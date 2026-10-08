@@ -7,138 +7,57 @@
 <title>Wilderness: Last Frontier</title>
 <style>
 *{box-sizing:border-box}
-:root{
- --bg:#0c1715;--panel:#152824;--border:#395b4b;
- --gold:#f2ce83;--text:#eaf0e8;--muted:#a5bbae;
-}
-body{
- margin:0;background:var(--bg);color:var(--text);
- font-family:Trebuchet MS,Arial,sans-serif;
-}
+body{margin:0;background:#0c1815;color:#e8eee6;font-family:Trebuchet MS,Arial,sans-serif}
 button{font:inherit;cursor:pointer;color:inherit}
-button:disabled{opacity:.43;cursor:not-allowed}
-button:focus-visible{outline:2px solid var(--gold)}
-header{
- padding:12px 20px;background:#101f1b;
- border-bottom:1px solid #385545;
- display:flex;align-items:center;justify-content:space-between;
- gap:14px;flex-wrap:wrap;
-}
-.logo{font-size:21px;font-weight:900;letter-spacing:2px;color:var(--gold)}
-.logo small{display:block;font-size:10px;letter-spacing:4px;color:#a5b7a2}
-.topinfo{display:flex;gap:17px;font-size:12px;color:#d6e5d7;flex-wrap:wrap}
-#layout{
- max-width:1600px;margin:auto;padding:12px;
- display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:12px;
-}
-#gameArea{min-width:0}
-#viewport{
- position:relative;border:2px solid #476b55;border-radius:12px;
- overflow:hidden;background:#315437;
-}
-#game{
- display:block;width:100%;height:auto;aspect-ratio:16/10;
- image-rendering:pixelated;cursor:crosshair;touch-action:none;
-}
-.overlay{
- position:absolute;pointer-events:none;background:#0c1d1bdc;
- border:1px solid #4a7058;border-radius:7px;
- font-size:12px;padding:8px 12px;
-}
-#region{top:12px;left:12px}
-#hint{
- bottom:12px;left:50%;transform:translateX(-50%);
- text-align:center;max-width:95%;
-}
-#message{
- position:absolute;top:50px;left:50%;transform:translateX(-50%);
- background:#10211ff0;border:1px solid #8eae83;border-radius:8px;
- padding:10px 16px;text-align:center;font-size:13px;
- max-width:83%;pointer-events:none;opacity:0;transition:opacity .2s;
-}
-.panel{
- background:linear-gradient(155deg,#19332b,#111f1d);
- border:1px solid var(--border);border-radius:10px;
- padding:14px;margin-bottom:11px;
-}
-.panel h3{
- font-size:13px;letter-spacing:1.8px;color:var(--gold);
- margin:0 0 13px;text-transform:uppercase;
-}
-.stat{margin-bottom:10px}
+button:disabled{opacity:.4;cursor:not-allowed}
+button:focus-visible{outline:2px solid #eac878}
+header{background:#10211b;border-bottom:1px solid #486452;padding:13px 20px;display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+.logo{color:#f1ce83;font-size:21px;font-weight:900;letter-spacing:2px}
+.logo small{display:block;font-size:10px;color:#a9c0aa;letter-spacing:4px}
+.topline{display:flex;gap:15px;flex-wrap:wrap;font-size:12px}
+#layout{max-width:1570px;margin:auto;padding:12px;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:12px}
+main{min-width:0}
+#viewport{position:relative;border:2px solid #50725a;border-radius:11px;overflow:hidden;background:#345b3b}
+#game{display:block;width:100%;height:auto;aspect-ratio:16/10;image-rendering:pixelated;cursor:crosshair;touch-action:none}
+.overlay{position:absolute;pointer-events:none;background:#10221edc;border:1px solid #577866;border-radius:6px;padding:7px 10px;font-size:11px}
+#region{top:13px;left:13px}
+#hint{bottom:12px;left:50%;transform:translateX(-50%);max-width:95%;text-align:center}
+#message{position:absolute;top:48px;left:50%;transform:translateX(-50%);max-width:85%;text-align:center;border:1px solid #98b589;background:#11241ef0;border-radius:8px;padding:10px 14px;opacity:0;pointer-events:none;transition:opacity .2s;font-size:13px}
+.panel{background:linear-gradient(150deg,#1a322a,#12211e);border:1px solid #3d5d4a;border-radius:10px;padding:14px;margin-bottom:11px}
+.panel h3{margin:0 0 12px;color:#f1ce83;font-size:13px;letter-spacing:1.7px;text-transform:uppercase}
+.stat{margin-bottom:9px}
 .statline{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
-.bar{
- height:9px;background:#07120e;border-radius:9px;
- overflow:hidden;border:1px solid #45634d;
-}
-.fill{height:100%;transition:width .2s}
+.bar{height:9px;background:#091611;border-radius:8px;overflow:hidden;border:1px solid #4b6b52}
+.fill{height:100%}
 .inventory{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-.item{
- border:1px solid #426354;background:#0b1b17;
- border-radius:8px;min-height:63px;padding:7px 3px;
- display:flex;flex-direction:column;justify-content:center;
- align-items:center;font-size:11px;gap:4px;text-align:center;
-}
-.item .emoji{font-size:22px}
-.equipment{display:flex;gap:7px;flex-wrap:wrap}
-.equip{
- background:#0b1d18;padding:9px;border:1px solid #42604e;
- border-radius:7px;font-size:12px;flex:1;text-align:center;
- min-width:110px;
-}
-.equip.owned{border-color:#d1a75c;background:#32402a}
-.btn{
- width:100%;text-align:left;padding:10px;margin-bottom:6px;
- border:1px solid #668270;background:#244536;border-radius:7px;
- font-size:12px;font-weight:bold;
-}
-.btn:hover:not(:disabled){background:#39644b}
-.btn small{
- display:block;font-size:11px;color:#bed0bd;
- font-weight:normal;margin-top:4px;line-height:1.4;
-}
-#toolbar{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}
-.toolbutton{
- background:#1d3a30;border:1px solid #50705d;
- border-radius:7px;padding:9px 12px;font-size:12px;
-}
-.toolbutton:hover{background:#335b46}
-#journal{font-size:12px;line-height:1.8;color:#c5d6c5}
-#gameOver{
- display:none;position:absolute;inset:0;z-index:10;
- background:#081311ed;align-items:center;justify-content:center;
- flex-direction:column;text-align:center;padding:20px;
-}
-#gameOver h1{color:#f3b499}
-#mobile{
- display:none;align-items:center;justify-content:space-between;
- gap:15px;margin-top:9px;
-}
-.dpad{
- display:grid;grid-template-columns:repeat(3,50px);
- grid-template-rows:repeat(3,46px);gap:3px;
-}
-.touch{
- background:#294e3d;border:1px solid #83a183;
- border-radius:8px;touch-action:none;user-select:none;font-weight:bold;
-}
-.touchActions{display:flex;flex-direction:column;gap:7px}
-.touchActions button{min-width:95px;padding:11px}
-dialog{
- max-width:460px;width:92%;background:#142820;color:#eff5eb;
- border:2px solid #718d75;border-radius:12px;padding:23px;
-}
+.item{min-height:66px;padding:7px 3px;background:#0c1b17;border:1px solid #446252;border-radius:7px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font-size:11px}
+.emoji{font-size:22px}
+.equipment{display:flex;gap:7px}
+.equip{flex:1;text-align:center;background:#0c1c18;border:1px solid #486351;border-radius:8px;padding:10px 5px;font-size:12px}
+.equip.owned{border-color:#d8b76e;background:#34432e}
+.btn{display:block;width:100%;background:#244737;border:1px solid #678774;border-radius:7px;padding:10px;text-align:left;font-size:12px;font-weight:bold;margin:0 0 7px}
+.btn:hover:not(:disabled),.toolbar button:hover{background:#36604b}
+.btn small{display:block;font-size:11px;font-weight:normal;color:#bfd5bd;margin-top:4px}
+.toolbar{display:flex;flex-wrap:wrap;gap:7px;margin:11px 0}
+.toolbar button{background:#1e4032;border:1px solid #577765;border-radius:7px;padding:9px 12px;font-size:12px}
+#journal{font-size:12px;color:#c6d9c6;line-height:1.7}
+#gameOver{display:none;position:absolute;inset:0;z-index:3;background:#071610f0;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:20px}
+#gameOver h1{color:#f4b99c}
+#gameOver button{width:auto}
+#mobile{display:none;justify-content:space-between;align-items:end;margin-top:12px}
+.dpad{display:grid;grid-template-columns:repeat(3,51px);grid-template-rows:repeat(3,45px);gap:3px}
+.touch{background:#2b523e;border:1px solid #86a48a;border-radius:8px;touch-action:none;user-select:none}
+.touchActions{display:flex;flex-direction:column;gap:6px}
+.touchActions button{padding:12px 16px}
+dialog{width:min(92%,470px);background:#132820;border:2px solid #7c9a7e;color:#e8f2e6;border-radius:12px;padding:24px}
 dialog::backdrop{background:#000b}
-dialog h2{color:var(--gold);margin-top:0}
-dialog p{font-size:14px;line-height:1.6}
-dialog button{
- padding:11px 18px;background:#32614a;
- border:1px solid #96b78b;border-radius:7px;
-}
-@media(max-width:920px){
+dialog h2{color:#f0cb7b}
+dialog p{font-size:14px;line-height:1.65}
+dialog button{background:#306246;border:1px solid #92b790;padding:10px 17px;border-radius:7px}
+@media(max-width:900px){
  #layout{grid-template-columns:1fr}
  #mobile{display:flex}
- .logo{font-size:16px}
+ .logo{font-size:17px}
  #hint{font-size:10px}
 }
 </style>
@@ -146,8 +65,8 @@ dialog button{
 <body>
 
 <header>
- <div class="logo">WILDERNESS <small>LAST FRONTIER</small></div>
- <div class="topinfo">
+ <div class="logo">WILDERNESS<small>LAST FRONTIER</small></div>
+ <div class="topline">
   <span id="dayLabel">DAY 1</span>
   <span id="clockLabel">08:00</span>
   <span id="weatherLabel">☀ Clear</span>
@@ -156,32 +75,24 @@ dialog button{
 </header>
 
 <div id="layout">
-<main id="gameArea">
+<main>
  <div id="viewport">
   <canvas id="game" width="960" height="600"></canvas>
-  <div class="overlay" id="region">REGION: PINE VALLEY</div>
+  <div id="region" class="overlay">REGION: PINE VALLEY</div>
+  <div id="hint" class="overlay">WASD: Walk • Click nearby resources • E: Gather</div>
   <div id="message"></div>
-  <div class="overlay" id="hint">
-   WASD: Walk · Click nearby resources · E: Gather
-  </div>
   <div id="gameOver">
    <h1>You Did Not Survive</h1>
-   <p>Your journey has ended in the wilderness.</p>
-   <button class="btn" id="restartBtn">Begin a New Journey</button>
+   <p>Your wilderness journey has ended.</p>
+   <button class="btn" id="restartBtn">Begin New Journey</button>
   </div>
  </div>
 
  <div id="mobile">
   <div class="dpad">
-   <span></span>
-   <button class="touch" data-move="up">▲</button>
-   <span></span>
-   <button class="touch" data-move="left">◀</button>
-   <span></span>
-   <button class="touch" data-move="right">▶</button>
-   <span></span>
-   <button class="touch" data-move="down">▼</button>
-   <span></span>
+   <span></span><button class="touch" data-move="up">▲</button><span></span>
+   <button class="touch" data-move="left">◀</button><span></span><button class="touch" data-move="right">▶</button>
+   <span></span><button class="touch" data-move="down">▼</button><span></span>
   </div>
   <div class="touchActions">
    <button class="touch" id="touchGather">Gather</button>
@@ -190,12 +101,12 @@ dialog button{
   </div>
  </div>
 
- <div id="toolbar">
-  <button class="toolbutton" id="interactBtn">✋ Gather Nearby</button>
-  <button class="toolbutton" id="pauseBtn">⏸ Pause</button>
-  <button class="toolbutton" id="saveBtn">💾 Save</button>
-  <button class="toolbutton" id="helpBtn">? Help</button>
-  <button class="toolbutton" id="newBtn">New Game</button>
+ <div class="toolbar">
+  <button id="interactBtn">✋ Gather Nearby</button>
+  <button id="pauseBtn">⏸ Pause</button>
+  <button id="saveBtn">💾 Save</button>
+  <button id="helpBtn">? Help</button>
+  <button id="newBtn">New Game</button>
  </div>
  <div id="journal">Loading...</div>
 </main>
@@ -205,7 +116,6 @@ dialog button{
   <h3>Survivor Status</h3>
   <div id="statusPanel"></div>
  </section>
-
  <section class="panel">
   <h3>Equipment</h3>
   <div class="equipment">
@@ -213,218 +123,142 @@ dialog button{
    <div class="equip" id="pickEquip">⛏️ Pickaxe<br>Not Crafted</div>
   </div>
  </section>
-
  <section class="panel">
   <h3>Backpack</h3>
   <div class="inventory" id="inventoryPanel"></div>
  </section>
-
  <section class="panel">
   <h3>Crafting</h3>
-  <button class="btn" id="craftAxe">
-   🪓 Craft Stone Axe
-   <small>3 wood + 2 stone</small>
-  </button>
-  <button class="btn" id="craftPick">
-   ⛏️ Craft Stone Pickaxe
-   <small>4 wood + 3 stone</small>
-  </button>
-  <button class="btn" id="buildFire">
-   🔥 Build Campfire
-   <small>5 wood + 3 stone</small>
-  </button>
-  <button class="btn" id="refuelFire">
-   🪵 Refuel Campfire
-   <small>2 wood · Must stand beside burning fire</small>
-  </button>
+  <button class="btn" id="craftAxe">🪓 Craft Stone Axe<small>3 sticks + 2 pebbles</small></button>
+  <button class="btn" id="craftPick">⛏️ Craft Stone Pickaxe<small>4 sticks + 3 pebbles</small></button>
+  <button class="btn" id="buildFire">🔥 Build Campfire<small>5 sticks + 3 pebbles</small></button>
+  <button class="btn" id="refuelFire">🪵 Refuel Campfire<small>3 sticks OR 1 log</small></button>
  </section>
-
  <section class="panel">
   <h3>Survival Actions</h3>
-  <button class="btn" id="eatBtn">
-   🍓 Eat Berries
-   <small>Restore hunger</small>
-  </button>
-  <button class="btn" id="drinkBtn">
-   💧 Drink Water
-   <small>Stand beside a lake</small>
-  </button>
-  <button class="btn" id="restBtn">
-   💤 Rest by Fire
-   <small>Sleep four hours beside a burning fire</small>
-  </button>
+  <button class="btn" id="eatBtn">🍓 Eat Berries<small>Restore hunger</small></button>
+  <button class="btn" id="drinkBtn">💧 Drink Water<small>Stand beside a lake</small></button>
+  <button class="btn" id="restBtn">💤 Rest by Fire<small>Sleep four hours beside a burning campfire</small></button>
  </section>
 </aside>
 </div>
 
 <dialog id="helpDialog">
  <h2>Welcome to the Wilderness</h2>
- <p><b>First mission:</b> Find fallen branches and loose stones on the ground. Craft a stone axe and stone pickaxe to begin harvesting larger resources.</p>
- <p>
- <b>WASD / Arrow keys:</b> Walk.<br>
- <b>Left-click:</b> Gather a nearby resource or drink from a nearby lake.<br>
- <b>E:</b> Gather nearest resource.<br>
- <b>F:</b> Drink water.<br>
- <b>Q:</b> Eat berries.<br>
- <b>C:</b> Build a campfire.<br>
- <b>R:</b> Rest by the fire.<br>
- <b>Space:</b> Pause.
- </p>
- <p>Clicking the ground does not move you. Use WASD to explore the map.</p>
- <button id="closeHelp">Begin Survival</button>
+ <p>Begin by picking up <b>fallen sticks</b> and <b>loose pebbles</b>. These are separate from logs and mined stone. Craft a stone axe to cut pine trees and a stone pickaxe to mine boulders.</p>
+ <p><b>WASD / Arrow keys:</b> Walk<br>
+ <b>Mouse:</b> Click nearby resources to interact<br>
+ <b>E:</b> Gather closest resource<br>
+ <b>F:</b> Drink at a lake · <b>Q:</b> Eat berries<br>
+ <b>C:</b> Build campfire · <b>R:</b> Rest by fire<br>
+ <b>Space:</b> Pause</p>
+ <p>Mouse clicks never move your character; you always walk with WASD.</p>
+ <button id="closeHelp">Enter Wilderness</button>
 </dialog>
 
 <script>
 "use strict";
 
-const $=id=>document.getElementById(id);
-const canvas=$("game");
-const ctx=canvas.getContext("2d");
-const W=960,H=600;
-const WORLD_W=3200,WORLD_H=2400;
-const SAVE_KEY="wilderness_frontier_v11_wasd";
-const SPAWN={x:1600,y:1200};
-const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
-const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
-const keys={};
-const mobileKeys=new Set();
-
-let state;
-let lastFrame=performance.now();
-let lastUI=0,lastSave=0;
-let noticeTime=0;
-let mouse={x:-100,y:-100,worldX:0,worldY:0};
-let particles=[];
-let renderCamera={x:0,y:0};
-let hovering=null;
-
-const LAKES=[
+const $=id=>document.getElementById(id),canvas=$("game"),ctx=canvas.getContext("2d");
+const W=960,H=600,WORLD_W=3200,WORLD_H=2400,SPAWN={x:1600,y:1200};
+const SAVE_KEY="wilderness_frontier_v12_wasd",OLD_SAVE="wilderness_frontier_v11_wasd";
+const clamp=(n,a,b)=>Math.max(a,Math.min(b,n)),dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+const keys={},mobileKeys=new Set(),LAKES=[
  {x:1110,y:860,rx:275,ry:190},
  {x:2360,y:1580,rx:340,ry:250},
  {x:710,y:1880,rx:235,ry:200},
  {x:2720,y:390,rx:290,ry:170}
 ];
+let state,nodes=[],hovering=null,particles=[],camera={x:0,y:0};
+let lastFrame=performance.now(),uiTimer=0,saveTimer=0,noticeTimer=0;
+const nightLayer=document.createElement("canvas");
+nightLayer.width=W;nightLayer.height=H;
+const nightCtx=nightLayer.getContext("2d");
 
 function hash(x,y,seed=0){
- let n=Math.imul(x,374761393)+Math.imul(y,668265263)+
-  Math.imul(seed,1442695041);
+ let n=Math.imul(x,374761393)+Math.imul(y,668265263)+Math.imul(seed,1442695041);
  n=Math.imul(n^(n>>>13),1274126177);
  return ((n^(n>>>16))>>>0)/4294967295;
 }
-
-function isWater(x,y){
- for(const lake of LAKES){
-  const nx=(x-lake.x)/lake.rx;
-  const ny=(y-lake.y)/lake.ry;
-  const wave=Math.sin(x*.016)*.045+Math.cos(y*.021)*.045;
-  if(nx*nx+ny*ny<1+wave)return true;
- }
- return false;
+function lakeShape(lake,x,y){
+ const nx=(x-lake.x)/lake.rx,ny=(y-lake.y)/lake.ry;
+ return nx*nx+ny*ny-(1+Math.sin(x*.016)*.045+Math.cos(y*.021)*.045);
 }
-
+function isWater(x,y){
+ return LAKES.some(lake=>lakeShape(lake,x,y)<0);
+}
 function canStand(x,y){
  if(x<22||y<22||x>WORLD_W-22||y>WORLD_H-22)return false;
- for(const [ox,oy] of [[-13,0],[13,0],[0,-13],[0,13]]){
-  if(isWater(x+ox,y+oy))return false;
- }
- return true;
+ return [[-13,0],[13,0],[0,-13],[0,13]].every(([a,b])=>!isWater(x+a,y+b));
 }
 
-function createNodes(){
- const result=[];
- const cell=84;
+function makeNodes(){
+ const result=[],cell=84;
  for(let gy=0;gy<Math.ceil(WORLD_H/cell);gy++){
   for(let gx=0;gx<Math.ceil(WORLD_W/cell);gx++){
    const x=gx*cell+10+hash(gx,gy,1)*60;
    const y=gy*cell+10+hash(gx,gy,2)*60;
-   if(x>WORLD_W-25||y>WORLD_H-25)continue;
-   if(isWater(x,y)||isWater(x+20,y)||isWater(x-20,y))
-    continue;
-
-   const roll=hash(gx,gy,3);
-   const variant=hash(gx,gy,4);
-   let type;
-
-   if(roll<.35)type="tree";
-   else if(roll<.53)type="rock";
-   else if(roll<.67)type="berry";
-   else if(roll<.84)type="branch";
-   else type="pebble";
-
-   if(Math.hypot(x-SPAWN.x,y-SPAWN.y)<70&&
-    (type==="tree"||type==="rock"))continue;
-
-   result.push({
-    id:`${gx}_${gy}`,x,y,type,variant
-   });
+   if(x>WORLD_W-25||y>WORLD_H-25||isWater(x,y)||isWater(x+20,y)||isWater(x-20,y))continue;
+   const r=hash(gx,gy,3);
+   const type=r<.35?"tree":r<.53?"rock":r<.67?"berry":r<.84?"branch":"pebble";
+   if(dist({x,y},SPAWN)<70&&(type==="tree"||type==="rock"))continue;
+   result.push({id:`${gx}_${gy}`,x,y,type,variant:hash(gx,gy,4)});
   }
+ }
+ // Guaranteed starter supplies near the spawn.
+ for(let i=0;i<10;i++){
+  const a=i*Math.PI*2/10,r=115+(i%3)*35;
+  const x=SPAWN.x+Math.cos(a)*r,y=SPAWN.y+Math.sin(a)*r;
+  if(canStand(x,y))result.push({id:`starter_${i}`,x,y,type:i%2?"pebble":"branch",variant:.55});
  }
  return result;
 }
+nodes=makeNodes();
 
-const nodes=createNodes();
-
-function freshState(){
+function fresh(){
  return {
-  player:{
-   x:SPAWN.x,y:SPAWN.y,dir:"down",
-   step:0,moving:false
-  },
-  stats:{
-   health:100,hunger:85,thirst:82,
-   energy:95,warmth:90
-  },
-  inventory:{wood:0,stone:0,berries:3},
+  player:{x:SPAWN.x,y:SPAWN.y,dir:"down",step:0,moving:false},
+  stats:{health:100,hunger:85,thirst:82,energy:95,warmth:90},
+  inventory:{sticks:0,pebbles:0,logs:0,stone:0,berries:3},
   tools:{axe:false,pickaxe:false},
-  gathered:{},
-  fires:[],
-  time:480,day:1,elapsed:0,
-  totalGathered:0,distanceWalked:0,
-  paused:false,dead:false
+  gathered:{},fires:[],time:480,day:1,
+  totalGathered:0,distanceWalked:0,paused:false,dead:false
  };
 }
 
 function loadGame(){
- state=freshState();
+ state=fresh();
  try{
-  const raw=localStorage.getItem(SAVE_KEY);
+  let raw=localStorage.getItem(SAVE_KEY),old=false;
+  if(!raw){raw=localStorage.getItem(OLD_SAVE);old=!!raw}
   if(!raw)return false;
-
-  const s=JSON.parse(raw);
-  if(!s||!s.player||!s.stats||!s.inventory)
-   return false;
-
-  const base=freshState();
+  const saved=JSON.parse(raw);
+  if(!saved||!saved.player||!saved.inventory||!saved.stats)return false;
+  const base=fresh();
+  const inv=old?{
+   sticks:Number(saved.inventory.wood)||0,
+   pebbles:Number(saved.inventory.stone)||0,
+   logs:0,stone:0,berries:saved.inventory.berries||0
+  }:saved.inventory;
   state={
-   ...base,...s,
-   player:{...base.player,...s.player},
-   stats:{...base.stats,...s.stats},
-   inventory:{...base.inventory,...s.inventory},
-   tools:{...base.tools,...s.tools},
-   gathered:s.gathered||{},
-   fires:Array.isArray(s.fires)?s.fires:[]
+   ...base,...saved,
+   player:{...base.player,...saved.player},
+   stats:{...base.stats,...saved.stats},
+   tools:{...base.tools,...saved.tools},
+   inventory:{...base.inventory,...inv},
+   gathered:saved.gathered||{},
+   fires:Array.isArray(saved.fires)?saved.fires:[]
   };
-
-  state.paused=false;
-  state.dead=false;
-  state.player.moving=false;
-
-  if(!Number.isFinite(state.player.x)||
-     !Number.isFinite(state.player.y)||
-     !canStand(state.player.x,state.player.y)){
-   state.player.x=SPAWN.x;
-   state.player.y=SPAWN.y;
+  state.paused=false;state.dead=false;state.player.moving=false;
+  if(!Number.isFinite(state.player.x)||!Number.isFinite(state.player.y)||!canStand(state.player.x,state.player.y)){
+   state.player.x=SPAWN.x;state.player.y=SPAWN.y;
   }
-
-  state.time=Number.isFinite(state.time)?state.time:480;
+  if(old)saveGame();
   return true;
-
  }catch(e){
-  state=freshState();
-  return false;
+  state=fresh();return false;
  }
 }
-
 function saveGame(show=false){
  if(!state||state.dead)return;
  try{
@@ -432,811 +266,446 @@ function saveGame(show=false){
   $("saveLabel").textContent="✓ Saved";
   if(show)message("Progress saved!");
  }catch(e){
-  $("saveLabel").textContent="Saving unavailable";
-  if(show)message("Browser storage unavailable.");
+  $("saveLabel").textContent="Save unavailable";
+  if(show)message("Browser storage unavailable");
  }
 }
-
-function message(text){
- $("message").textContent=text;
- $("message").style.opacity="1";
- noticeTime=3.1;
+function message(s){
+ $("message").textContent=s;$("message").style.opacity=1;noticeTimer=3;
 }
-
-function makeParticles(x,y,color,count=10){
- for(let i=0;i<count;i++){
-  const angle=Math.random()*Math.PI*2;
-  const speed=20+Math.random()*70;
-  particles.push({
-   x,y,
-   vx:Math.cos(angle)*speed,
-   vy:Math.sin(angle)*speed,
-   life:.5+Math.random()*.5,
-   color
-  });
- }
+function isNight(){
+ return state.time<360||state.time>=1200;
 }
-
-function available(node){
- return node&&!state.gathered[node.id];
-}
-
-function interactionRange(node){
- return node.type==="tree"?69:
-        node.type==="rock"?62:48;
-}
-
-function nearestNode(){
- let result=null,best=70;
- for(const node of nodes){
-  if(!available(node))continue;
-  const d=dist(state.player,node);
-  if(d<best&&d<=interactionRange(node)){
-   best=d;
-   result=node;
-  }
- }
- return result;
-}
-
-function nearestFire(){
+function nearFire(){
  let result=null,best=120;
- for(const fire of state.fires){
-  if(fire.fuel<=0)continue;
-  const d=dist(state.player,fire);
-  if(d<best){
-   best=d;
-   result=fire;
-  }
+ for(const f of state.fires){
+  if(f.fuel>0&&dist(f,state.player)<best){result=f;best=dist(f,state.player)}
  }
  return result;
 }
-
-function waterNearby(){
+function nearWater(){
  const p=state.player;
  for(let a=0;a<Math.PI*2;a+=Math.PI/16){
-  if(isWater(
-   p.x+Math.cos(a)*45,
-   p.y+Math.sin(a)*45
-  ))return true;
+  if(isWater(p.x+Math.cos(a)*45,p.y+Math.sin(a)*45))return true;
  }
  return false;
 }
+function available(n){return n&&!state.gathered[n.id]}
+function range(n){return n.type==="tree"?68:n.type==="rock"?60:49}
 
-function interactNode(node){
- if(state.paused||state.dead||!available(node))
-  return false;
-
- if(dist(state.player,node)>interactionRange(node)){
-  message("Move closer using WASD to collect that resource.");
+// All gathering methods use this same requirement check.
+function requiredTool(n){
+ if(n.type==="tree"&&!state.tools.axe)return "axe";
+ if(n.type==="rock"&&!state.tools.pickaxe)return "pickaxe";
+ return null;
+}
+function nearestNode(){
+ let best=null,d=70;
+ for(const n of nodes){
+  if(!available(n))continue;
+  const v=dist(n,state.player);
+  if(v<=range(n)&&v<d){best=n;d=v}
+ }
+ return best;
+}
+function particleBurst(n,color){
+ for(let i=0;i<12;i++){
+  const a=Math.random()*Math.PI*2,s=30+Math.random()*60;
+  particles.push({
+   x:n.x,y:n.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,
+   life:.5+Math.random()*.6,color
+  });
+ }
+}
+function harvest(n){
+ if(!n||!available(n)||state.paused||state.dead)return false;
+ if(dist(state.player,n)>range(n)){
+  message("Move closer with WASD first.");
   return false;
  }
-
- const inv=state.inventory;
- let amount=0;
- let label="",color="#b6d28c";
-
- switch(node.type){
-  case "branch":
-   amount=1+Math.floor(node.variant*3);
-   inv.wood+=amount;
-   label=`Picked up ${amount} fallen branches`;
-   color="#b49a66";
-   break;
-
-  case "pebble":
-   amount=1+Math.floor(node.variant*3);
-   inv.stone+=amount;
-   label=`Collected ${amount} loose stones`;
-   color="#b3b9aa";
-   break;
-
-  case "berry":
-   amount=2+Math.floor(node.variant*4);
-   inv.berries+=amount;
-   label=`Picked ${amount} berries`;
-   color="#e36070";
-   break;
-
-  case "tree":
-   if(!state.tools.axe){
-    message("You need a stone axe to chop trees!");
-    return false;
-   }
-   amount=4+Math.floor(node.variant*5);
-   inv.wood+=amount;
-   label=`Chopped tree: +${amount} wood`;
-   color="#80bb71";
-   break;
-
-  case "rock":
-   if(!state.tools.pickaxe){
-    message("You need a stone pickaxe to mine boulders!");
-    return false;
-   }
-   amount=3+Math.floor(node.variant*5);
-   inv.stone+=amount;
-   label=`Mined boulder: +${amount} stone`;
-   color="#aeb9b0";
-   break;
+ const tool=requiredTool(n);
+ if(tool){
+  message(tool==="axe"?
+   "🪓 Axe required! Pick up sticks and pebbles to craft one.":
+   "⛏️ Pickaxe required! Pick up sticks and pebbles to craft one.");
+  return false;
  }
-
- state.gathered[node.id]=true;
+ const amounts={
+  branch:1+Math.floor(n.variant*3),
+  pebble:1+Math.floor(n.variant*3),
+  berry:2+Math.floor(n.variant*4),
+  tree:3+Math.floor(n.variant*4),
+  rock:2+Math.floor(n.variant*4)
+ };
+ const amount=amounts[n.type];
+ const item={branch:"sticks",pebble:"pebbles",berry:"berries",tree:"logs",rock:"stone"}[n.type];
+ state.inventory[item]+=amount;
+ state.gathered[n.id]=true;
  state.totalGathered++;
- makeParticles(node.x,node.y,color);
-
- message(label);
- updateUI();
- saveGame();
+ particleBurst(n,{branch:"#ac8d5b",pebble:"#b7bfb9",berry:"#e15a79",tree:"#78bb70",rock:"#a6b9ad"}[n.type]);
+ message(`Collected ${amount} ${item}${n.type==="tree"?" with your axe":n.type==="rock"?" with your pickaxe":""}.`);
+ updateUI();saveGame();
  return true;
 }
-
 function interactNearest(){
  if(state.paused||state.dead)return;
-
- const node=nearestNode();
-
- if(node)interactNode(node);
- else message("Move closer to a resource with WASD.");
+ const n=nearestNode();
+ n?harvest(n):message("Move closer to a resource with WASD.");
 }
-
 function craft(type){
- if(state.dead||state.paused)return;
-
- const inv=state.inventory;
- const axe=type==="axe";
- const key=axe?"axe":"pickaxe";
- const woodCost=axe?3:4;
- const stoneCost=axe?2:3;
-
- if(state.tools[key]){
-  message(`You already own a ${axe?"stone axe":"stone pickaxe"}.`);
-  return;
- }
-
- if(inv.wood<woodCost||inv.stone<stoneCost){
-  message(`Need ${woodCost} wood and ${stoneCost} stone.`);
-  return;
- }
-
- inv.wood-=woodCost;
- inv.stone-=stoneCost;
+ if(state.paused||state.dead)return;
+ const axe=type==="axe",key=axe?"axe":"pickaxe";
+ const s=axe?3:4,p=axe?2:3,inv=state.inventory;
+ if(state.tools[key])return message("You already own this tool.");
+ if(inv.sticks<s||inv.pebbles<p)return message(`You need ${s} sticks and ${p} pebbles.`);
+ inv.sticks-=s;inv.pebbles-=p;
  state.tools[key]=true;
-
- message(axe?
-  "Stone axe crafted! You can now chop trees.":
-  "Stone pickaxe crafted! You can now mine boulders."
- );
-
- updateUI();
- saveGame();
+ message(axe?"Stone axe crafted: trees unlocked!":"Stone pickaxe crafted: boulders unlocked!");
+ updateUI();saveGame();
 }
-
 function eat(){
  if(state.dead||state.paused)return;
-
- if(state.inventory.berries<1){
-  message("Find a berry bush first.");
-  return;
- }
-
- if(state.stats.hunger>=99){
-  message("You're already full.");
-  return;
- }
-
+ if(state.inventory.berries<1)return message("Collect berries first.");
+ if(state.stats.hunger>=99)return message("You're already full.");
  state.inventory.berries--;
  state.stats.hunger=clamp(state.stats.hunger+22,0,100);
  state.stats.health=clamp(state.stats.health+2,0,100);
-
- message("You ate wild berries.");
- updateUI();
- saveGame();
+ message("You ate berries.");
+ updateUI();saveGame();
 }
-
 function drink(){
  if(state.dead||state.paused)return;
-
- if(!waterNearby()){
-  message("Get closer to the edge of a lake.");
-  return;
- }
-
+ if(!nearWater())return message("Stand at the edge of a freshwater lake.");
  state.stats.thirst=100;
  message("You drank freshwater.");
- updateUI();
- saveGame();
+ updateUI();saveGame();
 }
-
 function buildFire(){
  if(state.dead||state.paused)return;
-
  const inv=state.inventory;
-
- if(inv.wood<5||inv.stone<3){
-  message("A campfire requires 5 wood and 3 stone.");
-  return;
- }
-
- if(nearestFire()){
-  message("There is already a burning fire nearby.");
-  return;
- }
-
- const p=state.player;
- const offsets={
-  up:[0,-48],
-  down:[0,48],
-  left:[-48,0],
-  right:[48,0]
- };
-
- const [ox,oy]=offsets[p.dir]||[0,48];
- const x=p.x+ox,y=p.y+oy;
-
- if(!canStand(x,y)){
-  message("Find a clear spot to build your campfire.");
-  return;
- }
-
- inv.wood-=5;
- inv.stone-=3;
-
+ if(inv.sticks<5||inv.pebbles<3)return message("Campfire needs 5 sticks + 3 pebbles.");
+ if(nearFire())return message("Already near a burning campfire.");
+ const dir={up:[0,-48],down:[0,48],left:[-48,0],right:[48,0]}[state.player.dir];
+ const x=state.player.x+dir[0],y=state.player.y+dir[1];
+ if(!canStand(x,y))return message("Stand in a clear place to build.");
+ inv.sticks-=5;inv.pebbles-=3;
  state.fires.push({x,y,fuel:240});
- makeParticles(x,y,"#f8bb6a",14);
-
- message("Campfire built! Stay nearby to keep warm.");
- updateUI();
- saveGame();
+ particleBurst({x,y},"#f7ba62");
+ message("Campfire built!");
+ updateUI();saveGame();
 }
-
-function refuelFire(){
- if(state.dead||state.paused)return;
-
- const fire=nearestFire();
-
- if(!fire){
-  message("Stand beside a burning campfire.");
-  return;
- }
-
- if(state.inventory.wood<2){
-  message("You need 2 wood.");
-  return;
- }
-
- state.inventory.wood-=2;
- fire.fuel=Math.min(720,fire.fuel+180);
-
- message("Added more wood to your campfire.");
- updateUI();
- saveGame();
+function refuel(){
+ if(state.paused||state.dead)return;
+ const f=nearFire();
+ if(!f)return message("Stand next to a burning campfire.");
+ const inv=state.inventory;
+ if(inv.sticks>=3)inv.sticks-=3;
+ else if(inv.logs>=1)inv.logs--;
+ else return message("Refueling requires 3 sticks or 1 log.");
+ f.fuel=Math.min(720,f.fuel+180);
+ message("Campfire refueled.");
+ updateUI();saveGame();
 }
-
 function normalizeTime(){
  while(state.time>=1440){
-  state.time-=1440;
-  state.day++;
-  message(`Day ${state.day} has begun.`);
+  state.time-=1440;state.day++;
+  message(`Day ${state.day} begins!`);
  }
 }
-
 function rest(){
- if(state.dead||state.paused)return;
-
- const fire=nearestFire();
-
- if(!fire){
-  message("You must sleep beside a burning campfire.");
-  return;
- }
-
- if(state.stats.hunger<12||state.stats.thirst<12){
-  message("You're too hungry or thirsty to rest safely.");
-  return;
- }
-
- state.time+=240;
- normalizeTime();
-
+ if(state.paused||state.dead)return;
+ const f=nearFire();
+ if(!f)return message("Rest beside a burning campfire.");
+ if(state.stats.hunger<12||state.stats.thirst<12)return message("Eat and drink before sleeping.");
+ state.time+=240;normalizeTime();
  const s=state.stats;
-
  s.energy=clamp(s.energy+65,0,100);
  s.health=clamp(s.health+12,0,100);
  s.hunger=clamp(s.hunger-14,0,100);
  s.thirst=clamp(s.thirst-17,0,100);
-
- fire.fuel=Math.max(0,fire.fuel-240);
-
- message("You slept for four hours.");
- updateUI();
- saveGame();
+ f.fuel=Math.max(0,f.fuel-240);
+ message("Slept four hours.");
+ updateUI();saveGame();
 }
-
-function isNight(){
- return state.time<360||state.time>=1200;
-}
-
 function die(){
- if(state.dead)return;
-
- state.dead=true;
- state.stats.health=0;
-
+ state.dead=true;state.stats.health=0;
  localStorage.removeItem(SAVE_KEY);
+ localStorage.removeItem(OLD_SAVE);
  $("gameOver").style.display="flex";
-
  updateUI();
 }
-
 function restart(){
- if(!state.dead&&
-    !confirm("Erase your current wilderness save and start over?"))
-  return;
-
+ if(!state.dead&&!confirm("Erase your survival progress and start over?"))return;
  localStorage.removeItem(SAVE_KEY);
-
- state=freshState();
- particles=[];
- hovering=null;
-
+ localStorage.removeItem(OLD_SAVE);
+ state=fresh();particles=[];hovering=null;
  $("gameOver").style.display="none";
-
- message("New journey started! Collect branches and stones.");
- updateUI();
- saveGame();
+ message("Fresh start: collect fallen sticks and loose pebbles!");
+ updateUI();saveGame();
 }
-
-function updateUI(){
- const s=state.stats;
-
- const stats=[
-  ["health","Health","#dc675b"],
-  ["hunger","Hunger","#e6ac57"],
-  ["thirst","Thirst","#58aee5"],
-  ["energy","Energy","#88c875"],
-  ["warmth","Warmth","#e18a4f"]
- ];
-
- $("statusPanel").innerHTML=stats.map(([key,name,color])=>`
-  <div class="stat">
-   <div class="statline">
-    <span>${name}</span>
-    <span>${Math.ceil(s[key])}/100</span>
-   </div>
-   <div class="bar">
-    <div class="fill" style="background:${color};width:${s[key]}%"></div>
-   </div>
-  </div>`).join("");
-
- $("inventoryPanel").innerHTML=[
-  ["wood","🪵","Wood"],
-  ["stone","🪨","Stone"],
-  ["berries","🍓","Berries"]
- ].map(([key,emoji,name])=>`
-  <div class="item">
-   <span class="emoji">${emoji}</span>
-   <span>${name}: ${state.inventory[key]}</span>
-  </div>`).join("");
-
- const axe=state.tools.axe;
- const pick=state.tools.pickaxe;
-
- $("axeEquip").innerHTML=axe?
-  "🪓 Stone Axe<br>Equipped":
-  "🪓 Stone Axe<br>Not Crafted";
-
- $("pickEquip").innerHTML=pick?
-  "⛏️ Stone Pickaxe<br>Equipped":
-  "⛏️ Stone Pickaxe<br>Not Crafted";
-
- $("axeEquip").classList.toggle("owned",axe);
- $("pickEquip").classList.toggle("owned",pick);
-
- const inv=state.inventory;
- const unavailable=state.dead||state.paused;
-
- $("craftAxe").disabled=unavailable||axe||
-  inv.wood<3||inv.stone<2;
- $("craftPick").disabled=unavailable||pick||
-  inv.wood<4||inv.stone<3;
- $("buildFire").disabled=unavailable||
-  inv.wood<5||inv.stone<3;
- $("refuelFire").disabled=unavailable||
-  !nearestFire()||inv.wood<2;
- $("eatBtn").disabled=unavailable||inv.berries<1;
- $("drinkBtn").disabled=unavailable||!waterNearby();
- $("restBtn").disabled=unavailable||!nearestFire();
-
- $("dayLabel").textContent=`DAY ${state.day}`;
-
- const h=Math.floor(state.time/60)%24;
- const m=Math.floor(state.time%60);
-
- $("clockLabel").textContent=
-  `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
-
- $("weatherLabel").textContent=
-  isNight()?"🌙 Cold Night":"☀ Clear Skies";
-
- $("pauseBtn").textContent=
-  state.paused?"▶ Resume":"⏸ Pause";
-
- const objective=!axe?
-  "Craft your first stone axe.":
-  !pick?
-  "Craft your stone pickaxe.":
-  "Build a campfire and survive the night.";
-
- $("journal").innerHTML=`
-  <b>Wilderness Journal</b> &nbsp; • &nbsp;
-  Day ${state.day} &nbsp; • &nbsp;
-  ${state.totalGathered} resources harvested &nbsp; • &nbsp;
-  ${Math.floor(state.distanceWalked)} m traveled
-  <div style="color:#edcd88">
-   Objective: ${objective}
-  </div>`;
-}
-
 function togglePause(){
  if(state.dead)return;
  state.paused=!state.paused;
- message(state.paused?"Game paused":"Survival resumed");
+ message(state.paused?"Game paused":"Back to survival!");
  updateUI();
+}
+function updateUI(){
+ const stats=[
+  ["health","Health","#d96659"],
+  ["hunger","Hunger","#e7b052"],
+  ["thirst","Thirst","#54aae8"],
+  ["energy","Energy","#83cc79"],
+  ["warmth","Warmth","#df874c"]
+ ];
+ $("statusPanel").innerHTML=stats.map(([k,label,c])=>
+  `<div class="stat"><div class="statline"><span>${label}</span><span>${Math.ceil(state.stats[k])}/100</span></div><div class="bar"><div class="fill" style="background:${c};width:${clamp(state.stats[k],0,100)}%"></div></div></div>`
+ ).join("");
+ $("inventoryPanel").innerHTML=[
+  ["sticks","🌿","Sticks"],
+  ["pebbles","🪨","Pebbles"],
+  ["logs","🪵","Logs"],
+  ["stone","⛏️","Mined Stone"],
+  ["berries","🍓","Berries"]
+ ].map(([k,emoji,label])=>
+  `<div class="item"><span class="emoji">${emoji}</span>${label}: ${state.inventory[k]}</div>`
+ ).join("");
+ for(const [key,id,name] of [
+  ["axe","axeEquip","🪓 Stone Axe"],
+  ["pickaxe","pickEquip","⛏️ Stone Pickaxe"]
+ ]){
+  $(id).innerHTML=name+"<br>"+(state.tools[key]?"Equipped":"Not Crafted");
+  $(id).classList.toggle("owned",!!state.tools[key]);
+ }
+ const inv=state.inventory,off=state.paused||state.dead;
+ $("craftAxe").disabled=off||state.tools.axe||inv.sticks<3||inv.pebbles<2;
+ $("craftPick").disabled=off||state.tools.pickaxe||inv.sticks<4||inv.pebbles<3;
+ $("buildFire").disabled=off||inv.sticks<5||inv.pebbles<3;
+ $("refuelFire").disabled=off||!nearFire()||(inv.sticks<3&&inv.logs<1);
+ $("eatBtn").disabled=off||inv.berries<1;
+ $("drinkBtn").disabled=off||!nearWater();
+ $("restBtn").disabled=off||!nearFire();
+ const h=Math.floor(state.time/60)%24,m=Math.floor(state.time%60);
+ $("clockLabel").textContent=`${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
+ $("dayLabel").textContent=`DAY ${state.day}`;
+ $("weatherLabel").textContent=isNight()?"🌙 Cold Night":"☀ Clear Skies";
+ $("pauseBtn").textContent=state.paused?"▶ Resume":"⏸ Pause";
+ $("journal").innerHTML=`<b>Wilderness Journal</b> · Day ${state.day} · ${state.totalGathered} gathered · ${Math.floor(state.distanceWalked)} m traveled<br><span style="color:#e9c77f">Objective: ${!state.tools.axe?"Gather sticks and pebbles. Craft an axe.":!state.tools.pickaxe?"Craft a pickaxe to mine boulders.":"Build a campfire and survive the night."}</span>`;
 }
 
 function update(dt){
- if(!state)return;
  dt=Math.min(dt,.05);
-
- if(noticeTime>0){
-  noticeTime-=dt;
-  if(noticeTime<=0)$("message").style.opacity="0";
+ if(noticeTimer>0){
+  noticeTimer-=dt;
+  if(noticeTimer<=0)$("message").style.opacity=0;
  }
-
  if(state.paused||state.dead)return;
 
  const p=state.player;
  let dx=0,dy=0;
-
  if(keys.KeyW||keys.ArrowUp||mobileKeys.has("up"))dy--;
  if(keys.KeyS||keys.ArrowDown||mobileKeys.has("down"))dy++;
  if(keys.KeyA||keys.ArrowLeft||mobileKeys.has("left"))dx--;
  if(keys.KeyD||keys.ArrowRight||mobileKeys.has("right"))dx++;
-
- p.moving=dx!==0||dy!==0;
+ p.moving=!!(dx||dy);
 
  if(p.moving){
   const length=Math.hypot(dx,dy);
-  dx/=length;
-  dy/=length;
-
-  if(Math.abs(dx)>Math.abs(dy)){
-   p.dir=dx>0?"right":"left";
-  }else{
-   p.dir=dy>0?"down":"up";
-  }
-
+  dx/=length;dy/=length;
+  p.dir=Math.abs(dx)>Math.abs(dy)?
+   (dx>0?"right":"left"):(dy>0?"down":"up");
   const speed=state.stats.energy<10?78:145;
   const ox=p.x,oy=p.y;
-  const nx=p.x+dx*speed*dt;
-  const ny=p.y+dy*speed*dt;
-
-  if(canStand(nx,p.y))p.x=nx;
-  if(canStand(p.x,ny))p.y=ny;
-
+  if(canStand(p.x+dx*speed*dt,p.y))p.x+=dx*speed*dt;
+  if(canStand(p.x,p.y+dy*speed*dt))p.y+=dy*speed*dt;
   const moved=Math.hypot(p.x-ox,p.y-oy);
-
   if(moved>.01){
-   p.step+=dt*10;
+   p.step+=dt*9;
    state.distanceWalked+=moved/10;
    state.stats.energy-=dt*.2;
    state.stats.thirst-=dt*.045;
-  }else{
-   p.moving=false;
-  }
- }else{
-  state.stats.energy+=dt*.035;
- }
+  }else p.moving=false;
+ }else state.stats.energy+=dt*.035;
 
  state.time+=dt*2;
  normalizeTime();
-
  const s=state.stats;
-
  s.hunger-=dt*.055;
  s.thirst-=dt*.09;
-
- const targetWarmth=nearestFire()?100:isNight()?22:82;
- s.warmth+=(targetWarmth-s.warmth)*Math.min(1,dt*.065);
-
+ s.warmth+=((nearFire()?100:isNight()?22:82)-s.warmth)*Math.min(1,dt*.065);
  if(s.hunger<=0||s.thirst<=0)s.health-=dt*.9;
  if(s.warmth<16)s.health-=dt*.48;
  if(s.energy<=0)s.health-=dt*.24;
-
- if(s.hunger>50&&s.thirst>50&&s.warmth>35&&s.energy>30)
-  s.health+=dt*.018;
-
- for(const key of Object.keys(s)){
-  s[key]=clamp(s[key],0,100);
+ if(s.hunger>50&&s.thirst>50&&s.warmth>35&&s.energy>30)s.health+=dt*.018;
+ for(const k of Object.keys(s))s[k]=clamp(s[k],0,100);
+ for(const f of state.fires)f.fuel=Math.max(0,f.fuel-dt*2);
+ for(const a of particles){
+  a.x+=a.vx*dt;a.y+=a.vy*dt;
+  a.vy+=40*dt;a.life-=dt;
  }
-
- for(const fire of state.fires){
-  fire.fuel=Math.max(0,fire.fuel-dt*2);
- }
-
- for(const part of particles){
-  part.x+=part.vx*dt;
-  part.y+=part.vy*dt;
-  part.vy+=40*dt;
-  part.life-=dt;
- }
- particles=particles.filter(part=>part.life>0);
-
+ particles=particles.filter(a=>a.life>0);
  if(s.health<=0)die();
-
- lastUI+=dt;
- lastSave+=dt;
-
- if(lastUI>.25){
-  updateUI();
-  lastUI=0;
- }
-
- if(lastSave>15){
-  saveGame();
-  lastSave=0;
- }
+ uiTimer+=dt;saveTimer+=dt;
+ if(uiTimer>.3){updateUI();uiTimer=0}
+ if(saveTimer>15){saveGame();saveTimer=0}
 }
 
-function drawGround(camX,camY){
+function ground(cx,cy){
  ctx.fillStyle="#365b3a";
  ctx.fillRect(0,0,W,H);
-
  const size=40;
- const startX=Math.floor(camX/size);
- const startY=Math.floor(camY/size);
- const endX=Math.ceil((camX+W)/size);
- const endY=Math.ceil((camY+H)/size);
-
- for(let gy=startY;gy<=endY;gy++){
-  for(let gx=startX;gx<=endX;gx++){
-   const wx=gx*size,wy=gy*size;
-   const x=wx-camX,y=wy-camY;
-   const n=hash(gx,gy,7);
-
-   ctx.fillStyle=n<.2?"#345636":
-    n>.82?"#40623d":"#395c3b";
+ for(let gy=Math.floor(cy/size);gy<=Math.ceil((cy+H)/size);gy++){
+  for(let gx=Math.floor(cx/size);gx<=Math.ceil((cx+W)/size);gx++){
+   const x=gx*size-cx,y=gy*size-cy,n=hash(gx,gy,7);
+   ctx.fillStyle=n<.2?"#355b38":n>.82?"#426541":"#3a603e";
    ctx.fillRect(x,y,size+1,size+1);
-
    if(n>.65){
-    ctx.fillStyle="#537347";
+    ctx.fillStyle="#648455";
     ctx.fillRect(x+6+n*9,y+12,3,8);
     ctx.fillRect(x+15+n*8,y+19,2,5);
    }
-
    if(n<.11){
-    ctx.fillStyle="#c1b37b";
+    ctx.fillStyle="#c6b684";
     ctx.fillRect(x+20,y+16,3,2);
     ctx.fillRect(x+24,y+15,2,3);
-   }
-
-   if(n>.42&&n<.47){
-    ctx.strokeStyle="#628653";
-    ctx.lineWidth=1.5;
-    ctx.beginPath();
-    ctx.moveTo(x+12,y+32);
-    ctx.lineTo(x+8,y+25);
-    ctx.moveTo(x+12,y+32);
-    ctx.lineTo(x+16,y+26);
-    ctx.stroke();
    }
   }
  }
 }
 
-function drawLakes(camX,camY){
+function lakePath(lake,cx,cy,margin=1){
+ ctx.beginPath();
+ for(let i=0;i<=96;i++){
+  const a=i/96*Math.PI*2;
+  const rx=lake.rx*margin,ry=lake.ry*margin;
+  const wx=lake.x+Math.cos(a)*rx,wy=lake.y+Math.sin(a)*ry;
+  const r=Math.sqrt(Math.max(.75,1+Math.sin(wx*.016)*.045+Math.cos(wy*.021)*.045));
+  const x=lake.x-cx+Math.cos(a)*rx*r;
+  const y=lake.y-cy+Math.sin(a)*ry*r;
+  if(i===0)ctx.moveTo(x,y);
+  else ctx.lineTo(x,y);
+ }
+ ctx.closePath();
+}
+
+function drawLakes(cx,cy){
  for(const lake of LAKES){
-  const x=lake.x-camX,y=lake.y-camY;
+  const x=lake.x-cx,y=lake.y-cy;
+  if(x<-lake.rx-35||x>W+lake.rx+35||y<-lake.ry-35||y>H+lake.ry+35)continue;
 
-  if(x<-lake.rx-30||x>W+lake.rx+30||
-     y<-lake.ry-30||y>H+lake.ry+30)continue;
-
-  const path=(rx,ry)=>{
-   ctx.beginPath();
-
-   for(let i=0;i<=80;i++){
-    const a=i/80*Math.PI*2;
-    const wx=lake.x+Math.cos(a)*rx;
-    const wy=lake.y+Math.sin(a)*ry;
-    const radius=1+Math.sin(wx*.016)*.023+
-     Math.cos(wy*.021)*.023;
-    const px=x+Math.cos(a)*rx*radius;
-    const py=y+Math.sin(a)*ry*radius;
-
-    if(i===0)ctx.moveTo(px,py);
-    else ctx.lineTo(px,py);
-   }
-
-   ctx.closePath();
-  };
-
-  path(lake.rx+16,lake.ry+16);
-  ctx.fillStyle="#b5a478";
-  ctx.fill();
-
-  path(lake.rx,lake.ry);
-  ctx.fillStyle="#286b80";
-  ctx.fill();
-
-  path(lake.rx*.87,lake.ry*.87);
-  ctx.fillStyle="#317c91";
-  ctx.fill();
+  lakePath(lake,cx,cy,1.06);
+  ctx.fillStyle="#b9aa7b";ctx.fill();
+  lakePath(lake,cx,cy);
+  ctx.fillStyle="#286b80";ctx.fill();
+  lakePath(lake,cx,cy,.87);
+  ctx.fillStyle="#327d93";ctx.fill();
 
   ctx.save();
-  path(lake.rx,lake.ry);
+  lakePath(lake,cx,cy);
   ctx.clip();
-
-  const time=performance.now()*.0004;
-
-  ctx.strokeStyle="#8cc9d0";
+  ctx.strokeStyle="#88c4c9";
   ctx.globalAlpha=.35;
   ctx.lineWidth=2;
-
+  const t=performance.now()*.0004;
   for(let i=0;i<11;i++){
-   const py=y-lake.ry+(i*38+(time*15)%38);
+   const py=y-lake.ry+(i*38+(t*15)%38);
    ctx.beginPath();
    ctx.moveTo(x-lake.rx,py);
    ctx.bezierCurveTo(x-70,py-8,x+60,py+8,x+lake.rx,py);
    ctx.stroke();
   }
-
   ctx.restore();
-  ctx.globalAlpha=1;
  }
 }
 
-function drawTree(x,y,node){
- const variation=node.variant;
- const scale=.85+variation*.4;
-
+function drawTree(x,y,n){
+ const scale=.85+n.variant*.4;
  ctx.save();
  ctx.translate(x,y);
  ctx.scale(scale,scale);
-
- ctx.fillStyle="#182f26aa";
- ctx.beginPath();
- ctx.ellipse(8,15,26,12,0,0,Math.PI*2);
- ctx.fill();
-
- ctx.fillStyle="#60482b";
- ctx.fillRect(-5,-12,10,27);
-
- ctx.fillStyle="#123b2b";
- ctx.beginPath();
- ctx.moveTo(0,-66);
- ctx.lineTo(-30,-15);
- ctx.lineTo(30,-15);
- ctx.fill();
-
- ctx.fillStyle="#1d593e";
- ctx.beginPath();
- ctx.moveTo(0,-80);
- ctx.lineTo(-25,-30);
- ctx.lineTo(25,-30);
- ctx.fill();
-
- ctx.fillStyle="#30764d";
- ctx.beginPath();
- ctx.moveTo(0,-91);
- ctx.lineTo(-18,-48);
- ctx.lineTo(18,-48);
- ctx.fill();
-
- ctx.fillStyle="#68a36c";
- ctx.fillRect(-8,-59,5,9);
- ctx.fillRect(9,-33,4,8);
- ctx.fillRect(-2,-73,3,7);
-
+ ctx.fillStyle="#10251d88";
+ ctx.beginPath();ctx.ellipse(7,14,28,12,0,0,7);ctx.fill();
+ ctx.fillStyle="#6a4b2d";ctx.fillRect(-5,-12,10,28);
+ for(const [h,w,c] of [
+  [-15,30,"#143c2d"],
+  [-30,25,"#21573c"],
+  [-49,20,"#31764e"]
+ ]){
+  ctx.fillStyle=c;
+  ctx.beginPath();
+  ctx.moveTo(0,h-43);
+  ctx.lineTo(-w,h);
+  ctx.lineTo(w,h);
+  ctx.closePath();ctx.fill();
+ }
+ ctx.fillStyle="#75a87a";
+ ctx.fillRect(-6,-60,3,9);
+ ctx.fillRect(8,-32,3,8);
  ctx.restore();
 }
 
-function drawRock(x,y,node){
- const size=15+node.variant*12;
-
- ctx.fillStyle="#14262277";
+function drawRock(x,y,n){
+ const r=16+n.variant*12;
+ ctx.fillStyle="#11241d75";
+ ctx.beginPath();ctx.ellipse(x+3,y+7,r+6,r*.43,0,0,7);ctx.fill();
+ ctx.fillStyle="#748880";
  ctx.beginPath();
- ctx.ellipse(x+4,y+8,size+6,size*.43,0,0,7);
- ctx.fill();
-
- ctx.fillStyle="#788780";
+ ctx.moveTo(x-r,y+4);
+ ctx.lineTo(x-r*.72,y-r*.7);
+ ctx.lineTo(x+r*.35,y-r);
+ ctx.lineTo(x+r,y-r*.2);
+ ctx.lineTo(x+r*.72,y+r*.6);
+ ctx.closePath();ctx.fill();
+ ctx.fillStyle="#b0bcb1";
  ctx.beginPath();
- ctx.moveTo(x-size,y+4);
- ctx.lineTo(x-size*.72,y-size*.7);
- ctx.lineTo(x+size*.35,y-size);
- ctx.lineTo(x+size,y-size*.2);
- ctx.lineTo(x+size*.72,y+size*.6);
- ctx.closePath();
- ctx.fill();
-
- ctx.fillStyle="#aab5a6";
- ctx.beginPath();
- ctx.moveTo(x-size*.72,y-size*.7);
- ctx.lineTo(x+size*.35,y-size);
- ctx.lineTo(x+size*.12,y);
- ctx.lineTo(x-size*.55,y+size*.13);
- ctx.closePath();
+ ctx.moveTo(x-r*.72,y-r*.7);
+ ctx.lineTo(x+r*.35,y-r);
+ ctx.lineTo(x+r*.12,y);
+ ctx.lineTo(x-r*.55,y+r*.13);
  ctx.fill();
 }
 
-function drawBerry(x,y,node){
- ctx.fillStyle="#153c2b";
-
+function drawBerry(x,y){
  for(const [dx,dy,r] of [[-9,0,13],[9,-3,13],[0,-12,15]]){
-  ctx.beginPath();
-  ctx.arc(x+dx,y+dy,r,0,7);
-  ctx.fill();
+  ctx.fillStyle="#16402d";
+  ctx.beginPath();ctx.arc(x+dx,y+dy,r,0,7);ctx.fill();
  }
-
- ctx.fillStyle="#34754c";
- ctx.beginPath();
- ctx.arc(x,y-7,15,0,7);
- ctx.fill();
-
- ctx.fillStyle="#e95d71";
- const positions=[[-9,-8],[7,-12],[-2,-19],[12,-2],[-9,3]];
-
- for(const [dx,dy] of positions){
-  ctx.beginPath();
-  ctx.arc(x+dx,y+dy,3.5,0,7);
-  ctx.fill();
+ ctx.fillStyle="#34794d";
+ ctx.beginPath();ctx.arc(x,y-7,15,0,7);ctx.fill();
+ ctx.fillStyle="#ef647c";
+ for(const [dx,dy] of [[-9,-8],[7,-12],[-2,-19],[12,-2],[-9,3]]){
+  ctx.beginPath();ctx.arc(x+dx,y+dy,3.5,0,7);ctx.fill();
  }
 }
 
-function drawBranch(x,y,node){
+function drawBranch(x,y,n){
  ctx.save();
  ctx.translate(x,y);
- ctx.rotate(node.variant*1.5-.75);
-
- ctx.strokeStyle="#2b3625";
- ctx.lineWidth=8;
- ctx.lineCap="round";
- ctx.beginPath();
- ctx.moveTo(-17,5);
- ctx.lineTo(15,-4);
- ctx.stroke();
-
- ctx.strokeStyle="#99754a";
+ ctx.rotate(n.variant*1.5-.75);
+ ctx.strokeStyle="#2b3323";
+ ctx.lineWidth=8;ctx.lineCap="round";
+ ctx.beginPath();ctx.moveTo(-17,5);ctx.lineTo(15,-4);ctx.stroke();
+ ctx.strokeStyle="#a58350";
  ctx.lineWidth=5;
  ctx.beginPath();
- ctx.moveTo(-17,3);
- ctx.lineTo(15,-6);
- ctx.moveTo(-3,-1);
- ctx.lineTo(2,-12);
- ctx.moveTo(7,-4);
- ctx.lineTo(15,4);
+ ctx.moveTo(-17,3);ctx.lineTo(15,-6);
+ ctx.moveTo(-3,-1);ctx.lineTo(2,-12);
+ ctx.moveTo(7,-4);ctx.lineTo(15,4);
  ctx.stroke();
-
  ctx.restore();
 }
 
-function drawPebble(x,y,node){
- ctx.fillStyle="#192b2377";
- ctx.beginPath();
- ctx.ellipse(x+2,y+5,15,6,0,0,7);
- ctx.fill();
-
- ctx.fillStyle="#9ba69d";
+function drawPebble(x,y){
+ ctx.fillStyle="#192d2677";
+ ctx.beginPath();ctx.ellipse(x+2,y+5,15,6,0,0,7);ctx.fill();
+ ctx.fillStyle="#a0ada2";
  ctx.beginPath();
  ctx.moveTo(x-12,y+3);
  ctx.lineTo(x-8,y-5);
  ctx.lineTo(x+2,y-8);
  ctx.lineTo(x+12,y-2);
  ctx.lineTo(x+8,y+6);
- ctx.closePath();
- ctx.fill();
-
- ctx.fillStyle="#c0c8bb";
+ ctx.closePath();ctx.fill();
+ ctx.fillStyle="#ccd1c5";
  ctx.beginPath();
  ctx.moveTo(x-8,y-5);
  ctx.lineTo(x+2,y-8);
@@ -1245,465 +714,326 @@ function drawPebble(x,y,node){
  ctx.fill();
 }
 
-function drawFire(fire,camX,camY){
- const x=fire.x-camX,y=fire.y-camY;
- const active=fire.fuel>0;
-
- ctx.fillStyle="#625e52";
+function drawFire(f,cx,cy){
+ const x=f.x-cx,y=f.y-cy;
+ ctx.fillStyle="#706b5d";
  for(let i=0;i<9;i++){
   const a=i*Math.PI*2/9;
   ctx.beginPath();
   ctx.arc(x+Math.cos(a)*15,y+Math.sin(a)*11,6,0,7);
   ctx.fill();
  }
-
  ctx.save();
- ctx.translate(x,y);
- ctx.rotate(.65);
- ctx.fillStyle="#67452b";
- ctx.fillRect(-20,-4,40,8);
- ctx.rotate(-1.3);
- ctx.fillRect(-20,-4,40,8);
+ ctx.translate(x,y);ctx.rotate(.65);
+ ctx.fillStyle="#67452b";ctx.fillRect(-20,-4,40,8);
+ ctx.rotate(-1.3);ctx.fillRect(-20,-4,40,8);
  ctx.restore();
-
- if(active){
-  const flicker=Math.sin(performance.now()*.018)*4;
-
-  const glow=ctx.createRadialGradient(x,y,2,x,y,125);
-  glow.addColorStop(0,"#ffb94b65");
-  glow.addColorStop(1,"#ffb94b00");
-
-  ctx.fillStyle=glow;
-  ctx.beginPath();
-  ctx.arc(x,y,125,0,7);
-  ctx.fill();
-
-  ctx.fillStyle="#ed5c26";
-  ctx.beginPath();
-  ctx.moveTo(x-12,y+3);
-  ctx.quadraticCurveTo(x-15,y-16,x+flicker,y-32);
-  ctx.quadraticCurveTo(x+18,y-13,x+12,y+3);
-  ctx.fill();
-
-  ctx.fillStyle="#ffd26b";
-  ctx.beginPath();
-  ctx.moveTo(x-6,y+4);
-  ctx.quadraticCurveTo(x-8,y-9,x+3,y-20+flicker);
-  ctx.quadraticCurveTo(x+10,y-5,x+7,y+4);
-  ctx.fill();
- }
+ if(f.fuel<=0)return;
+ const flicker=Math.sin(performance.now()*.018)*4;
+ const g=ctx.createRadialGradient(x,y,2,x,y,125);
+ g.addColorStop(0,"#ffb94b65");
+ g.addColorStop(1,"#ffb94b00");
+ ctx.fillStyle=g;
+ ctx.beginPath();ctx.arc(x,y,125,0,7);ctx.fill();
+ ctx.fillStyle="#ea5626";
+ ctx.beginPath();
+ ctx.moveTo(x-12,y+3);
+ ctx.quadraticCurveTo(x-15,y-16,x+flicker,y-32);
+ ctx.quadraticCurveTo(x+18,y-13,x+12,y+3);
+ ctx.fill();
+ ctx.fillStyle="#ffd26b";
+ ctx.beginPath();
+ ctx.moveTo(x-6,y+4);
+ ctx.quadraticCurveTo(x-8,y-9,x+3,y-20+flicker);
+ ctx.quadraticCurveTo(x+10,y-5,x+7,y+4);
+ ctx.fill();
 }
 
-// Improved four-direction survivor character.
+// New consistent four-direction pixel survivor.
 function drawPlayer(x,y){
  const p=state.player;
- const walk=p.moving?Math.sin(p.step*1.8)*4:0;
+ const step=p.moving?Math.sin(p.step*2)*2:0;
+ const side=p.dir==="left"||p.dir==="right";
+ const back=p.dir==="up";
 
  ctx.save();
  ctx.translate(Math.round(x),Math.round(y));
 
- // Ground shadow
- ctx.fillStyle="#10241888";
+ // Shadow
+ ctx.fillStyle="#081b1277";
  ctx.beginPath();
- ctx.ellipse(0,12,14,6,0,0,Math.PI*2);
+ ctx.ellipse(0,4,17,7,0,0,7);
  ctx.fill();
 
- const front=p.dir==="down";
- const back=p.dir==="up";
- const side=p.dir==="left"||p.dir==="right";
- const facing=p.dir==="left"?-1:1;
+ ctx.scale(2,2);
+ if(side&&p.dir==="left")ctx.scale(-1,1);
 
- if(side)ctx.scale(facing,1);
+ const px=(a,b,w,h,c)=>{
+  ctx.fillStyle=c;
+  ctx.fillRect(Math.round(a),Math.round(b),Math.round(w),Math.round(h));
+ };
 
- // Legs, animated opposite one another
- ctx.fillStyle="#303739";
- ctx.fillRect(-9,2+walk,7,13);
- ctx.fillRect(2,2-walk,7,13);
+ // Boots and moving legs
+ px(-8,-7+step,6,9,"#2b302d");
+ px(2,-7-step,6,9,"#2b302d");
+ px(-9,-1+step,7,3,"#221d1c");
+ px(2,-1-step,7,3,"#221d1c");
 
- // Boots
- ctx.fillStyle="#342b23";
- ctx.fillRect(-10,12+walk,9,5);
- ctx.fillRect(2,12-walk,9,5);
+ // Shoulder silhouette and sleeves
+ px(-11,-23,22,18,"#172b21");
+ px(-13,-22-step*.5,5,15,"#365740");
+ px(8,-22+step*.5,5,15,"#365740");
+ px(-13,-9-step*.5,5,4,"#c39269");
+ px(8,-9+step*.5,5,4,"#c39269");
 
- // Backpack is visible behind the character
- ctx.fillStyle="#6d4a31";
+ // Tunic, shading, belt, and buckle
+ px(-9,-23,18,17,"#356448");
+ px(-7,-22,14,13,"#477958");
+ px(-9,-10,18,3,"#423d2c");
+ px(-2,-10,4,3,"#bc9b59");
 
- if(back){
-  ctx.fillRect(-12,-19,24,22);
-  ctx.fillStyle="#8b6541";
-  ctx.fillRect(-9,-16,18,12);
-  ctx.fillStyle="#c1a16b";
-  ctx.fillRect(-3,-12,6,5);
- }else if(side){
-  ctx.fillRect(-12,-17,10,21);
- }else{
-  ctx.fillRect(-13,-17,8,19);
-  ctx.fillRect(5,-17,8,19);
- }
-
- // Coat
- ctx.fillStyle="#345b46";
- ctx.fillRect(-10,-21,20,25);
- ctx.fillStyle="#497b56";
- ctx.fillRect(-8,-20,16,18);
-
- // Arms
- ctx.fillStyle="#35533b";
-
- if(side){
-  ctx.fillRect(-7,-18,8,16+walk*.25);
-  ctx.fillStyle="#c99c72";
-  ctx.fillRect(-6,-4+walk*.25,6,5);
- }else{
-  ctx.fillRect(-15,-18+walk*.35,6,18);
-  ctx.fillRect(9,-18-walk*.35,6,18);
-  ctx.fillStyle="#c99c72";
-  ctx.fillRect(-15,-2+walk*.35,6,5);
-  ctx.fillRect(9,-2-walk*.35,6,5);
- }
-
- // Neck
- ctx.fillStyle="#b88460";
- ctx.fillRect(-4,-24,8,7);
-
- // Head
- ctx.fillStyle="#d4a47e";
- ctx.beginPath();
- ctx.roundRect(-10,-39,20,20,5);
- ctx.fill();
-
- // Hair / back of head
- ctx.fillStyle="#493728";
+ // Neck and head
+ px(-4,-26,8,5,"#ae825e");
+ px(-8,-35,16,12,"#d5a276");
 
  if(back){
-  ctx.fillRect(-10,-40,20,15);
-  ctx.fillStyle="#604430";
-  ctx.fillRect(-9,-25,18,5);
- }else if(front){
-  ctx.fillRect(-10,-40,20,7);
-  ctx.fillRect(-10,-36,4,8);
-  ctx.fillRect(6,-36,4,8);
+  // Back view: hair, backpack, straps, and hat.
+  // No face is drawn when walking away.
+  px(-9,-35,18,8,"#46392a");
+  px(-7,-27,14,5,"#5a4632");
 
-  ctx.fillStyle="#24231e";
-  ctx.fillRect(-6,-29,3,2);
-  ctx.fillRect(3,-29,3,2);
- }else{
-  ctx.fillRect(-10,-40,20,7);
-  ctx.fillRect(-10,-36,5,9);
-  ctx.fillStyle="#24231e";
-  ctx.fillRect(4,-29,3,2);
- }
+  px(-9,-22,18,14,"#6d5439");
+  px(-7,-20,14,10,"#886844");
+  px(-2,-18,4,4,"#baa06b");
+  px(-11,-22,4,12,"#a1895a");
+  px(7,-22,4,12,"#a1895a");
 
- // Outdoor cap with visible brim
- ctx.fillStyle="#7b673f";
- ctx.fillRect(-11,-42,22,5);
-
- if(front){
-  ctx.fillStyle="#9d8754";
-  ctx.fillRect(-13,-38,26,4);
+  px(-10,-39,20,6,"#556647");
+  px(-9,-40,18,2,"#73815a");
+  px(-11,-34,22,3,"#4a5940");
  }else if(side){
-  ctx.fillStyle="#9d8754";
-  ctx.fillRect(5,-39,13,4);
+  // Left and right profile.
+  px(-12,-22,5,14,"#73583a");
+  px(-8,-35,15,5,"#4c3828");
+  px(6,-29,4,4,"#cb9b75");
+  px(3,-29,2,2,"#332922");
+  px(8,-27,3,2,"#d3a17b");
+
+  px(-10,-39,19,6,"#526747");
+  px(-9,-40,17,2,"#7f8a60");
+  px(7,-34,7,3,"#475a3b");
+ }else{
+  // Front view with face, hair, hat, and jacket straps.
+  px(-8,-35,16,5,"#4c3729");
+  px(-9,-35,3,8,"#59402d");
+  px(6,-35,3,8,"#59402d");
+
+  px(-5,-29,2,2,"#342a24");
+  px(3,-29,2,2,"#342a24");
+  px(-1,-25,3,1,"#a26c52");
+
+  px(-10,-39,20,6,"#526747");
+  px(-9,-40,18,2,"#849368");
+  px(-12,-34,24,3,"#495e42");
+
+  px(-6,-20,2,11,"#c1aa83");
+  px(4,-20,2,11,"#c1aa83");
  }
-
- // Belt
- ctx.fillStyle="#453a2a";
- ctx.fillRect(-9,-1,18,4);
- ctx.fillStyle="#c6ab71";
- ctx.fillRect(-2,-1,4,4);
-
  ctx.restore();
 }
 
-function nodeName(node){
+function hoverNode(wx,wy){
+ const hit={
+  tree:[-40,37],
+  rock:[-6,30],
+  berry:[-8,24],
+  branch:[0,23],
+  pebble:[0,21]
+ };
+ let candidate=null,best=Infinity;
+ for(const n of nodes){
+  if(!available(n))continue;
+  const [offset,r]=hit[n.type];
+  const d=Math.hypot(wx-n.x,wy-(n.y+offset));
+  if(d<r&&d<best){candidate=n;best=d}
+ }
+ return candidate;
+}
+
+function drawHover(cx,cy){
+ if(!hovering||!available(hovering))return;
+ const n=hovering,x=n.x-cx,y=n.y-cy;
+ const tool=requiredTool(n),close=dist(state.player,n)<=range(n);
+
+ ctx.strokeStyle=!tool&&close?"#f6de94":"#e88c71";
+ ctx.lineWidth=2;ctx.setLineDash([5,4]);
+ ctx.beginPath();ctx.ellipse(x,y,27,14,0,0,7);ctx.stroke();
+ ctx.setLineDash([]);
+
  const names={
   tree:"Pine Tree",
   rock:"Boulder",
   berry:"Berry Bush",
-  branch:"Fallen Branches",
-  pebble:"Loose Stones"
+  branch:"Fallen Sticks",
+  pebble:"Loose Pebbles"
  };
- return names[node.type]||"Resource";
-}
-
-function findHoverNode(wx,wy){
- let result=null;
- let best=Infinity;
-
- for(const node of nodes){
-  if(!available(node))continue;
-
-  const offsets={
-   tree:{y:-39,r:37},
-   rock:{y:-6,r:30},
-   berry:{y:-8,r:24},
-   branch:{y:0,r:23},
-   pebble:{y:0,r:20}
-  };
-
-  const hit=offsets[node.type];
-  const d=Math.hypot(wx-node.x,wy-(node.y+hit.y));
-
-  if(d<hit.r&&d<best){
-   result=node;
-   best=d;
-  }
- }
-
- return result;
-}
-
-function drawHover(camX,camY){
- if(!hovering||!available(hovering))return;
-
- const node=hovering;
- const x=node.x-camX;
- const y=node.y-camY;
-
- const close=dist(state.player,node)<=interactionRange(node);
- const needsTool=
-  (node.type==="tree"&&!state.tools.axe)||
-  (node.type==="rock"&&!state.tools.pickaxe);
-
- ctx.strokeStyle=close&&!needsTool?"#f4df8c":"#ea9478";
- ctx.lineWidth=2;
- ctx.setLineDash([5,4]);
- ctx.beginPath();
- ctx.ellipse(x,y,26,15,0,0,7);
- ctx.stroke();
- ctx.setLineDash([]);
-
- let label=nodeName(node);
-
- if(needsTool){
-  label+=node.type==="tree"?" · Axe Required":" · Pickaxe Required";
- }else if(!close){
-  label+=" · Move Closer";
- }else{
-  label+=" · Click to Gather";
- }
+ const label=names[n.type]+(tool?
+  ` · ${tool==="axe"?"AXE":"PICKAXE"} REQUIRED`:
+  close?" · CLICK TO GATHER":" · MOVE CLOSER");
 
  ctx.font="bold 12px Arial";
- const width=ctx.measureText(label).width+18;
+ const width=ctx.measureText(label).width+20;
  const bx=clamp(x-width/2,5,W-width-5);
- const by=clamp(y-108,5,H-32);
+ const by=clamp(y-106,5,H-30);
 
- ctx.fillStyle="#10211ded";
+ ctx.fillStyle="#10231eea";
  ctx.fillRect(bx,by,width,25);
- ctx.strokeStyle="#698a70";
+ ctx.strokeStyle="#78997a";
  ctx.strokeRect(bx,by,width,25);
-
- ctx.fillStyle="#ffe4a2";
  ctx.textAlign="left";
- ctx.fillText(label,bx+9,by+17);
+ ctx.fillStyle="#ffe3a0";
+ ctx.fillText(label,bx+10,by+17);
 }
 
-function drawMinimap(){
- const mw=145,mh=109;
- const mx=W-mw-14,my=14;
-
+function minimap(){
+ const mw=145,mh=109,mx=W-mw-14,my=14;
  ctx.fillStyle="#0b211de6";
  ctx.fillRect(mx,my,mw,mh);
  ctx.strokeStyle="#8caa91";
  ctx.strokeRect(mx,my,mw,mh);
 
  for(const lake of LAKES){
-  ctx.fillStyle="#387c9a";
+  ctx.fillStyle="#397e96";
   ctx.beginPath();
   ctx.ellipse(
    mx+lake.x/WORLD_W*mw,
    my+lake.y/WORLD_H*mh,
    lake.rx/WORLD_W*mw,
-   lake.ry/WORLD_H*mh,
-   0,0,Math.PI*2
+   lake.ry/WORLD_H*mh,0,0,7
   );
   ctx.fill();
  }
 
- for(const fire of state.fires){
-  if(fire.fuel<=0)continue;
-  ctx.fillStyle="#ffba63";
-  ctx.fillRect(
-   mx+fire.x/WORLD_W*mw-2,
-   my+fire.y/WORLD_H*mh-2,
-   4,4
-  );
+ for(const f of state.fires){
+  if(f.fuel>0){
+   ctx.fillStyle="#ffb365";
+   ctx.fillRect(
+    mx+f.x/WORLD_W*mw-2,
+    my+f.y/WORLD_H*mh-2,4,4
+   );
+  }
  }
 
- ctx.fillStyle="#ffffff";
+ ctx.fillStyle="#fff";
  ctx.beginPath();
  ctx.arc(
   mx+state.player.x/WORLD_W*mw,
   my+state.player.y/WORLD_H*mh,
-  3,0,Math.PI*2
+  3,0,7
  );
  ctx.fill();
 }
 
 function render(){
- if(!state)return;
-
  const p=state.player;
- const camX=clamp(p.x-W/2,0,WORLD_W-W);
- const camY=clamp(p.y-H/2,0,WORLD_H-H);
-
- renderCamera={x:camX,y:camY};
+ const cx=clamp(p.x-W/2,0,WORLD_W-W);
+ const cy=clamp(p.y-H/2,0,WORLD_H-H);
+ camera.x=cx;camera.y=cy;
 
  ctx.clearRect(0,0,W,H);
- drawGround(camX,camY);
- drawLakes(camX,camY);
+ ground(cx,cy);
+ drawLakes(cx,cy);
 
- const objects=[];
-
- for(const node of nodes){
-  if(!available(node))continue;
-
-  const x=node.x-camX;
-  const y=node.y-camY;
-
-  if(x<-100||x>W+100||y<-110||y>H+100)continue;
-
-  objects.push({
-   kind:node.type,x,y,node,sort:node.y
-  });
+ const objs=[];
+ for(const n of nodes){
+  if(!available(n))continue;
+  const x=n.x-cx,y=n.y-cy;
+  if(x>-110&&x<W+110&&y>-110&&y<H+110){
+   objs.push({kind:n.type,n,x,y,sort:n.y});
+  }
  }
 
- for(const fire of state.fires){
-  const x=fire.x-camX;
-  const y=fire.y-camY;
-
+ for(const f of state.fires){
+  const x=f.x-cx,y=f.y-cy;
   if(x>-150&&x<W+150&&y>-150&&y<H+150){
-   objects.push({
-    kind:"fire",x,y,fire,sort:fire.y
-   });
+   objs.push({kind:"fire",f,sort:f.y});
   }
  }
 
- objects.push({
-  kind:"player",
-  x:p.x-camX,
-  y:p.y-camY,
-  sort:p.y
- });
+ objs.push({kind:"player",x:p.x-cx,y:p.y-cy,sort:p.y});
+ objs.sort((a,b)=>a.sort-b.sort);
 
- objects.sort((a,b)=>a.sort-b.sort);
-
- for(const object of objects){
-  switch(object.kind){
-   case "tree":
-    drawTree(object.x,object.y,object.node);
-    break;
-   case "rock":
-    drawRock(object.x,object.y,object.node);
-    break;
-   case "berry":
-    drawBerry(object.x,object.y,object.node);
-    break;
-   case "branch":
-    drawBranch(object.x,object.y,object.node);
-    break;
-   case "pebble":
-    drawPebble(object.x,object.y,object.node);
-    break;
-   case "fire":
-    drawFire(object.fire,camX,camY);
-    break;
-   case "player":
-    drawPlayer(object.x,object.y);
-    break;
+ for(const o of objs){
+  switch(o.kind){
+   case "tree":drawTree(o.x,o.y,o.n);break;
+   case "rock":drawRock(o.x,o.y,o.n);break;
+   case "berry":drawBerry(o.x,o.y);break;
+   case "branch":drawBranch(o.x,o.y,o.n);break;
+   case "pebble":drawPebble(o.x,o.y);break;
+   case "fire":drawFire(o.f,cx,cy);break;
+   case "player":drawPlayer(o.x,o.y);break;
   }
  }
 
- for(const part of particles){
-  ctx.globalAlpha=clamp(part.life,0,1);
-  ctx.fillStyle=part.color;
-  ctx.fillRect(
-   part.x-camX,
-   part.y-camY,
-   4,4
-  );
+ for(const a of particles){
+  ctx.globalAlpha=clamp(a.life,0,1);
+  ctx.fillStyle=a.color;
+  ctx.fillRect(a.x-cx,a.y-cy,4,4);
  }
  ctx.globalAlpha=1;
 
- const nearest=nearestNode();
-
- if(nearest&&!state.paused&&!state.dead&&!hovering){
-  const x=nearest.x-camX;
-  const y=nearest.y-camY;
-
-  ctx.strokeStyle="#f3d58a";
-  ctx.lineWidth=2;
-  ctx.setLineDash([5,4]);
-
-  ctx.beginPath();
-  ctx.ellipse(x,y,24,13,0,0,Math.PI*2);
-  ctx.stroke();
+ const n=nearestNode();
+ if(n&&!state.paused&&!state.dead&&!hovering){
+  const x=n.x-cx,y=n.y-cy;
+  ctx.strokeStyle=requiredTool(n)?"#ef987b":"#f4d892";
+  ctx.lineWidth=2;ctx.setLineDash([5,4]);
+  ctx.beginPath();ctx.ellipse(x,y,24,13,0,0,7);ctx.stroke();
   ctx.setLineDash([]);
-
   ctx.font="bold 12px Arial";
   ctx.textAlign="center";
   ctx.fillStyle="#ffe5a8";
-  ctx.fillText("E · GATHER",x,y-43);
+  ctx.fillText(requiredTool(n)?"TOOL NEEDED":"E · GATHER",x,y-42);
  }
 
- drawHover(camX,camY);
+ drawHover(cx,cy);
 
- // Day/night lighting
+ // Reuse the night canvas rather than creating it every frame.
  const hour=state.time/60;
- let darkness=0;
+ const dark=hour>=20?Math.min(.62,(hour-20)*.155):
+  hour<6?.62:hour<8?.62*(8-hour)/2:0;
 
- if(hour>=20){
-  darkness=Math.min(.62,(hour-20)*.155);
- }else if(hour<6){
-  darkness=.62;
- }else if(hour<8){
-  darkness=.62*(8-hour)/2;
- }
+ if(dark>0){
+  nightCtx.clearRect(0,0,W,H);
+  nightCtx.globalCompositeOperation="source-over";
+  nightCtx.fillStyle=`rgba(4,15,27,${dark})`;
+  nightCtx.fillRect(0,0,W,H);
+  nightCtx.globalCompositeOperation="destination-out";
 
- if(darkness>0){
-  // Draw the darkness on a separate layer so campfire
-  // lighting cannot erase the underlying world.
-  const darknessLayer=document.createElement("canvas");
-  darknessLayer.width=W;
-  darknessLayer.height=H;
-  const dc=darknessLayer.getContext("2d");
-
-  dc.fillStyle=`rgba(4,15,27,${darkness})`;
-  dc.fillRect(0,0,W,H);
-
-  dc.globalCompositeOperation="destination-out";
-
-  for(const fire of state.fires){
-   if(fire.fuel<=0)continue;
-
-   const x=fire.x-camX;
-   const y=fire.y-camY;
-   const glow=dc.createRadialGradient(x,y,5,x,y,145);
-
-   glow.addColorStop(0,"rgba(0,0,0,.92)");
-   glow.addColorStop(1,"rgba(0,0,0,0)");
-
-   dc.fillStyle=glow;
-   dc.beginPath();
-   dc.arc(x,y,145,0,Math.PI*2);
-   dc.fill();
+  for(const f of state.fires){
+   if(f.fuel<=0)continue;
+   const x=f.x-cx,y=f.y-cy;
+   const g=nightCtx.createRadialGradient(x,y,5,x,y,145);
+   g.addColorStop(0,"rgba(0,0,0,.92)");
+   g.addColorStop(1,"rgba(0,0,0,0)");
+   nightCtx.fillStyle=g;
+   nightCtx.beginPath();
+   nightCtx.arc(x,y,145,0,7);
+   nightCtx.fill();
   }
 
-  dc.globalCompositeOperation="source-over";
-  ctx.drawImage(darknessLayer,0,0);
+  nightCtx.globalCompositeOperation="source-over";
+  ctx.drawImage(nightLayer,0,0);
  }
 
- drawMinimap();
+ minimap();
 
  if(state.paused&&!state.dead){
   ctx.fillStyle="#061210bb";
   ctx.fillRect(0,0,W,H);
-
   ctx.textAlign="center";
   ctx.fillStyle="#f2d894";
   ctx.font="bold 42px Arial";
   ctx.fillText("PAUSED",W/2,H/2);
-
   ctx.font="16px Arial";
   ctx.fillText("Press Space to resume",W/2,H/2+34);
  }
@@ -1711,54 +1041,10 @@ function render(){
 
 function mousePosition(e){
  const rect=canvas.getBoundingClientRect();
- const x=(e.clientX-rect.left)*W/rect.width;
- const y=(e.clientY-rect.top)*H/rect.height;
-
- mouse.x=x;
- mouse.y=y;
- mouse.worldX=x+renderCamera.x;
- mouse.worldY=y+renderCamera.y;
-}
-
-function setupMouse(){
- canvas.addEventListener("mousemove",e=>{
-  mousePosition(e);
-  hovering=findHoverNode(mouse.worldX,mouse.worldY);
-  canvas.style.cursor=hovering?"pointer":"crosshair";
- });
-
- canvas.addEventListener("mouseleave",()=>{
-  hovering=null;
-  canvas.style.cursor="crosshair";
- });
-
- canvas.addEventListener("click",e=>{
-  if(state.dead||state.paused)return;
-
-  mousePosition(e);
-  const wx=mouse.worldX;
-  const wy=mouse.worldY;
-
-  // Click resources. Player must already be nearby.
-  const node=findHoverNode(wx,wy);
-
-  if(node){
-   interactNode(node);
-   return;
-  }
-
-  // Clicking lake water works only while standing
-  // near enough to drink.
-  if(isWater(wx,wy)){
-   drink();
-   return;
-  }
-
-  // Clicking an empty tile intentionally does NOT
-  // move the character. Movement remains WASD.
- });
-
- canvas.addEventListener("contextmenu",e=>e.preventDefault());
+ return {
+  x:(e.clientX-rect.left)*W/rect.width+camera.x,
+  y:(e.clientY-rect.top)*H/rect.height+camera.y
+ };
 }
 
 function setupControls(){
@@ -1769,11 +1055,8 @@ function setupControls(){
  ]);
 
  document.addEventListener("keydown",e=>{
-  if(e.target.matches("input,textarea"))return;
-  if($("helpDialog").open)return;
-
+  if(e.target.matches("input,textarea")||$("helpDialog").open)return;
   if(blocked.has(e.code))e.preventDefault();
-
   keys[e.code]=true;
   if(e.repeat)return;
 
@@ -1796,11 +1079,11 @@ function setupControls(){
   mobileKeys.clear();
  });
 
- const handlers={
+ const actions={
   craftAxe:()=>craft("axe"),
   craftPick:()=>craft("pickaxe"),
   buildFire,
-  refuelFire,
+  refuelFire:refuel,
   eatBtn:eat,
   drinkBtn:drink,
   restBtn:rest,
@@ -1814,8 +1097,8 @@ function setupControls(){
   touchFire:buildFire
  };
 
- for(const [id,handler] of Object.entries(handlers)){
-  $(id).addEventListener("click",handler);
+ for(const [id,fn] of Object.entries(actions)){
+  $(id).addEventListener("click",fn);
  }
 
  $("helpBtn").addEventListener("click",()=>{
@@ -1830,49 +1113,69 @@ function setupControls(){
   updateUI();
  });
 
- document.querySelectorAll("[data-move]").forEach(button=>{
-  const direction=button.dataset.move;
-
-  button.addEventListener("pointerdown",e=>{
-   e.preventDefault();
-   button.setPointerCapture(e.pointerId);
-   mobileKeys.add(direction);
-  });
-
-  const release=()=>mobileKeys.delete(direction);
-
-  button.addEventListener("pointerup",release);
-  button.addEventListener("pointercancel",release);
-  button.addEventListener("lostpointercapture",release);
+ $("helpDialog").addEventListener("close",()=>{
+  if(state.paused&&!state.dead){
+   state.paused=false;
+   updateUI();
+  }
  });
 
+ canvas.addEventListener("pointermove",e=>{
+  const p=mousePosition(e);
+  hovering=hoverNode(p.x,p.y);
+  canvas.style.cursor=hovering?"pointer":"crosshair";
+ });
+
+ canvas.addEventListener("pointerleave",()=>{
+  hovering=null;
+  canvas.style.cursor="crosshair";
+ });
+
+ canvas.addEventListener("click",e=>{
+  if(state.paused||state.dead)return;
+  const p=mousePosition(e);
+  const n=hoverNode(p.x,p.y);
+  if(n)return harvest(n);
+  if(isWater(p.x,p.y))drink();
+ });
+
+ canvas.addEventListener("contextmenu",e=>e.preventDefault());
+
+ for(const btn of document.querySelectorAll("[data-move]")){
+  const dir=btn.dataset.move;
+  btn.addEventListener("pointerdown",e=>{
+   e.preventDefault();
+   btn.setPointerCapture(e.pointerId);
+   mobileKeys.add(dir);
+  });
+  const release=()=>mobileKeys.delete(dir);
+  btn.addEventListener("pointerup",release);
+  btn.addEventListener("pointercancel",release);
+  btn.addEventListener("lostpointercapture",release);
+ }
+
  document.addEventListener("visibilitychange",()=>{
-  if(document.hidden&&state&&!state.dead){
+  if(document.hidden&&!state.dead){
    state.paused=true;
    saveGame();
   }
  });
 
  window.addEventListener("beforeunload",()=>{
-  if(state&&!state.dead)saveGame();
+  if(!state.dead)saveGame();
  });
-
- setupMouse();
 }
 
-function gameLoop(now){
+function frame(now){
  const dt=(now-lastFrame)/1000;
  lastFrame=now;
-
  update(dt);
  render();
-
- requestAnimationFrame(gameLoop);
+ requestAnimationFrame(frame);
 }
 
 function start(){
  const resumed=loadGame();
-
  setupControls();
  updateUI();
 
@@ -1883,13 +1186,10 @@ function start(){
   updateUI();
   $("helpDialog").showModal();
  }
-
- requestAnimationFrame(gameLoop);
+ requestAnimationFrame(frame);
 }
 
 start();
 </script>
 </body>
 </html>
-
- 
