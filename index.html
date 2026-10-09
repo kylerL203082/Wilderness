@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Wilderness: Last Frontier</title>
+<title>Wilderness: Last Frontier — V1.4</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#0c1815;color:#e8eee6;font-family:Trebuchet MS,Arial,sans-serif}
@@ -39,6 +39,8 @@ main{min-width:0}
 .btn small{display:block;font-size:11px;font-weight:normal;color:#bfd5bd;margin-top:4px}
 .toolbar{display:flex;flex-wrap:wrap;gap:7px;margin:11px 0}
 .toolbar button{background:#1e4032;border:1px solid #577765;border-radius:7px;padding:9px 12px;font-size:12px}
+#craftQuick{background:#574d2a;border-color:#e0bb68;font-weight:bold}
+#craftQuick:hover{background:#6b6034}
 #journal{font-size:12px;color:#c6d9c6;line-height:1.7}
 #buildingHint{display:none;position:absolute;left:50%;top:12px;transform:translateX(-50%);background:#102a22ee;border:1px solid #b9d38e;border-radius:9px;padding:10px 16px;z-index:2;font-size:12px;pointer-events:none;white-space:nowrap}
 #buildingHint.active{display:block}
@@ -66,8 +68,25 @@ dialog::backdrop{background:#000b}
 dialog h2{color:#f0cb7b}
 dialog p{font-size:14px;line-height:1.65}
 #storageDialog{width:min(95%,620px)}
+#craftDialog{width:min(94vw,570px);max-height:min(85vh,620px);overflow:auto;padding:18px 20px 16px}
+.craftHeader{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.craftHeader h2{margin:0;font-size:21px}
+#craftClose{font-size:12px;padding:8px 10px}
+.craftIntro{margin:9px 0 16px;color:#c8dbca;font-size:12px}
+.craftGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.craftGrid .btn{min-height:70px;margin:0}
+.craftStatus{font-size:12px;color:#e8cd8b;margin:14px 0 0}
+@media(max-width:480px){
+ .craftGrid{grid-template-columns:1fr}
+ .craftGrid .btn{min-height:58px}
+}
 dialog button{background:#306246;border:1px solid #92b790;padding:10px 17px;border-radius:7px}
-@media(max-width:900px){#layout{grid-template-columns:1fr}#mobile{display:flex}.logo{font-size:17px}#hint{font-size:10px}}
+@media(max-width:900px){
+ #layout{grid-template-columns:1fr}
+ #mobile{display:flex}
+ .logo{font-size:17px}
+ #hint{font-size:10px}
+}
 </style>
 </head>
 <body>
@@ -85,7 +104,7 @@ dialog button{background:#306246;border:1px solid #92b790;padding:10px 17px;bord
 <div id="viewport">
 <canvas id="game" width="960" height="600"></canvas>
 <div id="region" class="overlay">REGION: PINE VALLEY</div>
-<div id="hint" class="overlay">WASD: Walk • Click nearby resources • E: Gather</div>
+<div id="hint" class="overlay">WASD: Walk • K: Craft • Click resources • E: Gather</div>
 <div id="message"></div>
 <div id="buildingHint">BUILD MODE</div>
 <div id="gameOver">
@@ -97,8 +116,9 @@ dialog button{background:#306246;border:1px solid #92b790;padding:10px 17px;bord
 <div id="mobile">
 <div class="dpad">
 <span></span><button class="touch" data-move="up">▲</button><span></span>
-<button class="touch" data-move="left">◀</button><span></span><button class="touch" data-move="right">▶</button>
-<span></span><button class="touch" data-move="down">▼</button><span></span>
+<button class="touch" data-move="left">◀</button><span></span>
+<button class="touch" data-move="right">▶</button><span></span>
+<button class="touch" data-move="down">▼</button><span></span>
 </div>
 <div class="touchActions">
 <button class="touch" id="touchGather">Gather</button>
@@ -107,6 +127,7 @@ dialog button{background:#306246;border:1px solid #92b790;padding:10px 17px;bord
 </div>
 </div>
 <div class="toolbar">
+<button id="craftQuick">🛠 Craft (K)</button>
 <button id="interactBtn">✋ Gather Nearby</button>
 <button id="pauseBtn">⏸ Pause</button>
 <button id="saveBtn">💾 Save</button>
@@ -124,12 +145,6 @@ dialog button{background:#306246;border:1px solid #92b790;padding:10px 17px;bord
 <div class="equip" id="pickEquip">⛏️ Pickaxe<br>Not Crafted</div>
 </div></section>
 <section class="panel"><h3>Backpack</h3><div class="inventory" id="inventoryPanel"></div></section>
-<section class="panel"><h3>Crafting</h3>
-<button class="btn" id="craftAxe">🪓 Craft Stone Axe<small>3 sticks + 2 pebbles</small></button>
-<button class="btn" id="craftPick">⛏️ Craft Stone Pickaxe<small>4 sticks + 3 pebbles</small></button>
-<button class="btn" id="buildFire">🔥 Build Campfire<small>5 sticks + 3 pebbles</small></button>
-<button class="btn" id="refuelFire">🪵 Refuel Campfire<small>3 sticks OR 1 log</small></button>
-</section>
 <section class="panel"><h3>Construction · B</h3>
 <div id="buildPanel">
 <button class="btn" data-build="tent">⛺ Tent<small>8 sticks · 4 pebbles · Sleeping shelter</small></button>
@@ -148,12 +163,27 @@ dialog button{background:#306246;border:1px solid #92b790;padding:10px 17px;bord
 </section>
 </aside></div>
 
+<dialog id="craftDialog">
+<div class="craftHeader">
+<h2>🛠 Crafting</h2>
+<button id="craftClose" type="button">✕ Close (K)</button>
+</div>
+<p class="craftIntro">Gather loose sticks and pebbles to make tools. Trees require an axe; boulders require a pickaxe.</p>
+<div class="craftGrid">
+<button class="btn" id="craftAxe">🪓 Craft Stone Axe<small>3 sticks + 2 pebbles</small></button>
+<button class="btn" id="craftPick">⛏️ Craft Stone Pickaxe<small>4 sticks + 3 pebbles</small></button>
+<button class="btn" id="buildFire">🔥 Build Campfire<small>5 sticks + 3 pebbles</small></button>
+<button class="btn" id="refuelFire">🪵 Refuel Campfire<small>3 sticks OR 1 log</small></button>
+</div>
+<p class="craftStatus" id="craftStatus">Sticks: 0 · Pebbles: 0 · Logs: 0</p>
+</dialog>
+
 <dialog id="helpDialog">
 <h2>Welcome to the Wilderness</h2>
 <p>Begin by picking up <b>fallen sticks</b> and <b>loose pebbles</b>. These are separate from logs and mined stone. Craft a stone axe to cut pine trees and a stone pickaxe to mine boulders.</p>
 <p><b>WASD / Arrow keys:</b> Walk<br>
 <b>Mouse:</b> Click nearby resources to interact<br>
-<b>E:</b> Gather closest resource<br>
+<b>E:</b> Gather closest resource · <b>K:</b> Open Crafting<br>
 <b>F:</b> Drink at a lake · <b>Q:</b> Eat berries<br>
 <b>C:</b> Build campfire · <b>R:</b> Rest by fire<br>
 <b>Space:</b> Pause</p>
@@ -193,6 +223,7 @@ const keys={},mobileKeys=new Set(),LAKES=[
 let state,nodes=[],hovering=null,particles=[],camera={x:0,y:0};
 let buildMode=null,pointer={x:0,y:0,inside:false},activeStructure=null,storageOpen=null;
 let lastFrame=performance.now(),uiTimer=0,saveTimer=0,noticeTimer=0;
+let craftPreviousPause=false;
 const nightLayer=document.createElement("canvas");
 nightLayer.width=W;nightLayer.height=H;
 const nightCtx=nightLayer.getContext("2d");
@@ -218,12 +249,14 @@ function makeNodes(){
   const x=gx*cell+10+hash(gx,gy,1)*60;
   const y=gy*cell+10+hash(gx,gy,2)*60;
   if(x>WORLD_W-25||y>WORLD_H-25||isWater(x,y)||isWater(x+20,y)||isWater(x-20,y))continue;
+  // Deterministic filter for approximately 25% fewer resource locations.
+  if(hash(gx,gy,19)>=.731)continue;
   const r=hash(gx,gy,3);
   const type=r<.35?"tree":r<.53?"rock":r<.67?"berry":r<.84?"branch":"pebble";
   if(dist({x,y},SPAWN)<70&&(type==="tree"||type==="rock"))continue;
   result.push({id:`${gx}_${gy}`,x,y,type,variant:hash(gx,gy,4)});
  }
- // Starter resources always appear near your starting area.
+ // Guaranteed starting resources.
  for(let i=0;i<10;i++){
   const a=i*Math.PI*2/10,r=115+(i%3)*35;
   const x=SPAWN.x+Math.cos(a)*r,y=SPAWN.y+Math.sin(a)*r;
@@ -319,9 +352,7 @@ function isNight(){return state.time<360||state.time>=1200}
 function nearFire(){
  let result=null,best=120;
  for(const f of state.fires){
-  if(f.fuel>0&&dist(f,state.player)<best){
-   result=f;best=dist(f,state.player);
-  }
+  if(f.fuel>0&&dist(f,state.player)<best){result=f;best=dist(f,state.player)}
  }
  return result;
 }
@@ -387,8 +418,17 @@ function interactNearest(){
  const n=nearestNode();
  n?harvest(n):message("Move closer to a resource with WASD.");
 }
+function openCraft(){
+ if(state.dead||$("craftDialog").open||$("helpDialog").open||$("structureDialog").open||$("storageDialog").open)return;
+ craftPreviousPause=state.paused;
+ state.paused=true;
+ $("craftDialog").showModal();
+ updateUI();
+}
+function closeCraft(){if($("craftDialog").open)$("craftDialog").close()}
+function canCraftNow(){return !state.dead&&(!state.paused||$("craftDialog").open)}
 function craft(type){
- if(state.paused||state.dead)return;
+ if(!canCraftNow())return;
  const axe=type==="axe",key=axe?"axe":"pickaxe",s=axe?3:4,p=axe?2:3,inv=state.inventory;
  if(state.tools[key])return message("You already own this tool.");
  if(inv.sticks<s||inv.pebbles<p)return message(`You need ${s} sticks and ${p} pebbles.`);
@@ -415,7 +455,7 @@ function drink(){
  updateUI();saveGame();
 }
 function buildFire(){
- if(state.dead||state.paused)return;
+ if(!canCraftNow())return;
  const inv=state.inventory;
  if(inv.sticks<5||inv.pebbles<3)return message("Campfire needs 5 sticks + 3 pebbles.");
  if(nearFire())return message("Already near a burning campfire.");
@@ -429,7 +469,7 @@ function buildFire(){
  updateUI();saveGame();
 }
 function refuel(){
- if(state.paused||state.dead)return;
+ if(!canCraftNow())return;
  const f=nearFire();
  if(!f)return message("Stand next to a burning campfire.");
  const inv=state.inventory;
@@ -867,15 +907,16 @@ function updateUI(){
 
  const inv=state.inventory,off=state.paused||state.dead;
 
- $("craftAxe").disabled=off||state.tools.axe||inv.sticks<3||inv.pebbles<2;
- $("craftPick").disabled=off||state.tools.pickaxe||inv.sticks<4||inv.pebbles<3;
- $("buildFire").disabled=off||inv.sticks<5||inv.pebbles<3;
- $("refuelFire").disabled=off||!nearFire()||(inv.sticks<3&&inv.logs<1);
+ $("craftAxe").disabled=(off&&!$("craftDialog").open)||state.tools.axe||inv.sticks<3||inv.pebbles<2;
+ $("craftPick").disabled=(off&&!$("craftDialog").open)||state.tools.pickaxe||inv.sticks<4||inv.pebbles<3;
+ $("buildFire").disabled=(off&&!$("craftDialog").open)||inv.sticks<5||inv.pebbles<3;
+ $("refuelFire").disabled=(off&&!$("craftDialog").open)||!nearFire()||(inv.sticks<3&&inv.logs<1);
  $("eatBtn").disabled=off||inv.berries<1;
  $("drinkBtn").disabled=off||!nearWater();
  $("restBtn").disabled=off||(!nearFire()&&!nearbyShelter());
  $("eatRation").disabled=off||!inv.rations;
 
+ $("craftStatus").textContent=`Sticks: ${inv.sticks} · Pebbles: ${inv.pebbles} · Logs: ${inv.logs} · Stone: ${inv.stone}`;
  updateBuildUI();
 
  const h=Math.floor(state.time/60)%24,m=Math.floor(state.time%60);
@@ -1162,7 +1203,6 @@ function drawFire(f,cx,cy){
  ctx.fill();
 }
 
-// Four-direction survivor, with a back view and moving legs.
 function drawPlayer(x,y){
  const p=state.player;
  const step=p.moving?Math.sin(p.step*2)*2:0;
@@ -1283,8 +1323,10 @@ function drawHover(cx,cy){
 
 function minimap(){
  const mw=145,mh=109,mx=W-mw-14,my=14;
- ctx.fillStyle="#0b211de6";ctx.fillRect(mx,my,mw,mh);
- ctx.strokeStyle="#8caa91";ctx.strokeRect(mx,my,mw,mh);
+ ctx.fillStyle="#0b211de6";
+ ctx.fillRect(mx,my,mw,mh);
+ ctx.strokeStyle="#8caa91";
+ ctx.strokeRect(mx,my,mw,mh);
  for(const lake of LAKES){
   ctx.fillStyle="#397e96";
   ctx.beginPath();
@@ -1559,11 +1601,12 @@ function setupControls(){
  const blocked=new Set([
   "ArrowUp","ArrowDown","ArrowLeft","ArrowRight",
   "Space","KeyW","KeyA","KeyS","KeyD",
-  "KeyE","KeyF","KeyQ","KeyC","KeyR","KeyB","Escape"
+  "KeyE","KeyF","KeyQ","KeyC","KeyR","KeyB","KeyK","Escape"
  ]);
 
  document.addEventListener("keydown",e=>{
   if(e.target.matches("input,textarea")||$("helpDialog").open)return;
+  if($("craftDialog").open&&e.code!=="KeyK"&&e.code!=="Escape")return;
   if(blocked.has(e.code))e.preventDefault();
   keys[e.code]=true;
   if(e.repeat)return;
@@ -1575,7 +1618,8 @@ function setupControls(){
    case "KeyC":buildFire();break;
    case "KeyR":rest();break;
    case "KeyB":chooseBuild("tent");break;
-   case "Escape":cancelBuild();break;
+   case "KeyK":$("craftDialog").open?closeCraft():openCraft();break;
+   case "Escape":if($("craftDialog").open)closeCraft();else cancelBuild();break;
    case "Space":togglePause();break;
   }
  });
@@ -1590,6 +1634,7 @@ function setupControls(){
  });
 
  const actions={
+  craftQuick:openCraft,
   craftAxe:()=>craft("axe"),
   craftPick:()=>craft("pickaxe"),
   buildFire,
@@ -1611,6 +1656,11 @@ function setupControls(){
  for(const [id,fn] of Object.entries(actions))
   $(id).addEventListener("click",fn);
 
+ $("craftClose").addEventListener("click",closeCraft);
+ $("craftDialog").addEventListener("close",()=>{
+  state.paused=craftPreviousPause;
+  updateUI();
+ });
  $("helpBtn").addEventListener("click",()=>{
   state.paused=true;
   updateUI();
