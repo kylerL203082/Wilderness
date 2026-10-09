@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Wilderness: Last Frontier — Version 2.1</title>
+<title>Wilderness: Last Frontier — Version 2.2: The Living Frontier</title>
 <style>
 *{box-sizing:border-box}
 html,body{margin:0;background:#0c1815;color:#eef3e8;font-family:Trebuchet MS,Arial,sans-serif}
@@ -29,7 +28,7 @@ header{background:#12271e;border-bottom:1px solid #4e7055;padding:11px 18px;disp
 .toolbar{display:flex;flex-wrap:wrap;gap:5px}
 .toolbar button,.action{background:#254536;border:1px solid #5e8a6d;border-radius:7px;padding:8px 12px;font-size:12px}
 .toolbar button:hover,.action:hover:not(:disabled){background:#39634a}
-#workbenchBtn{background:#62582d;border-color:#ddc078}
+#workbenchBtn{background:#62582d;border-color:#ddc078;font-weight:bold}
 #fullBtn{background:#27515a;border-color:#80c4cd}
 #inventoryBtn{background:#2d465a;border-color:#8aafc5}
 #mission{background:#19382b;border:1px solid #607b52;border-radius:6px;padding:9px;font-size:12px}
@@ -48,7 +47,6 @@ dialog p{font-size:13px;line-height:1.65}
 dialog button{background:#2e5d42;border:1px solid #7aab81;border-radius:7px;padding:8px 12px}
 #craftDialog{width:min(95vw,730px)}
 #cancelPlacement:not([hidden]){border-color:#f4c176;background:#643c2e}
-#workbenchBtn{font-weight:bold}
 .dialoghead{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:14px 0}
 .tabs button{font-size:12px;padding:10px 4px}
@@ -83,18 +81,24 @@ dialog button{background:#2e5d42;border:1px solid #7aab81;border-radius:7px;padd
 .inventoryTools span{background:#1f382b;border:1px solid #637c5f;border-radius:4px;padding:8px;font-size:12px}
 #viewport{flex:0 1 auto}
 #gameArea:fullscreen #viewport{flex:1 1 auto}
+#frontierMission{background:#172d24;border:1px solid #587766;border-radius:6px;padding:7px 10px;font-size:11px}
+#frontierMission strong{color:#e9d19d}
+#penDialog,#animalDialog,#troughDialog{width:min(94vw,540px)}
+#penDialog .dialogfooter button{flex:1 1 42%}
+#penDialog button:disabled{opacity:.5}
+#viewport{height:clamp(280px,calc(100dvh - 290px),1000px)}
 @media(max-width:750px){
- .hud{grid-template-columns:repeat(3,minmax(0,1fr))}
- #viewport{height:clamp(270px,calc(100dvh - 265px),650px)}
- #game{width:100%;max-height:100%;object-fit:contain}
- #touchControls{display:flex}
- .recipes{grid-template-columns:1fr}
- .top{flex-wrap:wrap}
- #gameArea:fullscreen #viewport{flex:1}
+.hud{grid-template-columns:repeat(3,minmax(0,1fr))}
+#viewport{height:clamp(270px,calc(100dvh - 265px),650px)}
+#game{width:100%;max-height:100%;object-fit:contain}
+#touchControls{display:flex}
+.recipes{grid-template-columns:1fr}
+.top{flex-wrap:wrap}
+#gameArea:fullscreen #viewport{flex:1}
 }
 @media(max-width:540px){
- #inventoryGrid{grid-template-columns:repeat(3,minmax(0,1fr))}
- .invSlot{min-height:80px}
+#inventoryGrid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.invSlot{min-height:80px}
 }
 </style>
 </head>
@@ -109,1531 +113,2246 @@ dialog button{background:#2e5d42;border:1px solid #7aab81;border-radius:7px;padd
 </div>
 </header>
 <main id="gameArea">
- <div id="viewport">
-  <canvas id="game" width="960" height="600"></canvas>
-  <div id="region" class="tag">REGION: PINE VALLEY</div>
-  <div id="tip" class="tag">WASD Walk · E Gather · I Inventory · Click Workbench to Craft</div>
-  <div id="notice"></div>
-  <div id="placeHint"></div>
-  <div id="death"><h1>YOU DID NOT SURVIVE</h1><button id="restartDeath">Begin New Journey</button></div>
- </div>
- <div id="touchControls">
-  <div class="dpad">
-   <span></span><button data-dir="up">▲</button><span></span>
-   <button data-dir="left">◀</button><span></span><button data-dir="right">▶</button>
-   <span></span><button data-dir="down">▼</button><span></span>
-  </div>
-  <div class="touchActs">
-   <button id="touchGather">Gather</button>
-   <button id="touchDrink">Drink</button>
-   <button id="touchWorkbench">Workbench</button>
-  </div>
- </div>
- <div class="hud" id="stats"></div>
- <div class="huditems" id="items"></div>
- <div class="toolbar">
-  <button id="workbenchBtn" title="First workbench: 5 sticks and 3 pebbles">🔨 Build Workbench (5 sticks · 3 pebbles)</button>
-  <button id="inventoryBtn">🎒 Inventory (I)</button>
-  <button id="fullBtn">⛶ Fullscreen</button>
-  <button id="cancelPlacement" hidden>✕ Cancel Placement</button>
-  <button id="eatBtn">🍓 Eat</button>
-  <button id="rationBtn">🥫 Ration</button>
-  <button id="drinkBtn">💧 Drink</button>
-  <button id="restBtn">💤 Rest</button>
-  <button id="gatherBtn">✋ Gather</button>
-  <button id="pauseBtn">⏸ Pause</button>
-  <button id="saveBtn">💾 Save</button>
-  <button id="helpBtn">? Help</button>
-  <button id="restartBtn">New Game</button>
- </div>
- <div id="mission"></div>
- <div id="journal"></div>
+<div id="viewport">
+<canvas id="game" width="960" height="600"></canvas>
+<div id="region" class="tag">REGION: PINE VALLEY</div>
+<div id="tip" class="tag">WASD Move · E Gather · I Inventory · Click Workbench to Craft · Livestock: click to lure</div>
+<div id="notice"></div>
+<div id="placeHint"></div>
+<div id="death"><h1>YOU DID NOT SURVIVE</h1><button id="restartDeath">Begin New Journey</button></div>
+</div>
+<div id="touchControls">
+<div class="dpad">
+<span></span><button data-dir="up">▲</button><span></span>
+<button data-dir="left">◀</button><span></span><button data-dir="right">▶</button>
+<span></span><button data-dir="down">▼</button><span></span>
+</div>
+<div class="touchActs">
+<button id="touchGather">Gather</button>
+<button id="touchDrink">Drink</button>
+<button id="touchWorkbench">Workbench</button>
+</div>
+</div>
+<div class="hud" id="stats"></div>
+<div class="huditems" id="items"></div>
+<div class="toolbar">
+<button id="workbenchBtn" title="First workbench: 5 sticks and 3 pebbles">🔨 Build Workbench (5 sticks · 3 pebbles)</button>
+<button id="inventoryBtn">🎒 Inventory (I)</button>
+<button id="fullBtn">⛶ Fullscreen</button>
+<button id="cancelPlacement" hidden>✕ Cancel Placement</button>
+<button id="eatBtn">🍓 Eat</button>
+<button id="rationBtn">🥫 Ration</button>
+<button id="drinkBtn">💧 Drink</button>
+<button id="restBtn">💤 Rest</button>
+<button id="gatherBtn">✋ Gather</button>
+<button id="pauseBtn">⏸ Pause</button>
+<button id="saveBtn">💾 Save</button>
+<button id="helpBtn">? Help</button>
+<button id="restartBtn">New Game</button>
+</div>
+<div id="mission"></div>
+<div id="journal"></div>
+<div id="frontierMission"></div>
 </main>
 
 <dialog id="inventoryDialog">
- <div class="dialoghead">
-  <h2>🎒 Backpack</h2>
-  <button id="inventoryClose">Close (I)</button>
- </div>
- <p>Supplies in your pack. Store or withdraw resources by clicking a nearby chest in the world.</p>
- <div id="inventoryGrid"></div>
- <div class="inventoryTools" id="inventoryTools"></div>
+<div class="dialoghead">
+<h2>🎒 Backpack</h2>
+<button id="inventoryClose">Close (I)</button>
+</div>
+<p>Supplies in your pack. Store or withdraw resources by clicking a nearby chest in the world.</p>
+<div id="inventoryGrid"></div>
+<div class="inventoryTools" id="inventoryTools"></div>
 </dialog>
 
 <dialog id="craftDialog">
- <div class="dialoghead">
-  <h2>🔨 Workbench — Crafting & Building</h2>
-  <button id="craftClose">Close</button>
- </div>
- <p id="stationInfo">Craft tools, survival supplies, buildings, and upgrades while standing beside your workbench.</p>
- <div class="tabs" id="tabs">
-  <button class="active" data-tab="tools">🪓 Tools</button>
-  <button data-tab="survival">🔥 Survival</button>
-  <button data-tab="buildings">🏠 Buildings</button>
-  <button data-tab="upgrades">⬆ Upgrades</button>
- </div>
- <div id="recipes" class="recipes"></div>
- <p id="materials"></p>
+<div class="dialoghead">
+<h2>🔨 Workbench — Crafting & Building</h2>
+<button id="craftClose">Close</button>
+</div>
+<p id="stationInfo">Craft tools, survival supplies, buildings, and upgrades while standing beside your workbench.</p>
+<div class="tabs" id="tabs">
+<button class="active" data-tab="tools">🪓 Tools</button>
+<button data-tab="survival">🔥 Survival</button>
+<button data-tab="buildings">🏠 Buildings</button>
+<button data-tab="upgrades">⬆ Upgrades</button>
+</div>
+<div id="recipes" class="recipes"></div>
+<p id="materials"></p>
 </dialog>
 
 <dialog id="helpDialog">
- <h2>Welcome to the Wilderness</h2>
- <p>Gather fallen sticks and loose pebbles by hand. Build your first workbench for 5 sticks and 3 pebbles, then walk near it and click it to craft your axe, pickaxe, and other recipes.</p>
- <p><b>WASD / Arrow keys:</b> Walk · <b>E:</b> Gather · <b>I:</b> Inventory · <b>Mouse:</b> Click workbench to craft / interact · <b>F:</b> Drink near water · <b>Q:</b> Eat berries · <b>R:</b> Rest · <b>Space:</b> Pause · <b>Esc:</b> Cancel placement or exit fullscreen. K and B are no longer crafting shortcuts.</p>
- <p>Click nearby resources and structures with the mouse. Click a built workbench to craft. Choose a building or upgrade recipe, close the workbench automatically, then select its placement or target in the world.</p>
- <button id="helpClose">Enter Wilderness</button>
+<h2>Welcome to the Wilderness</h2>
+<p>Gather fallen sticks and loose pebbles by hand. Build your first workbench for 5 sticks and 3 pebbles, then walk near it and click it to craft your axe, pickaxe, and other recipes.</p>
+<p><b>WASD / Arrow keys:</b> Walk · <b>E:</b> Gather · <b>I:</b> Inventory · <b>Mouse:</b> Click workbench to craft / interact · <b>F:</b> Drink near water · <b>Q:</b> Eat berries · <b>R:</b> Rest · <b>Space:</b> Pause · <b>Esc:</b> Cancel placement or exit fullscreen. K and B are no longer crafting shortcuts.</p>
+<p>New lands hold Grasslands, Highlands, Wetlands, Snow, Hardwood Forest and Badlands. Click wild chickens, sheep or cows while carrying their preferred bait, lead them toward an enclosure with the gate open, then close the gate. Enclosure menus control feed, production and bait troughs.</p>
+<button id="helpClose">Enter Wilderness</button>
 </dialog>
 
 <dialog id="structureDialog">
- <h2 id="structureTitle"></h2>
- <p id="structureInfo"></p>
- <div class="dialogfooter">
-  <button id="structureUse">Use Structure</button>
-  <button id="structureClose">Close</button>
- </div>
+<h2 id="structureTitle"></h2>
+<p id="structureInfo"></p>
+<div class="dialogfooter">
+<button id="structureUse">Use Structure</button>
+<button id="structureClose">Close</button>
+</div>
 </dialog>
 
 <dialog id="storageDialog">
- <h2>📦 Storage Chest</h2>
- <p id="storageInfo"></p>
- <div id="storageTable"></div>
- <div class="dialogfooter">
-  <button id="storageClose">Close</button>
- </div>
+<h2>📦 Storage Chest</h2>
+<p id="storageInfo"></p>
+<div id="storageTable"></div>
+<div class="dialogfooter"><button id="storageClose">Close</button></div>
+</dialog>
+
+<dialog id="animalDialog">
+<h2 id="animalTitle">Wildlife</h2>
+<p id="animalInfo"></p>
+<div class="dialogfooter">
+<button id="animalLure">Lure Animal</button>
+<button id="animalClose">Close</button>
+</div>
+</dialog>
+
+<dialog id="penDialog">
+<h2 id="penTitle">Enclosure</h2>
+<p id="penInfo"></p>
+<div class="dialogfooter">
+<button id="penGate">Open Gate</button>
+<button id="penFeed">Feed Animals</button>
+<button id="penCollect">Collect Products</button>
+<button id="penBait">Load Trough</button>
+<button id="penClose">Close</button>
+</div>
+</dialog>
+
+<dialog id="troughDialog">
+<h2>Feeding Trough</h2>
+<p id="troughInfo"></p>
+<div class="dialogfooter">
+<button id="troughAdd">Add Bait</button>
+<button id="troughClose">Close</button>
+</div>
 </dialog>
 
 <script>
 "use strict";
+
 const $=id=>document.getElementById(id);
 const canvas=$("game"),ctx=canvas.getContext("2d");
-const W=960,H=600,WW=3200,WH=2400;
+const W=960,H=600,WW=6400,WH=4800;
 const SPAWN={x:1600,y:1200};
 const SAVE="wilderness_frontier_v13_wasd";
 const OLD=[
- "wilderness_frontier_v13_ui_inventory",
- "wilderness_frontier_v13_1_build_menu",
- "wilderness_frontier_v12_wasd",
- "wilderness_frontier_v11_wasd"
+"wilderness_frontier_v13_ui_inventory",
+"wilderness_frontier_v13_1_build_menu",
+"wilderness_frontier_v12_wasd",
+"wilderness_frontier_v11_wasd"
 ];
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 const LAKES=[
- {x:1110,y:860,rx:275,ry:190},
- {x:2360,y:1580,rx:340,ry:250},
- {x:710,y:1880,rx:235,ry:200},
- {x:2720,y:390,rx:290,ry:170}
+{x:1110,y:860,rx:275,ry:190},
+{x:2360,y:1580,rx:340,ry:250},
+{x:710,y:1880,rx:235,ry:200},
+{x:2720,y:390,rx:290,ry:170},
+{x:4780,y:3770,rx:195,ry:132},
+{x:5610,y:1300,rx:155,ry:115}
 ];
+
 const keys=new Set(),touchKeys=new Set();
 let state,nodes=[],camera={x:0,y:0};
-let hover=null,placing=null,upgrading=null,mouse={x:0,y:0,inside:false};
-let active=null,activeWorkbench=null,selectedTab="tools",previousPause=false,modalPause=false;
+let hover=null,placing=null,upgrading=null;
+let mouse={x:0,y:0,inside:false};
+let active=null,activeWorkbench=null,selectedTab="tools";
+let previousPause=false,modalPause=false;
 let last=performance.now(),uiElapsed=0,saveElapsed=0,toastTime=0;
 
 function hash(x,y,seed=0){
- let n=Math.imul(x,374761393)+Math.imul(y,668265263)+Math.imul(seed,1442695041);
- n=Math.imul(n^(n>>>13),1274126177);
- return ((n^(n>>>16))>>>0)/4294967295;
+let n=Math.imul(x,374761393)+Math.imul(y,668265263)+Math.imul(seed,1442695041);
+n=Math.imul(n^(n>>>13),1274126177);
+return ((n^(n>>>16))>>>0)/4294967295;
 }
 function lakeValue(l,x,y){
- let a=(x-l.x)/l.rx,b=(y-l.y)/l.ry;
- return a*a+b*b-(1+Math.sin(x*.016)*.045+Math.cos(y*.021)*.045);
+let a=(x-l.x)/l.rx,b=(y-l.y)/l.ry;
+return a*a+b*b-(1+Math.sin(x*.016)*.045+Math.cos(y*.021)*.045);
 }
-function water(x,y){return LAKES.some(l=>lakeValue(l,x,y)<0)}
+function water(x,y){
+if(LAKES.some(l=>lakeValue(l,x,y)<0))return true;
+if(x>3220&&x<5480&&y>1650&&y<4300){
+let river=2300+(x-3220)*.57+Math.sin(x*.004)*75;
+if(Math.abs(y-river)<36+Math.sin(x*.012)*7)return true;
+}
+return false;
+}
 function canStand(x,y){
- return x>20&&y>20&&x<WW-20&&y<WH-20&&
- [[-13,0],[13,0],[0,-13],[0,13]].every(([u,v])=>!water(x+u,y+v));
+return x>20&&y>20&&x<WW-20&&y<WH-20&&
+[[-13,0],[13,0],[0,-13],[0,13]].every(([u,v])=>!water(x+u,y+v));
 }
 function makeNodes(){
- let a=[];
- for(let gy=0;gy<Math.ceil(WH/84);gy++){
-  for(let gx=0;gx<Math.ceil(WW/84);gx++){
-   let x=gx*84+10+hash(gx,gy,1)*60;
-   let y=gy*84+10+hash(gx,gy,2)*60;
-   if(x>WW-25||y>WH-25||water(x,y)||water(x+20,y)||
-      water(x-20,y)||hash(gx,gy,19)>=.731)continue;
-   let r=hash(gx,gy,3);
-   let type=r<.35?"tree":r<.53?"rock":r<.67?"berry":
-            r<.84?"branch":"pebble";
-   if(dist({x,y},SPAWN)<70&&["tree","rock"].includes(type))continue;
-   a.push({id:`${gx}_${gy}`,x,y,type,variant:hash(gx,gy,4)});
-  }
- }
- for(let i=0;i<10;i++){
-  let t=i*Math.PI/5,r=115+(i%3)*35;
-  let x=SPAWN.x+Math.cos(t)*r,y=SPAWN.y+Math.sin(t)*r;
-  if(canStand(x,y))
-   a.push({id:`starter_${i}`,x,y,type:i%2?"pebble":"branch",variant:.55});
- }
- return a;
+let a=[];
+for(let gy=0;gy<Math.ceil(2400/84);gy++){
+for(let gx=0;gx<Math.ceil(3200/84);gx++){
+let x=gx*84+10+hash(gx,gy,1)*60;
+let y=gy*84+10+hash(gx,gy,2)*60;
+if(x>3175||y>2375||water(x,y)||water(x+20,y)||water(x-20,y)||hash(gx,gy,19)>=.731)continue;
+let r=hash(gx,gy,3);
+let type=r<.35?"tree":r<.53?"rock":r<.67?"berry":r<.84?"branch":"pebble";
+if(dist({x,y},SPAWN)<70&&["tree","rock"].includes(type))continue;
+a.push({id:`${gx}_${gy}`,x,y,type,variant:hash(gx,gy,4)});
+}
+}
+for(let i=0;i<10;i++){
+let t=i*Math.PI/5,r=115+(i%3)*35;
+let x=SPAWN.x+Math.cos(t)*r,y=SPAWN.y+Math.sin(t)*r;
+if(canStand(x,y))a.push({id:`starter_${i}`,x,y,type:i%2?"pebble":"branch",variant:.55});
+}
+return a;
 }
 nodes=makeNodes();
 
 const ITEMS={
- sticks:["🌿","Sticks"],
- pebbles:["🪨","Pebbles"],
- logs:["🪵","Logs"],
- stone:["⛏️","Mined Stone"],
- berries:["🍓","Berries"],
- rations:["🥫","Trail Rations"]
+sticks:["🌿","Sticks"],pebbles:["🪨","Pebbles"],
+logs:["🪵","Logs"],stone:["⛏️","Mined Stone"],
+berries:["🍓","Berries"],rations:["🥫","Trail Rations"],
+seeds:["🌻","Wild Seeds"],grass:["🌾","Tall Grass"],hay:["🌿","Hay"],
+eggs:["🥚","Eggs"],feathers:["🪶","Feathers"],wool:["🧶","Wool"],
+milk:["🥛","Milk"],hardwood:["🪵","Hardwood"],reeds:["🌱","Reeds"],
+clay:["🧱","Clay"],mushrooms:["🍄","Mushrooms"],nuts:["🌰","Nuts"],
+iron:["⚙️","Iron Ore"],coal:["⬛","Coal"],minerals:["💎","Rare Minerals"],
+alpine:["🌿","Alpine Plants"],flowers:["🌼","Wildflowers"]
 };
+
 const BUILDINGS={
- tent:{name:"Tent",icon:"⛺",unlock:4,cost:{sticks:8,pebbles:4},radius:38,description:"Sleep four hours and recover energy."},
- workbench:{name:"Workbench",icon:"🔨",unlock:0,cost:{sticks:5,pebbles:3},radius:37,description:"Craft all survival tools, buildings, rations, and upgrades here."},
- chest:{name:"Storage Chest",icon:"📦",unlock:5,cost:{logs:4,sticks:4},radius:29,description:"Deposit or withdraw supplies."},
- cabin:{name:"Log Cabin",icon:"🏠",unlock:6,cost:{logs:12,stone:8,sticks:6},radius:57,description:"Warm permanent shelter with six-hour sleep."},
- garden:{name:"Berry Garden",icon:"🌱",unlock:7,cost:{logs:2,sticks:6,berries:3},radius:38,description:"Plant, grow, and harvest berries."},
- collector:{name:"Water Collector",icon:"💧",unlock:7,cost:{logs:4,stone:4,pebbles:4},radius:30,description:"Generates stored drinking water."}
+tent:{name:"Tent",icon:"⛺",unlock:4,cost:{sticks:8,pebbles:4},radius:38,description:"Sleep four hours and recover energy."},
+workbench:{name:"Workbench",icon:"🔨",unlock:0,cost:{sticks:5,pebbles:3},radius:37,description:"Craft all survival tools, buildings, rations, and upgrades here."},
+chest:{name:"Storage Chest",icon:"📦",unlock:5,cost:{logs:4,sticks:4},radius:29,description:"Deposit or withdraw supplies."},
+cabin:{name:"Log Cabin",icon:"🏠",unlock:6,cost:{logs:12,stone:8,sticks:6},radius:57,description:"Warm permanent shelter with six-hour sleep."},
+garden:{name:"Berry Garden",icon:"🌱",unlock:7,cost:{logs:2,sticks:6,berries:3},radius:38,description:"Plant, grow, and harvest berries."},
+collector:{name:"Water Collector",icon:"💧",unlock:7,cost:{logs:4,stone:4,pebbles:4},radius:30,description:"Generates stored drinking water."},
+coop:{name:"Chicken Coop",icon:"🐔",unlock:7,cost:{sticks:8,logs:3,pebbles:4},radius:60,capacity:6,animal:"chicken",bait:"seeds",description:"Fenced home for up to 6 chickens."},
+sheepPen:{name:"Sheep Pen",icon:"🐑",unlock:7,cost:{logs:8,sticks:6},radius:75,capacity:4,animal:"sheep",bait:"grass",description:"Fenced pasture for up to 4 sheep."},
+cattlePasture:{name:"Cattle Pasture",icon:"🐄",unlock:7,cost:{logs:12,sticks:8,stone:4},radius:90,capacity:3,animal:"cow",bait:"grass",description:"Fenced pasture for up to 3 cows."},
+trough:{name:"Feeding Trough",icon:"🥕",unlock:7,cost:{sticks:4,logs:2,pebbles:2},radius:18,description:"Put bait inside a livestock enclosure to attract animals."}
 };
+
 const UPGRADES={
- tent:{sticks:6,pebbles:3},
- workbench:{logs:5,stone:4},
- chest:{logs:4,stone:2},
- cabin:{logs:7,stone:6},
- garden:{logs:3,stone:3},
- collector:{logs:4,stone:4}
+tent:{sticks:6,pebbles:3},workbench:{logs:5,stone:4},
+chest:{logs:4,stone:2},cabin:{logs:7,stone:6},
+garden:{logs:3,stone:3},collector:{logs:4,stone:4},
+coop:{sticks:6,logs:3},sheepPen:{logs:5,stone:2},
+cattlePasture:{logs:6,stone:4},trough:{sticks:2,logs:2}
 };
 
 function fresh(){
- return {
-  player:{x:SPAWN.x,y:SPAWN.y,dir:"down",step:0,moving:false},
-  stats:{health:100,hunger:85,thirst:82,energy:95,warmth:90},
-  inventory:{sticks:0,pebbles:0,logs:0,stone:0,berries:3,rations:0},
-  tools:{axe:false,pickaxe:false},
-  gathered:{},fires:[],buildings:[],mission:0,
-  milestones:{
-   gathered:{sticks:0,pebbles:0,logs:0,stone:0,berries:0},
-   stored:0,harvestedGarden:0,collectorDrinks:0
-  },
-  time:480,day:1,totalGathered:0,
-  distanceWalked:0,paused:false,dead:false,workbenchCraftVersion:2
- };
+return {
+player:{x:SPAWN.x,y:SPAWN.y,dir:"down",step:0,moving:false},
+stats:{health:100,hunger:85,thirst:82,energy:95,warmth:90},
+inventory:{
+sticks:0,pebbles:0,logs:0,stone:0,berries:3,rations:0,
+seeds:0,grass:0,hay:0,eggs:0,feathers:0,wool:0,milk:0,
+hardwood:0,reeds:0,clay:0,mushrooms:0,nuts:0,iron:0,
+coal:0,minerals:0,alpine:0,flowers:0
+},
+tools:{axe:false,pickaxe:false,woolWrap:false},
+gathered:{},fires:[],buildings:[],mission:0,
+milestones:{
+gathered:{sticks:0,pebbles:0,logs:0,stone:0,berries:0},
+stored:0,harvestedGarden:0,collectorDrinks:0,
+livestockProducts:{},captured:{},discovered:{}
+},
+time:480,day:1,totalGathered:0,distanceWalked:0,
+paused:false,dead:false,workbenchCraftVersion:2,
+worldVersion:2,animals:[],discovered:{pine:true},
+livestockProducts:{},captured:{},livestockMission:0
+};
 }
 
 function load(){
- state=fresh();
- try{
-  let raw=localStorage.getItem(SAVE),old=false;
-  if(!raw){
-   for(let k of OLD){
-    raw=localStorage.getItem(k);
-    if(raw){old=true;break}
-   }
-  }
-  if(!raw)return false;
-  let s=JSON.parse(raw);
-  if(!s.player||!s.inventory||!s.stats)return false;
-  let base=fresh();
-  let inv={...base.inventory,...s.inventory};
-  if("wood" in s.inventory){
-   inv.sticks=Number(inv.wood)||0;
-   inv.pebbles=Number(inv.stone)||0;
-   inv.stone=0;
-  }
-  state={
-   ...base,...s,
-   player:{...base.player,...s.player},
-   stats:{...base.stats,...s.stats},
-   inventory:inv,
-   tools:{...base.tools,...s.tools},
-   gathered:s.gathered||{},
-   fires:Array.isArray(s.fires)?s.fires:[],
-   buildings:Array.isArray(s.buildings)?s.buildings:[],
-   milestones:{
-    ...base.milestones,...s.milestones,
-    gathered:{...base.milestones.gathered,...s.milestones?.gathered}
-   }
-  };
-  state.paused=false;state.dead=false;state.player.moving=false;
-  if(!Number.isFinite(state.player.x)||!Number.isFinite(state.player.y)||
-     !canStand(state.player.x,state.player.y)){
-   state.player.x=SPAWN.x;state.player.y=SPAWN.y;
-  }
-  state.buildings.forEach(b=>{
-   b.level||=1;b.storage||={};
-   b.progress||=0;b.charges||=0;
-   b.planted=!!b.planted;b.ripe=!!b.ripe;
-  });
-  if(old){
-   let map=new Map(nodes.map(n=>[n.id,n]));
-   for(const id of Object.keys(state.gathered)){
-    let n=map.get(id);
-    if(!n)continue;
-    let item={branch:"sticks",pebble:"pebbles",berry:"berries",tree:"logs",rock:"stone"}[n.type];
-    let v=(n.type==="tree"?3:n.type==="rock"||n.type==="berry"?2:1)+
-      Math.floor(n.variant*(n.type==="branch"||n.type==="pebble"?3:4));
-    state.milestones.gathered[item]+=v;
-   }
-   for(let k of ["sticks","pebbles","logs","stone"]){
-    state.milestones.gathered[k]=Math.max(
-     state.milestones.gathered[k],state.inventory[k]||0);
-   }
-  }
-  // Migrate Version 2.0 mission indexes to the new progression.
-  if(s.workbenchCraftVersion!==2){
-   state.mission=0;
-   state.workbenchCraftVersion=2;
-  }
-  checkMissions(false);
-  if(old||s.workbenchCraftVersion!==2)save();
-  return true;
- }catch(e){
-  state=fresh();
-  return false;
- }
+state=fresh();
+try{
+let raw=localStorage.getItem(SAVE),old=false;
+if(!raw){
+for(let k of OLD){
+raw=localStorage.getItem(k);
+if(raw){old=true;break}
+}
+}
+if(!raw)return false;
+let s=JSON.parse(raw);
+if(!s.player||!s.inventory||!s.stats)return false;
+let base=fresh(),inv={...base.inventory,...s.inventory};
+if("wood" in s.inventory){
+inv.sticks=Number(inv.wood)||0;
+inv.pebbles=Number(inv.stone)||0;
+inv.stone=0;
+}
+state={
+...base,...s,
+player:{...base.player,...s.player},
+stats:{...base.stats,...s.stats},
+inventory:inv,
+tools:{...base.tools,...s.tools},
+gathered:s.gathered||{},
+fires:Array.isArray(s.fires)?s.fires:[],
+buildings:Array.isArray(s.buildings)?s.buildings:[],
+milestones:{
+...base.milestones,...s.milestones,
+gathered:{...base.milestones.gathered,...s.milestones?.gathered}
+}
+};
+state.paused=false;
+state.dead=false;
+state.player.moving=false;
+if(!Number.isFinite(state.player.x)||!Number.isFinite(state.player.y)||
+!canStand(state.player.x,state.player.y)){
+state.player.x=SPAWN.x;state.player.y=SPAWN.y;
+}
+state.buildings.forEach(b=>{
+b.level||=1;b.storage||={};b.progress||=0;b.charges||=0;
+b.planted=!!b.planted;b.ripe=!!b.ripe;
+});
+if(old){
+let map=new Map(nodes.map(n=>[n.id,n]));
+for(const id of Object.keys(state.gathered)){
+let n=map.get(id);
+if(!n)continue;
+let item={branch:"sticks",pebble:"pebbles",berry:"berries",tree:"logs",rock:"stone"}[n.type];
+let v=(n.type==="tree"?3:n.type==="rock"||n.type==="berry"?2:1)+
+Math.floor(n.variant*(n.type==="branch"||n.type==="pebble"?3:4));
+state.milestones.gathered[item]+=v;
+}
+for(let k of ["sticks","pebbles","logs","stone"])
+state.milestones.gathered[k]=Math.max(state.milestones.gathered[k],state.inventory[k]||0);
+}
+if(s.workbenchCraftVersion!==2){
+state.mission=0;
+state.workbenchCraftVersion=2;
+}
+state.discovered=state.discovered||{pine:true};
+state.captured=state.captured||{};
+state.livestockProducts=state.livestockProducts||{};
+state.livestockMission=Math.max(0,Math.min(LIVESTOCK_MISSIONS.length-1,Number(state.livestockMission)||0));
+state.animals=Array.isArray(s.animals)?s.animals:makeAnimals();
+state.buildings.forEach(b=>normalizeLivestock(b));
+checkMissions(false);
+if(old||s.workbenchCraftVersion!==2)save();
+return true;
+}catch(e){state=fresh();return false}
 }
 
 function save(show=false){
- if(state.dead)return;
- try{
-  localStorage.setItem(SAVE,JSON.stringify(state));
-  $("saved").textContent="✓ Saved";
-  if(show)notice("Progress saved!");
- }catch(e){
-  $("saved").textContent="Storage unavailable";
- }
+if(state.dead)return;
+try{
+localStorage.setItem(SAVE,JSON.stringify(state));
+$("saved").textContent="✓ Saved";
+if(show)notice("Progress saved!");
+}catch(e){$("saved").textContent="Storage unavailable"}
 }
 function notice(msg){
- $("notice").textContent=msg;
- $("notice").style.opacity=1;
- toastTime=3;
+$("notice").textContent=msg;
+$("notice").style.opacity=1;
+toastTime=3;
 }
 function night(){return state.time<360||state.time>=1200}
 function nearFire(){
- return state.fires.filter(f=>f.fuel>0&&dist(f,state.player)<120)
-  .sort((a,b)=>dist(a,state.player)-dist(b,state.player))[0]||null;
+return state.fires.filter(f=>f.fuel>0&&dist(f,state.player)<120)
+.sort((a,b)=>dist(a,state.player)-dist(b,state.player))[0]||null;
 }
 function nearWater(){
- for(let a=0;a<Math.PI*2;a+=Math.PI/16)
-  if(water(state.player.x+Math.cos(a)*45,state.player.y+Math.sin(a)*45))
-   return true;
- return false;
+for(let a=0;a<Math.PI*2;a+=Math.PI/16)
+if(water(state.player.x+Math.cos(a)*45,state.player.y+Math.sin(a)*45))return true;
+return false;
 }
 function nearStructure(type){
- return state.buildings
-  .filter(b=>(!type||b.type===type)&&dist(b,state.player)<135)
-  .sort((a,b)=>dist(a,state.player)-dist(b,state.player))[0]||null;
+return state.buildings.filter(b=>(!type||b.type===type)&&dist(b,state.player)<135)
+.sort((a,b)=>dist(a,state.player)-dist(b,state.player))[0]||null;
 }
 function nearShelter(){
- return ["cabin","tent"].map(type=>nearStructure(type)).filter(Boolean)[0]||null;
+return ["cabin","tent"].map(type=>nearStructure(type)).filter(Boolean)[0]||null;
 }
 function available(n){return n&&!state.gathered[n.id]}
 function range(n){return n.type==="tree"?68:n.type==="rock"?60:49}
 function required(n){
- return n.type==="tree"&&!state.tools.axe?"axe":
-        n.type==="rock"&&!state.tools.pickaxe?"pickaxe":null;
+return n.type==="tree"&&!state.tools.axe?"axe":
+n.type==="rock"&&!state.tools.pickaxe?"pickaxe":null;
 }
 function nearbyNode(){
- return nodes.filter(n=>available(n)&&dist(n,state.player)<=range(n))
-  .sort((a,b)=>dist(a,state.player)-dist(b,state.player))[0]||null;
+return nodes.filter(n=>available(n)&&dist(n,state.player)<=range(n))
+.sort((a,b)=>dist(a,state.player)-dist(b,state.player))[0]||null;
 }
 function gather(n){
- if(!n||!available(n)||state.paused||state.dead)return;
- if(dist(n,state.player)>range(n))return notice("Move closer using WASD.");
- let tool=required(n);
- if(tool)return notice((tool==="axe"?"🪓 Stone axe":"⛏️ Stone pickaxe")+
-  " required! Collect sticks and pebbles to craft it.");
- let item={branch:"sticks",pebble:"pebbles",berry:"berries",
-           tree:"logs",rock:"stone"}[n.type];
- let qty=(n.type==="tree"?3:n.type==="rock"||n.type==="berry"?2:1)+
-  Math.floor(n.variant*(n.type==="branch"||n.type==="pebble"?3:4));
- state.inventory[item]+=qty;
- state.milestones.gathered[item]+=qty;
- state.totalGathered++;
- state.gathered[n.id]=true;
- notice(`Collected ${qty} ${item}!`);
- checkMissions();renderUI();save();
+if(!n||!available(n)||state.paused||state.dead)return;
+if(dist(n,state.player)>range(n))return notice("Move closer using WASD.");
+let tool=required(n);
+if(tool)return notice((tool==="axe"?"🪓 Stone axe":"⛏️ Stone pickaxe")+
+" required! Collect sticks and pebbles to craft it.");
+let item={branch:"sticks",pebble:"pebbles",berry:"berries",tree:"logs",rock:"stone"}[n.type];
+let qty=(n.type==="tree"?3:n.type==="rock"||n.type==="berry"?2:1)+
+Math.floor(n.variant*(n.type==="branch"||n.type==="pebble"?3:4));
+state.inventory[item]+=qty;
+state.milestones.gathered[item]+=qty;
+state.totalGathered++;
+state.gathered[n.id]=true;
+notice(`Collected ${qty} ${item}!`);
+checkMissions();renderUI();save();
 }
 function gatherNear(){
- let n=nearbyNode();
- n?gather(n):notice("Move closer to a resource.");
+let n=nearbyNode();
+n?gather(n):notice("Move closer to a resource.");
 }
 function costs(cost){
- return Object.entries(cost).map(([k,v])=>`${v} ${ITEMS[k]?.[1]||k}`).join(" + ");
+return Object.entries(cost).map(([k,v])=>`${v} ${ITEMS[k]?.[1]||k}`).join(" + ");
 }
 function has(cost){
- return Object.entries(cost).every(([k,v])=>(state.inventory[k]||0)>=v);
+return Object.entries(cost).every(([k,v])=>(state.inventory[k]||0)>=v);
 }
 function spend(cost){
- if(!has(cost))return false;
- for(const [k,v] of Object.entries(cost))state.inventory[k]-=v;
- return true;
+if(!has(cost))return false;
+for(const [k,v] of Object.entries(cost))state.inventory[k]-=v;
+return true;
 }
 function stationReady(){
- return !state.dead&&activeWorkbench&&
-  state.buildings.includes(activeWorkbench)&&
-  activeWorkbench.type==="workbench"&&
-  dist(state.player,activeWorkbench)<135&&$("craftDialog").open;
+return !state.dead&&activeWorkbench&&
+state.buildings.includes(activeWorkbench)&&
+activeWorkbench.type==="workbench"&&
+dist(state.player,activeWorkbench)<135&&$("craftDialog").open;
 }
 function requireStation(){
- if(stationReady())return true;
- notice("Walk beside a workbench and click it to craft.");
- return false;
+if(stationReady())return true;
+notice("Walk beside a workbench and click it to craft.");
+return false;
 }
 function buildFirstWorkbench(){
- if(state.dead||state.paused||anyModal())return;
- if(state.buildings.some(b=>b.type==="workbench"))
-  return notice("Click your workbench to craft additional workbenches.");
- if(!has(BUILDINGS.workbench.cost))
-  return notice("First workbench requires 5 sticks and 3 pebbles.");
- placing="workbench";upgrading=null;
- $("placeHint").style.display="block";
- $("cancelPlacement").hidden=false;
- $("cancelPlacement").textContent="✕ Cancel Placement";
- notice("Click a clear spot nearby to place your first workbench.");
+if(state.dead||state.paused||anyModal())return;
+if(state.buildings.some(b=>b.type==="workbench"))
+return notice("Click your workbench to craft additional workbenches.");
+if(!has(BUILDINGS.workbench.cost))
+return notice("First workbench requires 5 sticks and 3 pebbles.");
+placing="workbench";upgrading=null;
+$("placeHint").style.display="block";
+$("cancelPlacement").hidden=false;
+$("cancelPlacement").textContent="✕ Cancel Placement";
+notice("Click a clear spot nearby to place your first workbench.");
 }
 function craftTool(type){
- if(!requireStation())return;
- let key=type==="axe"?"axe":"pickaxe";
- let cost=key==="axe"?{sticks:3,pebbles:2}:{sticks:4,pebbles:3};
- if(state.tools[key])return notice("Already crafted.");
- if(!spend(cost))return notice("Requires "+costs(cost));
- state.tools[key]=true;
- notice(key==="axe"?"Axe crafted: trees unlocked!":"Pickaxe crafted: boulders unlocked!");
- checkMissions();renderUI();save();
+if(!requireStation())return;
+let key=type==="axe"?"axe":"pickaxe";
+let cost=key==="axe"?{sticks:3,pebbles:2}:{sticks:4,pebbles:3};
+if(state.tools[key])return notice("Already crafted.");
+if(!spend(cost))return notice("Requires "+costs(cost));
+state.tools[key]=true;
+notice(key==="axe"?"Axe crafted: trees unlocked!":"Pickaxe crafted: boulders unlocked!");
+checkMissions();renderUI();save();
 }
 function makeFire(){
- if(!requireStation())return;
- let cost={sticks:5,pebbles:3};
- if(!has(cost))return notice("Campfire requires "+costs(cost));
- if(nearFire())return notice("You already have a fire nearby.");
- let d={up:[0,-48],down:[0,48],left:[-48,0],right:[48,0]}[state.player.dir];
- let x=state.player.x+d[0],y=state.player.y+d[1];
- if(!canStand(x,y))return notice("Need a dry, clear spot.");
- spend(cost);
- state.fires.push({x,y,fuel:240});
- notice("Campfire built!");
- renderUI();save();
+if(!requireStation())return;
+let cost={sticks:5,pebbles:3};
+if(!has(cost))return notice("Campfire requires "+costs(cost));
+if(nearFire())return notice("You already have a fire nearby.");
+let d={up:[0,-48],down:[0,48],left:[-48,0],right:[48,0]}[state.player.dir];
+let x=state.player.x+d[0],y=state.player.y+d[1];
+if(!canStand(x,y))return notice("Need a dry, clear spot.");
+spend(cost);
+state.fires.push({x,y,fuel:240});
+notice("Campfire built!");
+renderUI();save();
 }
 function refuel(){
- if(!requireStation())return;
- let f=nearFire();
- if(!f)return notice("Stand near a burning campfire.");
- if(state.inventory.sticks>=3)state.inventory.sticks-=3;
- else if(state.inventory.logs)state.inventory.logs--;
- else return notice("Need 3 sticks or a log.");
- f.fuel=Math.min(720,f.fuel+180);
- notice("Campfire refueled.");
- renderUI();save();
+if(!requireStation())return;
+let f=nearFire();
+if(!f)return notice("Stand near a burning campfire.");
+if(state.inventory.sticks>=3)state.inventory.sticks-=3;
+else if(state.inventory.logs)state.inventory.logs--;
+else return notice("Need 3 sticks or a log.");
+f.fuel=Math.min(720,f.fuel+180);
+notice("Campfire refueled.");
+renderUI();save();
 }
 function eat(){
- if(state.dead)return;
- if(!state.inventory.berries)return notice("Gather berries first.");
- if(state.stats.hunger>=99)return notice("Already full.");
- state.inventory.berries--;
- state.stats.hunger=clamp(state.stats.hunger+22,0,100);
- state.stats.health=clamp(state.stats.health+2,0,100);
- notice("Ate berries.");
- renderUI();save();
+if(state.dead)return;
+if(!state.inventory.berries)return notice("Gather berries first.");
+if(state.stats.hunger>=99)return notice("Already full.");
+state.inventory.berries--;
+state.stats.hunger=clamp(state.stats.hunger+22,0,100);
+state.stats.health=clamp(state.stats.health+2,0,100);
+notice("Ate berries.");
+renderUI();save();
 }
 function ration(){
- if(state.dead)return;
- if(!state.inventory.rations)return notice("Craft rations at a workbench.");
- if(state.stats.hunger>=99)return notice("Already full.");
- state.inventory.rations--;
- state.stats.hunger=clamp(state.stats.hunger+48,0,100);
- state.stats.health=clamp(state.stats.health+4,0,100);
- notice("Ate trail ration.");
- renderUI();save();
+if(state.dead)return;
+if(!state.inventory.rations)return notice("Craft rations at a workbench.");
+if(state.stats.hunger>=99)return notice("Already full.");
+state.inventory.rations--;
+state.stats.hunger=clamp(state.stats.hunger+48,0,100);
+state.stats.health=clamp(state.stats.health+4,0,100);
+notice("Ate trail ration.");
+renderUI();save();
 }
 function drink(){
- if(state.dead)return;
- if(!nearWater())return notice("Stand by the lake or use a water collector.");
- state.stats.thirst=100;
- notice("Drank freshwater.");
- renderUI();save();
+if(state.dead)return;
+if(!nearWater())return notice("Stand by the lake or use a water collector.");
+state.stats.thirst=100;
+notice("Drank freshwater.");
+renderUI();save();
 }
 function advance(minutes){
- for(let b of state.buildings){
-  if(b.type==="garden"&&b.planted&&!b.ripe){
-   b.progress+=minutes;
-   if(b.progress>=240){b.ripe=true;b.progress=240}
-  }
-  if(b.type==="collector"){
-   b.progress+=minutes;
-   while(b.progress>=180&&b.charges<(b.level>1?6:3)){
-    b.progress-=180;b.charges++;
-   }
-   if(b.charges>=(b.level>1?6:3))
-    b.progress=Math.min(180,b.progress);
-  }
- }
+for(let b of state.buildings){
+if(b.type==="garden"&&b.planted&&!b.ripe){
+b.progress+=minutes;
+if(b.progress>=240){b.ripe=true;b.progress=240}
+}
+if(b.type==="collector"){
+b.progress+=minutes;
+while(b.progress>=180&&b.charges<(b.level>1?6:3)){
+b.progress-=180;b.charges++;
+}
+if(b.charges>=(b.level>1?6:3))
+b.progress=Math.min(180,b.progress);
+}
+}
 }
 function tickTime(n){
- state.time+=n;
- while(state.time>=1440){
-  state.time-=1440;state.day++;
-  notice("Day "+state.day+" begins!");
- }
- advance(n);
+state.time+=n;
+while(state.time>=1440){
+state.time-=1440;state.day++;
+notice("Day "+state.day+" begins!");
+}
+advance(n);updateLivestock(n);
 }
 function rest(){
- if(state.dead)return;
- let shelter=nearShelter(),fire=nearFire();
- if(!fire&&!shelter)return notice("Rest by a fire, tent, or cabin.");
- if(state.stats.hunger<12||state.stats.thirst<12)
-  return notice("Eat and drink before sleeping.");
- let minutes=shelter?.type==="cabin"?360:240;
- tickTime(minutes);
- let s=state.stats;
- s.energy=clamp(s.energy+(shelter?.type==="cabin"?90:shelter?65:55),0,100);
- s.health=clamp(s.health+(shelter?.type==="cabin"?20:12),0,100);
- s.hunger=clamp(s.hunger-minutes/240*14,0,100);
- s.thirst=clamp(s.thirst-minutes/240*17,0,100);
- if(shelter)s.warmth=clamp(s.warmth+(shelter.level>1?28:14),0,100);
- if(fire)fire.fuel=Math.max(0,fire.fuel-minutes);
- notice(`Rested ${minutes/60} hours.`);
- checkMissions();renderUI();save();
+if(state.dead)return;
+let shelter=nearShelter(),fire=nearFire();
+if(!fire&&!shelter)return notice("Rest by a fire, tent, or cabin.");
+if(state.stats.hunger<12||state.stats.thirst<12)
+return notice("Eat and drink before sleeping.");
+let minutes=shelter?.type==="cabin"?360:240;
+tickTime(minutes);
+let s=state.stats;
+s.energy=clamp(s.energy+(shelter?.type==="cabin"?90:shelter?65:55),0,100);
+s.health=clamp(s.health+(shelter?.type==="cabin"?20:12),0,100);
+s.hunger=clamp(s.hunger-minutes/240*14,0,100);
+s.thirst=clamp(s.thirst-minutes/240*17,0,100);
+if(shelter)s.warmth=clamp(s.warmth+(shelter.level>1?28:14),0,100);
+if(fire)fire.fuel=Math.max(0,fire.fuel-minutes);
+notice(`Rested ${minutes/60} hours.`);
+checkMissions();renderUI();save();
 }
 
 const MISSIONS=[
- {name:"First Supplies",text:"Gather 5 sticks and 3 pebbles for your first workbench.",unlock:"First Workbench",done:s=>s.milestones.gathered.sticks>=5&&s.milestones.gathered.pebbles>=3,progress:s=>`${s.milestones.gathered.sticks}/5 sticks · ${s.milestones.gathered.pebbles}/3 pebbles`},
- {name:"Establish a Workbench",text:"Use Build Workbench and click a clear location.",unlock:"Workbench Crafting",done:s=>s.buildings.some(b=>b.type==="workbench"),progress:s=>"Build your first workbench"},
- {name:"Frontier Tools",text:"Click the workbench and craft a stone axe and a pickaxe.",unlock:"Resource Harvesting",done:s=>s.tools.axe&&s.tools.pickaxe,progress:s=>`Axe ${s.tools.axe?"✓":"✕"} · Pickaxe ${s.tools.pickaxe?"✓":"✕"}`},
- {name:"Gather Logs and Stone",text:"Harvest at least 7 logs and 5 mined stone using tools.",unlock:"Tent",done:s=>s.milestones.gathered.logs>=7&&s.milestones.gathered.stone>=5,progress:s=>`${s.milestones.gathered.logs}/7 logs · ${s.milestones.gathered.stone}/5 stone`},
- {name:"First Shelter",text:"Craft and place a tent using your workbench.",unlock:"Storage Chest",done:s=>s.buildings.some(b=>b.type==="tent"),progress:s=>"Build a tent"},
- {name:"Stockpile Supplies",text:"Build a chest and deposit five items.",unlock:"Log Cabin",done:s=>s.buildings.some(b=>b.type==="chest")&&s.milestones.stored>=5,progress:s=>`${s.milestones.stored}/5 items deposited`},
- {name:"Permanent Homestead",text:"Build a log cabin.",unlock:"Garden and Water Collector",done:s=>s.buildings.some(b=>b.type==="cabin"),progress:s=>"Build a cabin"},
- {name:"Self-Sufficiency",text:"Harvest berries from a garden and drink from a collector.",unlock:"First Winter",done:s=>s.milestones.harvestedGarden>0&&s.milestones.collectorDrinks>0,progress:s=>`${s.milestones.harvestedGarden}/1 garden · ${s.milestones.collectorDrinks}/1 collector`},
- {name:"Frontier Pioneer",text:"Reach Day 7.",unlock:"Long Frontier",done:s=>s.day>=7,progress:s=>`Day ${s.day}/7`},
- {name:"The Long Frontier",text:"Survive 365 days.",unlock:"Legendary Survivor",done:s=>s.day>=365,progress:s=>`Day ${s.day}/365`}
+{name:"First Supplies",text:"Gather 5 sticks and 3 pebbles for your first workbench.",unlock:"First Workbench",done:s=>s.milestones.gathered.sticks>=5&&s.milestones.gathered.pebbles>=3,progress:s=>`${s.milestones.gathered.sticks}/5 sticks · ${s.milestones.gathered.pebbles}/3 pebbles`},
+{name:"Establish a Workbench",text:"Use Build Workbench and click a clear location.",unlock:"Workbench Crafting",done:s=>s.buildings.some(b=>b.type==="workbench"),progress:s=>"Build your first workbench"},
+{name:"Frontier Tools",text:"Click the workbench and craft a stone axe and a pickaxe.",unlock:"Resource Harvesting",done:s=>s.tools.axe&&s.tools.pickaxe,progress:s=>`Axe ${s.tools.axe?"✓":"✕"} · Pickaxe ${s.tools.pickaxe?"✓":"✕"}`},
+{name:"Gather Logs and Stone",text:"Harvest at least 7 logs and 5 mined stone using tools.",unlock:"Tent",done:s=>s.milestones.gathered.logs>=7&&s.milestones.gathered.stone>=5,progress:s=>`${s.milestones.gathered.logs}/7 logs · ${s.milestones.gathered.stone}/5 stone`},
+{name:"First Shelter",text:"Craft and place a tent using your workbench.",unlock:"Storage Chest",done:s=>s.buildings.some(b=>b.type==="tent"),progress:s=>"Build a tent"},
+{name:"Stockpile Supplies",text:"Build a chest and deposit five items.",unlock:"Log Cabin",done:s=>s.buildings.some(b=>b.type==="chest")&&s.milestones.stored>=5,progress:s=>`${s.milestones.stored}/5 items deposited`},
+{name:"Permanent Homestead",text:"Build a log cabin.",unlock:"Garden and Water Collector",done:s=>s.buildings.some(b=>b.type==="cabin"),progress:s=>"Build a cabin"},
+{name:"Self-Sufficiency",text:"Harvest berries from a garden and drink from a collector.",unlock:"First Winter",done:s=>s.milestones.harvestedGarden>0&&s.milestones.collectorDrinks>0,progress:s=>`${s.milestones.harvestedGarden}/1 garden · ${s.milestones.collectorDrinks}/1 collector`},
+{name:"Frontier Pioneer",text:"Reach Day 7.",unlock:"Long Frontier",done:s=>s.day>=7,progress:s=>`Day ${s.day}/7`},
+{name:"The Long Frontier",text:"Survive 365 days.",unlock:"Legendary Survivor",done:s=>s.day>=365,progress:s=>`Day ${s.day}/365`}
 ];
 function checkMissions(announce=true){
- while(state.mission<MISSIONS.length&&MISSIONS[state.mission].done(state)){
-  let m=MISSIONS[state.mission++];
-  if(announce)notice("Mission complete: "+m.name+"! Unlocked "+m.unlock);
- }
+while(state.mission<MISSIONS.length&&MISSIONS[state.mission].done(state)){
+let m=MISSIONS[state.mission++];
+if(announce)notice("Mission complete: "+m.name+"! Unlocked "+m.unlock);
+}
 }
 function canPlace(type,x,y){
- let r=BUILDINGS[type].radius;
- if(x<r+20||x>WW-r-20||y<r+50||y>WH-r-20)return false;
- let d=dist(state.player,{x,y});
- if(d>205||d<r+32)return false;
- for(let u of [-r,0,r])
-  for(let v of [-r,0,r])
-   if(water(x+u,y+v)||water(x+u,y+v-25))return false;
- for(let f of state.fires)
-  if(dist(f,{x,y})<r+25)return false;
- for(let b of state.buildings)
-  if(dist(b,{x,y})<r+BUILDINGS[b.type].radius+12)return false;
- for(let n of nodes)
-  if(available(n)&&["tree","rock"].includes(n.type)&&
-     dist(n,{x,y})<r+15)return false;
- return true;
+if(type==="trough")return !!penAt(x,y)&&dist(state.player,{x,y})<205&&!state.buildings.some(b=>b.type==="trough"&&dist(b,{x,y})<35);
+let r=BUILDINGS[type].radius;
+if(x<r+20||x>WW-r-20||y<r+50||y>WH-r-20)return false;
+let d=dist(state.player,{x,y});
+if(d>205||d<r+32)return false;
+for(let u of [-r,0,r])
+for(let v of [-r,0,r])
+if(water(x+u,y+v)||water(x+u,y+v-25))return false;
+for(let f of state.fires)
+if(dist(f,{x,y})<r+25)return false;
+for(let b of state.buildings)
+if(dist(b,{x,y})<r+BUILDINGS[b.type].radius+12)return false;
+for(let n of nodes)
+if(available(n)&&["tree","rock"].includes(n.type)&&dist(n,{x,y})<r+15)return false;
+return true;
 }
 function canWalk(x,y){
- if(!canStand(x,y))return false;
- for(const n of nodes){
-  if(available(n)&&["tree","rock"].includes(n.type)&&
-     dist({x,y},n)<(n.type==="tree"?20:17))return false;
- }
- return state.buildings.every(b=>{
-  let r=BUILDINGS[b.type].radius;
-  return !(Math.abs(x-b.x)<r+12&&Math.abs(y-b.y+8)<r*.55+10);
- });
+if(!canStand(x,y))return false;
+for(const n of nodes){
+if(available(n)&&["tree","rock"].includes(n.type)&&
+dist({x,y},n)<(n.type==="tree"?20:17))return false;
+}
+return state.buildings.every(b=>{
+if(isPen(b.type)||b.type==="trough")return true;
+let r=BUILDINGS[b.type].radius;
+return !(Math.abs(x-b.x)<r+12&&Math.abs(y-b.y+8)<r*.55+10);
+});
 }
 function place(type){
- if(!BUILDINGS[type]||state.dead)return;
- if(!requireStation())return;
- let b=BUILDINGS[type];
- if(state.mission<b.unlock)
-  return notice("Complete mission "+b.unlock+" to unlock "+b.name);
- if(!has(b.cost))return notice("Requires "+costs(b.cost));
- placing=type;upgrading=null;
- closeCraft();
- $("placeHint").style.display="block";
- $("cancelPlacement").hidden=false;
- $("cancelPlacement").textContent="✕ Cancel Placement";
- notice("Move nearby and click a clear place to construct "+b.name+".");
+if(!BUILDINGS[type]||state.dead)return;
+if(!requireStation())return;
+let b=BUILDINGS[type];
+if(state.mission<b.unlock)return notice("Complete mission "+b.unlock+" to unlock "+b.name);
+if(!has(b.cost))return notice("Requires "+costs(b.cost));
+placing=type;upgrading=null;
+closeCraft();
+$("placeHint").style.display="block";
+$("cancelPlacement").hidden=false;
+$("cancelPlacement").textContent="✕ Cancel Placement";
+notice("Move nearby and click a clear place to construct "+b.name+".");
 }
 function buildAt(x,y){
- if(!placing||state.dead)return;
- let type=placing,cfg=BUILDINGS[type];
- x=Math.round(x/16)*16;
- y=Math.round(y/16)*16;
- if(!canPlace(type,x,y))
-  return notice("Choose a clear green location close to you.");
- if(!spend(cfg.cost))return notice("Not enough resources.");
- state.buildings.push({
-  id:"b"+Date.now()+state.buildings.length,
-  type,x,y,level:1,storage:{},progress:0,charges:0,
-  planted:false,ripe:false
- });
- for(let n of nodes){
-  if(available(n)&&["branch","pebble","berry"].includes(n.type)&&
-     dist(n,{x,y})<cfg.radius+5)state.gathered[n.id]=true;
- }
- placing=null;
- $("placeHint").style.display="none";
- $("cancelPlacement").hidden=true;
- notice(cfg.name+" constructed!");
- checkMissions();renderUI();save();
+if(!placing||state.dead)return;
+let type=placing,cfg=BUILDINGS[type];
+x=Math.round(x/16)*16;
+y=Math.round(y/16)*16;
+if(!canPlace(type,x,y))return notice("Choose a clear green location close to you.");
+if(!spend(cfg.cost))return notice("Not enough resources.");
+const pen=type==="trough"?penAt(x,y):null;
+state.buildings.push({
+id:"b"+Date.now()+state.buildings.length,
+type,x,y,level:1,storage:{},progress:0,charges:0,
+planted:false,ripe:false,gateOpen:false,feed:0,products:{},
+livestockTimer:0,breedTimer:0,bait:0,penId:pen?.id||null
+});
+for(let n of nodes){
+if(available(n)&&["branch","pebble","berry"].includes(n.type)&&
+dist(n,{x,y})<cfg.radius+5)state.gathered[n.id]=true;
+}
+placing=null;
+$("placeHint").style.display="none";
+$("cancelPlacement").hidden=true;
+notice(cfg.name+" constructed!");
+checkMissions();renderUI();save();
 }
 function nearestUpgrade(type){
- return state.buildings.filter(b=>
-  b.type===type&&b.level<2&&dist(b,state.player)<135)
-  .sort((a,b)=>dist(a,state.player)-dist(b,state.player))[0]||null;
+return state.buildings.filter(b=>b.type===type&&b.level<2&&dist(b,state.player)<135)
+.sort((a,b)=>dist(a,state.player)-dist(b,state.player))[0]||null;
 }
 function armUpgrade(type){
- if(!requireStation())return;
- if(!state.buildings.some(b=>b.type===type&&b.level<2))
-  return notice("No Level 1 "+BUILDINGS[type].name+" exists yet.");
- if(!has(UPGRADES[type]))return notice("Requires "+costs(UPGRADES[type]));
- upgrading=type;placing=null;
- closeCraft();
- $("placeHint").style.display="block";
- $("cancelPlacement").hidden=false;
- $("cancelPlacement").textContent="✕ Cancel Upgrade";
- notice("Walk to a Level 1 "+BUILDINGS[type].name+" and click it to upgrade.");
+if(!requireStation())return;
+if(!state.buildings.some(b=>b.type===type&&b.level<2))
+return notice("No Level 1 "+BUILDINGS[type].name+" exists yet.");
+if(!has(UPGRADES[type]))return notice("Requires "+costs(UPGRADES[type]));
+upgrading=type;placing=null;
+closeCraft();
+$("placeHint").style.display="block";
+$("cancelPlacement").hidden=false;
+$("cancelPlacement").textContent="✕ Cancel Upgrade";
+notice("Walk to a Level 1 "+BUILDINGS[type].name+" and click it to upgrade.");
 }
 function upgrade(b){
- if(!upgrading)return notice("Select an upgrade at your workbench first.");
- if(!b||b.type!==upgrading)return notice("Click a Level 1 "+BUILDINGS[upgrading].name+" to upgrade it.");
- if(dist(b,state.player)>=135)return notice("Walk closer to the target structure.");
- if(b.level>=2)return notice("Already fully upgraded.");
- const cost=UPGRADES[b.type];
- if(!spend(cost))return notice("Requires "+costs(cost));
- b.level=2;
- upgrading=null;
- $("placeHint").style.display="none";
- $("cancelPlacement").hidden=true;
- notice(BUILDINGS[b.type].name+" upgraded to Level 2!");
- renderUI();save();
+if(!upgrading)return notice("Select an upgrade at your workbench first.");
+if(!b||b.type!==upgrading)return notice("Click a Level 1 "+BUILDINGS[upgrading].name+" to upgrade it.");
+if(dist(b,state.player)>=135)return notice("Walk closer to the target structure.");
+if(b.level>=2)return notice("Already fully upgraded.");
+let cost=UPGRADES[b.type];
+if(!spend(cost))return notice("Requires "+costs(cost));
+b.level=2;upgrading=null;
+$("placeHint").style.display="none";
+$("cancelPlacement").hidden=true;
+notice(BUILDINGS[b.type].name+" upgraded to Level 2!");
+renderUI();save();
 }
 
-// Add any future tool or survival recipe here.
-// The workbench automatically reads this registry.
 const CRAFT_RECIPES=[
- {id:"axe",tab:"tools",name:"Stone Axe",icon:"🪓",cost:{sticks:3,pebbles:2},owned:()=>state.tools.axe,run:()=>craftTool("axe")},
- {id:"pickaxe",tab:"tools",name:"Stone Pickaxe",icon:"⛏️",cost:{sticks:4,pebbles:3},owned:()=>state.tools.pickaxe,run:()=>craftTool("pickaxe")},
- {id:"fire",tab:"survival",name:"Build Campfire",icon:"🔥",cost:{sticks:5,pebbles:3},status:()=>nearFire()?"Fire already nearby":null,run:makeFire},
- {id:"refuel",tab:"survival",name:"Refuel Campfire",icon:"🪵",costText:"3 sticks or 1 log",status:()=>!nearFire()?"Must stand near a burning fire":state.inventory.sticks<3&&state.inventory.logs<1?"Need fuel":null,run:refuel},
- {id:"rations",tab:"survival",name:"Trail Rations",icon:"🥫",cost:{berries:3,sticks:1},status:()=>!nearStructure("workbench")?"Requires nearby workbench":null,run:craftRations}
+{id:"axe",tab:"tools",name:"Stone Axe",icon:"🪓",cost:{sticks:3,pebbles:2},owned:()=>state.tools.axe,run:()=>craftTool("axe")},
+{id:"pickaxe",tab:"tools",name:"Stone Pickaxe",icon:"⛏️",cost:{sticks:4,pebbles:3},owned:()=>state.tools.pickaxe,run:()=>craftTool("pickaxe")},
+{id:"woolWrap",tab:"tools",name:"Wool Wrap",icon:"🧣",cost:{wool:4,sticks:2},owned:()=>state.tools.woolWrap,run:()=>{if(requireStation()&&spend({wool:4,sticks:2})){state.tools.woolWrap=true;notice("Wool Wrap crafted: better cold protection.");renderUI();save()}}},
+{id:"fire",tab:"survival",name:"Build Campfire",icon:"🔥",cost:{sticks:5,pebbles:3},status:()=>nearFire()?"Fire already nearby":null,run:makeFire},
+{id:"refuel",tab:"survival",name:"Refuel Campfire",icon:"🪵",costText:"3 sticks or 1 log",status:()=>!nearFire()?"Must stand near a burning fire":state.inventory.sticks<3&&state.inventory.logs<1?"Need fuel":null,run:refuel},
+{id:"rations",tab:"survival",name:"Trail Rations",icon:"🥫",cost:{berries:3,sticks:1},status:()=>!nearStructure("workbench")?"Requires nearby workbench":null,run:craftRations}
 ];
 function recipes(){
- return [
-  ...CRAFT_RECIPES,
-  ...Object.entries(BUILDINGS).map(([id,b])=>({
-   id:"build:"+id,tab:"buildings",name:b.name,icon:b.icon,
-   cost:b.cost,unlock:b.unlock,run:()=>place(id)
-  })),
-  ...Object.entries(UPGRADES).map(([id,cost])=>({
-   id:"upgrade:"+id,tab:"upgrades",
-   name:"Upgrade "+BUILDINGS[id].name,icon:BUILDINGS[id].icon,
-   cost,unlock:BUILDINGS[id].unlock,
-   status:()=>!state.buildings.some(b=>b.type===id&&b.level<2)?"Requires a Level 1 structure":null,
-   run:()=>armUpgrade(id)
-  }))
- ];
+return [
+...CRAFT_RECIPES,
+...Object.entries(BUILDINGS).map(([id,b])=>({
+id:"build:"+id,tab:"buildings",name:b.name,icon:b.icon,
+cost:b.cost,unlock:b.unlock,run:()=>place(id)
+})),
+...Object.entries(UPGRADES).map(([id,cost])=>({
+id:"upgrade:"+id,tab:"upgrades",
+name:"Upgrade "+BUILDINGS[id].name,icon:BUILDINGS[id].icon,
+cost,unlock:BUILDINGS[id].unlock,
+status:()=>!state.buildings.some(b=>b.type===id&&b.level<2)?"Requires a Level 1 structure":null,
+run:()=>armUpgrade(id)
+}))
+];
 }
 function recipeState(r){
- if(r.owned?.())return "Already crafted";
- if(r.unlock!==undefined&&state.mission<r.unlock)
-  return "Unlock after mission "+r.unlock;
- if(r.status?.())return r.status();
- if(r.cost&&!has(r.cost))return "Need more materials";
- return null;
+if(r.owned?.())return "Already crafted";
+if(r.unlock!==undefined&&state.mission<r.unlock)return "Unlock after mission "+r.unlock;
+if(r.status?.())return r.status();
+if(r.cost&&!has(r.cost))return "Need more materials";
+return null;
 }
 function renderRecipes(){
- if(!$("craftDialog").open)return;
- $("recipes").innerHTML=recipes().filter(r=>r.tab===selectedTab).map(r=>{
-  let status=recipeState(r);
-  return `<button class="recipe" data-recipe="${r.id}" ${status?"disabled":""}>
-   <strong>${r.icon} ${r.name}</strong>
-   <small>${r.costText||costs(r.cost||{})}</small>
-   <em>${status||"✓ Ready"}</em></button>`;
- }).join("");
- for(let b of $("tabs").querySelectorAll("[data-tab]"))
-  b.classList.toggle("active",b.dataset.tab===selectedTab);
- $("materials").textContent=["sticks","pebbles","logs","stone","berries"]
-  .map(k=>`${ITEMS[k][1]}: ${state.inventory[k]}`).join(" · ");
+if(!$("craftDialog").open)return;
+$("recipes").innerHTML=recipes().filter(r=>r.tab===selectedTab).map(r=>{
+let status=recipeState(r);
+return `<button class="recipe" data-recipe="${r.id}" ${status?"disabled":""}>
+<strong>${r.icon} ${r.name}</strong>
+<small>${r.costText||costs(r.cost||{})}</small>
+<em>${status||"✓ Ready"}</em>
+</button>`;
+}).join("");
+for(let b of $("tabs").querySelectorAll("[data-tab]"))
+b.classList.toggle("active",b.dataset.tab===selectedTab);
+$("materials").textContent=["sticks","pebbles","logs","stone","berries"]
+.map(k=>`${ITEMS[k][1]}: ${state.inventory[k]}`).join(" · ");
 }
 function openCraft(tab="tools",bench=null){
- if(state.dead||anyModal())return;
- if(!bench||bench.type!=="workbench"||!state.buildings.includes(bench)||
-    dist(bench,state.player)>=135)
-  return notice("Move beside a workbench and click it to craft.");
- activeWorkbench=bench;
- selectedTab=tab;
- previousPause=state.paused;
- state.paused=true;
- $("stationInfo").textContent= "Craft at this Level "+bench.level+" workbench. All materials come from your backpack.";
- $("craftDialog").showModal();
- renderRecipes();renderUI();
+if(state.dead||anyModal())return;
+if(!bench||bench.type!=="workbench"||!state.buildings.includes(bench)||
+dist(bench,state.player)>=135)
+return notice("Move beside a workbench and click it to craft.");
+activeWorkbench=bench;
+selectedTab=tab;
+previousPause=state.paused;
+state.paused=true;
+$("stationInfo").textContent="Craft at this Level "+bench.level+" workbench. All materials come from your backpack.";
+$("craftDialog").showModal();
+renderRecipes();renderUI();
 }
 function closeCraft(){
- if(!$("craftDialog").open)return;
- $("craftDialog").close();
- state.paused=previousPause;
- renderUI();
+if(!$("craftDialog").open)return;
+$("craftDialog").close();
+state.paused=previousPause;
+renderUI();
 }
 function anyModal(){
- return ["craftDialog","inventoryDialog","helpDialog",
-         "structureDialog","storageDialog"].some(id=>$(id).open);
+return ["craftDialog","inventoryDialog","helpDialog",
+"structureDialog","storageDialog","animalDialog","penDialog","troughDialog"]
+.some(id=>$(id).open);
 }
 function craftRations(){
- if(!requireStation())return;
- let b=activeWorkbench;
- if(!b)return notice("Stand by a workbench.");
- if(!spend({berries:3,sticks:1}))
-  return notice("Need 3 berries and 1 stick.");
- state.inventory.rations+=b.level>1?3:2;
- notice("Crafted trail rations!");
- renderUI();save();
+if(!requireStation())return;
+let b=activeWorkbench;
+if(!b)return notice("Stand by a workbench.");
+if(!spend({berries:3,sticks:1}))return notice("Need 3 berries and 1 stick.");
+state.inventory.rations+=b.level>1?3:2;
+notice("Crafted trail rations!");
+renderUI();save();
 }
-
-
 function describe(b){
- let cfg=BUILDINGS[b.type];
- $("structureTitle").textContent=`${cfg.icon} ${cfg.name} · Level ${b.level}`;
- let detail=cfg.description;
- if(b.type==="garden"){
-  detail+=b.ripe?" Ready to harvest!":
-   b.planted?` Growing: ${Math.floor(b.progress)}/240 minutes`:
-   " Needs 2 berries to plant";
- }
- if(b.type==="collector"){
-  detail+=` Water charges: ${b.charges}/${b.level>1?6:3}`;
- }
- $("structureInfo").textContent=detail;
- $("structureUse").textContent={
-  tent:"Sleep 4 Hours",
-  cabin:"Sleep 6 Hours",
-  garden:b.ripe?"Harvest Berries":b.planted?"Check Growth":"Plant Berries",
-  collector:"Drink Stored Water"
- }[b.type];
+let cfg=BUILDINGS[b.type];
+$("structureTitle").textContent=`${cfg.icon} ${cfg.name} · Level ${b.level}`;
+let detail=cfg.description;
+if(b.type==="garden")
+detail+=b.ripe?" Ready to harvest!":
+b.planted?` Growing: ${Math.floor(b.progress)}/240 minutes`:" Needs 2 berries to plant";
+if(b.type==="collector")
+detail+=` Water charges: ${b.charges}/${b.level>1?6:3}`;
+$("structureInfo").textContent=detail;
+$("structureUse").textContent={
+tent:"Sleep 4 Hours",cabin:"Sleep 6 Hours",
+garden:b.ripe?"Harvest Berries":b.planted?"Check Growth":"Plant Berries",
+collector:"Drink Stored Water"
+}[b.type];
 }
 function capacity(b){return b.level>1?100:40}
 function stored(b){
- return Object.values(b.storage).reduce((a,n)=>a+(+n||0),0);
+return Object.values(b.storage).reduce((a,n)=>a+(+n||0),0);
 }
 function showStorage(b){
- $("storageInfo").textContent=`Stored ${stored(b)}/${capacity(b)} items`;
- $("storageTable").innerHTML=`
- <table class="storage">
-  <tr><th>Item</th><th>Backpack</th><th>Chest</th>
-      <th>Deposit</th><th>Withdraw</th></tr>
-  ${Object.entries(ITEMS).map(([k,v])=>`
-   <tr>
-    <td>${v[0]} ${v[1]}</td>
-    <td>${state.inventory[k]||0}</td>
-    <td>${b.storage[k]||0}</td>
-    <td><button data-transfer="in" data-item="${k}" data-qty="1">+1</button>
-        <button data-transfer="in" data-item="${k}" data-qty="5">+5</button></td>
-    <td><button data-transfer="out" data-item="${k}" data-qty="1">−1</button>
-        <button data-transfer="out" data-item="${k}" data-qty="5">−5</button></td>
-   </tr>`).join("")}
- </table>`;
+$("storageInfo").textContent=`Stored ${stored(b)}/${capacity(b)} items`;
+$("storageTable").innerHTML=`
+<table class="storage">
+<tr><th>Item</th><th>Backpack</th><th>Chest</th><th>Deposit</th><th>Withdraw</th></tr>
+${Object.entries(ITEMS).map(([k,v])=>`
+<tr>
+<td>${v[0]} ${v[1]}</td>
+<td>${state.inventory[k]||0}</td>
+<td>${b.storage[k]||0}</td>
+<td><button data-transfer="in" data-item="${k}" data-qty="1">+1</button>
+<button data-transfer="in" data-item="${k}" data-qty="5">+5</button></td>
+<td><button data-transfer="out" data-item="${k}" data-qty="1">−1</button>
+<button data-transfer="out" data-item="${k}" data-qty="5">−5</button></td>
+</tr>`).join("")}
+</table>`;
 }
 function transfer(k,n,into){
- let b=active;
- if(!b||b.type!=="chest"||dist(b,state.player)>=135)return;
- if(into){
-  n=Math.min(n,state.inventory[k]||0,capacity(b)-stored(b));
-  if(n<1)return notice("Chest full or no supplies available.");
-  state.inventory[k]-=n;
-  b.storage[k]=(b.storage[k]||0)+n;
-  state.milestones.stored+=n;
- }else{
-  n=Math.min(n,b.storage[k]||0);
-  if(n<1)return notice("No stored items available.");
-  b.storage[k]-=n;
-  state.inventory[k]+=n;
- }
- showStorage(b);checkMissions();renderUI();save();
+let b=active;
+if(!b||b.type!=="chest"||dist(b,state.player)>=135)return;
+if(into){
+n=Math.min(n,state.inventory[k]||0,capacity(b)-stored(b));
+if(n<1)return notice("Chest full or no supplies available.");
+state.inventory[k]-=n;
+b.storage[k]=(b.storage[k]||0)+n;
+state.milestones.stored+=n;
+}else{
+n=Math.min(n,b.storage[k]||0);
+if(n<1)return notice("No stored items available.");
+b.storage[k]-=n;
+state.inventory[k]+=n;
+}
+showStorage(b);checkMissions();renderUI();save();
 }
 function useStructure(b){
- switch(b.type){
-  case "tent":
-  case "cabin":
-   $("structureDialog").close();
-   state.paused=false;
-   return rest();
-
-  case "garden":
-   if(b.ripe){
-    state.inventory.berries+=b.level>1?11:6;
-    b.ripe=false;b.planted=false;b.progress=0;
-    state.milestones.harvestedGarden++;
-    notice("Garden harvested!");
-   }else if(!b.planted){
-    if(state.inventory.berries<2)
-     return notice("Requires two berries to plant.");
-    state.inventory.berries-=2;
-    b.planted=true;b.progress=0;
-    notice("Garden planted!");
-   }else{
-    notice(`Growing: ${Math.floor(b.progress)}/240 minutes`);
-   }
-   break;
-
-  case "collector":
-   if(b.charges<1)
-    return notice("Collector filling: one charge every three game hours.");
-   if(state.stats.thirst>=99)return notice("You're not thirsty.");
-   b.charges--;
-   state.stats.thirst=clamp(state.stats.thirst+60,0,100);
-   state.milestones.collectorDrinks++;
-   notice("Drank stored water.");
-   break;
- }
- checkMissions();describe(b);renderUI();save();
+switch(b.type){
+case "tent":
+case "cabin":
+$("structureDialog").close();
+state.paused=false;
+return rest();
+case "garden":
+if(b.ripe){
+state.inventory.berries+=b.level>1?11:6;
+b.ripe=false;b.planted=false;b.progress=0;
+state.milestones.harvestedGarden++;
+notice("Garden harvested!");
+}else if(!b.planted){
+if(state.inventory.berries<2)return notice("Requires two berries to plant.");
+state.inventory.berries-=2;
+b.planted=true;b.progress=0;
+notice("Garden planted!");
+}else notice(`Growing: ${Math.floor(b.progress)}/240 minutes`);
+break;
+case "collector":
+if(b.charges<1)return notice("Collector filling: one charge every three game hours.");
+if(state.stats.thirst>=99)return notice("You're not thirsty.");
+b.charges--;
+state.stats.thirst=clamp(state.stats.thirst+60,0,100);
+state.milestones.collectorDrinks++;
+notice("Drank stored water.");
+break;
+}
+checkMissions();describe(b);renderUI();save();
 }
 function openStructure(b){
- if(state.paused||state.dead)return;
- if(dist(b,state.player)>=135)
-  return notice("Walk closer to use this structure.");
- if(b.type==="workbench")return openCraft("tools",b);
- active=b;state.paused=true;
- if(b.type==="chest"){
-  showStorage(b);
-  $("storageDialog").showModal();
- }else{
-  describe(b);
-  $("structureDialog").showModal();
- }
- renderUI();
+if(state.paused||state.dead)return;
+if(isPen(b.type))return openPen(b);
+if(b.type==="trough")return openTrough(b);
+if(dist(b,state.player)>=135)return notice("Walk closer to use this structure.");
+if(b.type==="workbench")return openCraft("tools",b);
+active=b;state.paused=true;
+if(b.type==="chest"){
+showStorage(b);
+$("storageDialog").showModal();
+}else{
+describe(b);
+$("structureDialog").showModal();
+}
+renderUI();
 }
 function cancelPlace(){
- placing=null;upgrading=null;
- $("placeHint").style.display="none";
- $("cancelPlacement").hidden=true;
+placing=null;upgrading=null;
+$("placeHint").style.display="none";
+$("cancelPlacement").hidden=true;
 }
 function reset(){
- if(!state.dead&&!confirm("Erase your progress and begin again?"))return;
- for(let k of [SAVE,...OLD]){
-  try{localStorage.removeItem(k)}catch(e){}
- }
- for(let id of ["craftDialog","inventoryDialog","structureDialog",
-                "storageDialog","helpDialog"])
-  if($(id).open)$(id).close();
- state=fresh();active=null;activeWorkbench=null;cancelPlace();hover=null;
- $("death").style.display="none";
- notice("New wilderness journey begins.");
- renderUI();save();
+if(!state.dead&&!confirm("Erase your progress and begin again?"))return;
+for(let k of [SAVE,...OLD]){
+try{localStorage.removeItem(k)}catch(e){}
+}
+for(let id of ["craftDialog","inventoryDialog","structureDialog",
+"storageDialog","helpDialog","animalDialog","penDialog","troughDialog"])
+if($(id).open)$(id).close();
+state=fresh();state.animals=makeAnimals();
+active=null;activeWorkbench=null;cancelPlace();hover=null;
+$("death").style.display="none";
+notice("New wilderness journey begins.");
+renderUI();save();
 }
 function die(){
- state.dead=true;state.stats.health=0;
- for(let k of [SAVE,...OLD]){
-  try{localStorage.removeItem(k)}catch(e){}
- }
- $("death").style.display="flex";renderUI();
+state.dead=true;state.stats.health=0;
+for(let k of [SAVE,...OLD]){
+try{localStorage.removeItem(k)}catch(e){}
 }
-
+$("death").style.display="flex";renderUI();
+}
 function inventoryRender(){
- if(!$("inventoryDialog").open)return;
- $("inventoryGrid").innerHTML=Object.entries(ITEMS)
-  .map(([k,[icon,name]])=>`
-   <div class="invSlot">
-    <span class="invQty">${state.inventory[k]||0}</span>
-    <span class="invIcon">${icon}</span>
-    <small>${name}</small>
-   </div>`).join("");
- for(let i=0;i<6;i++){
-  $("inventoryGrid").innerHTML+='<div class="invSlot" aria-label="Empty slot"></div>';
- }
- $("inventoryTools").innerHTML=`
-  <span>🪓 Axe: ${state.tools.axe?"Equipped":"Not crafted"}</span>
-  <span>⛏️ Pickaxe: ${state.tools.pickaxe?"Equipped":"Not crafted"}</span>`;
+if(!$("inventoryDialog").open)return;
+$("inventoryGrid").innerHTML=Object.entries(ITEMS).map(([k,[icon,name]])=>`
+<div class="invSlot">
+<span class="invQty">${state.inventory[k]||0}</span>
+<span class="invIcon">${icon}</span>
+<small>${name}</small>
+</div>`).join("");
+for(let i=0;i<6;i++)
+$("inventoryGrid").innerHTML+='<div class="invSlot" aria-label="Empty slot"></div>';
+$("inventoryTools").innerHTML=`
+<span>🪓 Axe: ${state.tools.axe?"Equipped":"Not crafted"}</span>
+<span>⛏️ Pickaxe: ${state.tools.pickaxe?"Equipped":"Not crafted"}</span>`;
 }
 function openInventory(){
- if(state.dead||anyModal())return;
- modalPause=state.paused;state.paused=true;
- $("inventoryDialog").showModal();
- inventoryRender();renderUI();
+if(state.dead||anyModal())return;
+modalPause=state.paused;state.paused=true;
+$("inventoryDialog").showModal();
+inventoryRender();renderUI();
 }
 function closeInventory(){
- if($("inventoryDialog").open)$("inventoryDialog").close();
+if($("inventoryDialog").open)$("inventoryDialog").close();
 }
 function renderUI(){
- if(!state)return;
- let colors={
-  health:"#de695c",hunger:"#e6b55c",thirst:"#58b4eb",
-  energy:"#87d27b",warmth:"#e99159"
- };
- $("stats").innerHTML=Object.entries(state.stats).map(([k,v])=>`
-  <div class="stat">
-   ${k[0].toUpperCase()+k.slice(1)}
-   <span>${Math.ceil(v)}/100</span>
-   <div class="bar"><div class="fill"
-    style="width:${clamp(v,0,100)}%;background:${colors[k]}"></div></div>
-  </div>`).join("");
-
- $("items").innerHTML=Object.entries(ITEMS).map(([k,[icon,name]])=>
-  `<span class="item">${icon} ${name}: ${state.inventory[k]||0}</span>`
- ).join("")+
- `<span class="equip">🪓 ${state.tools.axe?"Axe Equipped":"No Axe"}</span>
-  <span class="equip">⛏️ ${state.tools.pickaxe?"Pickaxe Equipped":"No Pickaxe"}</span>`;
-
- let m=MISSIONS[Math.min(MISSIONS.length-1,state.mission)];
- $("mission").innerHTML=`
-  <strong>MISSION ${Math.min(state.mission+1,MISSIONS.length)}:
-  ${m.name}</strong> · ${m.text}
-  <div>${m.progress(state)} · Unlock: ${m.unlock}</div>`;
-
- $("journal").textContent=
-  `Day ${state.day} · ${state.totalGathered} resources gathered · ${Math.floor(state.distanceWalked)} m traveled`;
- $("day").textContent="DAY "+state.day;
- $("clock").textContent=
-  String(Math.floor(state.time/60)).padStart(2,"0")+":"+
-  String(Math.floor(state.time%60)).padStart(2,"0");
- $("weather").textContent=night()?"🌙 Cold Night":"☀ Clear Skies";
- $("pauseBtn").textContent=state.paused?"▶ Resume":"⏸ Pause";
- $("workbenchBtn").title=state.buildings.some(b=>b.type==="workbench")?
-   "Additional workbenches: click your workbench and choose Buildings":
-   "First workbench costs 5 sticks and 3 pebbles";
- $("fullBtn").textContent=document.fullscreenElement?
-  "⛶ Exit Fullscreen":"⛶ Fullscreen";
-
- for(let id of ["eatBtn","rationBtn","drinkBtn","restBtn"]){
-  let ok={
-   eatBtn:state.inventory.berries>0,
-   rationBtn:state.inventory.rations>0,
-   drinkBtn:nearWater(),
-   restBtn:!!(nearShelter()||nearFire())
-  }[id];
-  $(id).disabled=state.dead||!ok;
- }
- if($("craftDialog").open)renderRecipes();
- inventoryRender();
+if(!state)return;
+let colors={
+health:"#de695c",hunger:"#e6b55c",thirst:"#58b4eb",
+energy:"#87d27b",warmth:"#e99159"
+};
+$("stats").innerHTML=Object.entries(state.stats).map(([k,v])=>`
+<div class="stat">
+${k[0].toUpperCase()+k.slice(1)}
+<span>${Math.ceil(v)}/100</span>
+<div class="bar"><div class="fill"
+style="width:${clamp(v,0,100)}%;background:${colors[k]}"></div></div>
+</div>`).join("");
+$("items").innerHTML=Object.entries(ITEMS).slice(0,6).map(([k,[icon,name]])=>
+`<span class="item">${icon} ${name}: ${state.inventory[k]||0}</span>`
+).join("")+
+`<span class="equip">🪓 ${state.tools.axe?"Axe Equipped":"No Axe"}</span>
+<span class="equip">⛏️ ${state.tools.pickaxe?"Pickaxe Equipped":"No Pickaxe"}</span>`;
+let m=MISSIONS[Math.min(MISSIONS.length-1,state.mission)];
+$("mission").innerHTML=`
+<strong>MISSION ${Math.min(state.mission+1,MISSIONS.length)}: ${m.name}</strong> · ${m.text}
+<div>${m.progress(state)} · Unlock: ${m.unlock}</div>`;
+$("journal").textContent=
+`Day ${state.day} · ${state.totalGathered} resources gathered · ${Math.floor(state.distanceWalked)} m traveled · ${Object.keys(state.discovered||{}).length}/7 biomes explored`;
+renderFrontierMission();
+const biome=biomeAt(state.player.x,state.player.y);
+$("region").textContent="REGION: "+BIOMES[biome].name.toUpperCase();
+$("day").textContent="DAY "+state.day;
+$("clock").textContent=
+String(Math.floor(state.time/60)).padStart(2,"0")+":"+
+String(Math.floor(state.time%60)).padStart(2,"0");
+$("weather").textContent=night()?"🌙 Cold Night":"☀ Clear Skies";
+$("pauseBtn").textContent=state.paused?"▶ Resume":"⏸ Pause";
+$("workbenchBtn").title=state.buildings.some(b=>b.type==="workbench")?
+"Additional workbenches: click your workbench and choose Buildings":
+"First workbench costs 5 sticks and 3 pebbles";
+$("fullBtn").textContent=document.fullscreenElement?"⛶ Exit Fullscreen":"⛶ Fullscreen";
+for(let id of ["eatBtn","rationBtn","drinkBtn","restBtn"]){
+let ok={
+eatBtn:state.inventory.berries>0,
+rationBtn:state.inventory.rations>0,
+drinkBtn:nearWater(),
+restBtn:!!(nearShelter()||nearFire())
+}[id];
+$(id).disabled=state.dead||!ok;
 }
-function moveUpdate(dt){
- let p=state.player;
- let dx=Number(keys.has("KeyD")||keys.has("ArrowRight")||touchKeys.has("right"))-
-        Number(keys.has("KeyA")||keys.has("ArrowLeft")||touchKeys.has("left"));
- let dy=Number(keys.has("KeyS")||keys.has("ArrowDown")||touchKeys.has("down"))-
-        Number(keys.has("KeyW")||keys.has("ArrowUp")||touchKeys.has("up"));
-
- p.moving=!!(dx||dy);
- if(!p.moving){
-  state.stats.energy+=dt*.035;
-  return;
- }
- let len=Math.hypot(dx,dy);
- dx/=len;dy/=len;
- p.dir=Math.abs(dx)>Math.abs(dy)?
-  dx>0?"right":"left":dy>0?"down":"up";
-
- let speed=state.stats.energy<10?78:145;
- let x=p.x,y=p.y;
- if(canWalk(x+dx*speed*dt,y))p.x+=dx*speed*dt;
- if(canWalk(p.x,y+dy*speed*dt))p.y+=dy*speed*dt;
-
- let d=Math.hypot(p.x-x,p.y-y);
- if(d){
-  p.step+=dt*9;
-  state.distanceWalked+=d/10;
-  state.stats.energy-=dt*.2;
-  state.stats.thirst-=dt*.045;
- }else p.moving=false;
+if($("craftDialog").open)renderRecipes();
+inventoryRender();
 }
+ function moveUpdate(dt){
+let p=state.player;
+let dx=Number(keys.has("KeyD")||keys.has("ArrowRight")||touchKeys.has("right"))-
+Number(keys.has("KeyA")||keys.has("ArrowLeft")||touchKeys.has("left"));
+let dy=Number(keys.has("KeyS")||keys.has("ArrowDown")||touchKeys.has("down"))-
+Number(keys.has("KeyW")||keys.has("ArrowUp")||touchKeys.has("up"));
+p.moving=!!(dx||dy);
+if(!p.moving){state.stats.energy+=dt*.035;return}
+let len=Math.hypot(dx,dy);
+dx/=len;dy/=len;
+p.dir=Math.abs(dx)>Math.abs(dy)?dx>0?"right":"left":dy>0?"down":"up";
+let biome=biomeAt(p.x,p.y);
+let speed=(state.stats.energy<10?78:145)*
+(biome==="wetlands"?.72:biome==="highlands"?.85:biome==="snow"?.83:1);
+let x=p.x,y=p.y;
+if(canWalk(x+dx*speed*dt,y))p.x+=dx*speed*dt;
+if(canWalk(p.x,y+dy*speed*dt))p.y+=dy*speed*dt;
+let d=Math.hypot(p.x-x,p.y-y);
+if(d){
+p.step+=dt*9;
+state.distanceWalked+=d/10;
+state.stats.energy-=dt*.2;
+state.stats.thirst-=dt*.045;
+}else p.moving=false;
+}
+
 function update(dt){
- dt=Math.min(dt,.05);
- if(toastTime>0){
-  toastTime-=dt;
-  if(toastTime<=0)$("notice").style.opacity=0;
- }
- if(state.dead||state.paused)return;
- moveUpdate(dt);
- tickTime(dt*2);
-
- let s=state.stats;
- s.hunger-=dt*.055;
- s.thirst-=dt*.09;
- let shelter=nearShelter();
- let target=nearFire()?100:shelter?
-  shelter.type==="cabin"?
-   shelter.level>1?100:86:
-   shelter.level>1?72:52:
-  night()?22:82;
-
- s.warmth+=(target-s.warmth)*Math.min(1,dt*.065);
- if(s.hunger<=0||s.thirst<=0)s.health-=dt*.9;
- if(s.warmth<16)s.health-=dt*.48;
- if(s.energy<=0)s.health-=dt*.24;
- if(s.hunger>50&&s.thirst>50&&s.warmth>35&&s.energy>30)
-  s.health+=dt*.018;
-
- for(let k of Object.keys(s))s[k]=clamp(s[k],0,100);
- for(let f of state.fires)f.fuel=Math.max(0,f.fuel-dt*2);
-
- if(s.health<=0)die();
- checkMissions(false);
- uiElapsed+=dt;saveElapsed+=dt;
- if(uiElapsed>.3){renderUI();uiElapsed=0}
- if(saveElapsed>15){save();saveElapsed=0}
+dt=Math.min(dt,.05);
+if(toastTime>0){
+toastTime-=dt;
+if(toastTime<=0)$("notice").style.opacity=0;
+}
+if(state.dead||state.paused)return;
+moveUpdate(dt);
+tickTime(dt*2);
+let s=state.stats;
+s.hunger-=dt*.055;
+s.thirst-=dt*(biomeAt(state.player.x,state.player.y)==="badlands"?.21:.09);
+let shelter=nearShelter();
+let target=nearFire()?100:shelter?
+shelter.type==="cabin"?
+shelter.level>1?100:86:
+shelter.level>1?72:52:
+biomeAt(state.player.x,state.player.y)==="snow"?(night()?8:29):night()?22:82;
+if(state.tools?.woolWrap)target=Math.min(100,target+22);
+s.warmth+=(target-s.warmth)*Math.min(1,dt*.065);
+if(s.hunger<=0||s.thirst<=0)s.health-=dt*.9;
+if(s.warmth<16)s.health-=dt*.48;
+if(s.energy<=0)s.health-=dt*.24;
+if(s.hunger>50&&s.thirst>50&&s.warmth>35&&s.energy>30)
+s.health+=dt*.018;
+for(let k of Object.keys(s))s[k]=clamp(s[k],0,100);
+for(let f of state.fires)f.fuel=Math.max(0,f.fuel-dt*2);
+if(s.health<=0)die();
+updateAnimals(dt);
+checkMissions(false);
+uiElapsed+=dt;saveElapsed+=dt;
+if(uiElapsed>.3){renderUI();uiElapsed=0}
+if(saveElapsed>15){save();saveElapsed=0}
 }
 
 // World graphics
 function ground(cx,cy){
- ctx.fillStyle="#385e3e";ctx.fillRect(0,0,W,H);
- for(let gy=Math.floor(cy/40);gy<Math.ceil((cy+H)/40);gy++)
- for(let gx=Math.floor(cx/40);gx<Math.ceil((cx+W)/40);gx++){
-  let x=gx*40-cx,y=gy*40-cy,n=hash(gx,gy,7);
-  ctx.fillStyle=n<.2?"#35593b":n>.82?"#426543":"#3b603f";
-  ctx.fillRect(x,y,41,41);
-  if(n>.65){
-   ctx.fillStyle="#6c895b";
-   ctx.fillRect(x+7,y+12,3,8);
-   ctx.fillRect(x+21,y+19,2,5);
-  }
-  if(n<.11){
-   ctx.fillStyle="#c6b684";
-   ctx.fillRect(x+20,y+16,3,2);
-  }
- }
+ctx.fillStyle="#385e3e";ctx.fillRect(0,0,W,H);
+for(let gy=Math.floor(cy/40);gy<Math.ceil((cy+H)/40);gy++)
+for(let gx=Math.floor(cx/40);gx<Math.ceil((cx+W)/40);gx++){
+let x=gx*40-cx,y=gy*40-cy,n=hash(gx,gy,7);
+let biome=biomeAt(gx*40,gy*40);
+ctx.fillStyle=biomeColor(biome,n,gx,gy);
+ctx.fillRect(x,y,41,41);
+if(n>.65&&biome!=="snow"&&biome!=="badlands"){
+ctx.fillStyle="#6c895b";
+ctx.fillRect(x+7,y+12,3,8);
+ctx.fillRect(x+21,y+19,2,5);
+}
+if(n<.11){
+ctx.fillStyle="#c6b684";
+ctx.fillRect(x+20,y+16,3,2);
+}
+}
 }
 function drawLakes(cx,cy){
- for(let l of LAKES){
-  if(Math.abs(l.x-cx-W/2)>W/2+l.rx+30||
-     Math.abs(l.y-cy-H/2)>H/2+l.ry+30)continue;
-  for(let factor of [1.06,1,.88]){
-   ctx.beginPath();
-   ctx.ellipse(l.x-cx,l.y-cy,l.rx*factor,l.ry*factor,0,0,Math.PI*2);
-   ctx.fillStyle=factor===1.06?"#c1b186":
-                 factor===1?"#286e81":"#347f94";
-   ctx.fill();
-  }
-  ctx.strokeStyle="#90bfc3";
-  ctx.globalAlpha=.25;
-  for(let i=0;i<6;i++){
-   let y=l.y-cy-l.ry/2+i*30;
-   ctx.beginPath();
-   ctx.moveTo(l.x-cx-l.rx*.45,y);
-   ctx.lineTo(l.x-cx+l.rx*.45,y);
-   ctx.stroke();
-  }
-  ctx.globalAlpha=1;
- }
+for(let l of LAKES){
+if(Math.abs(l.x-cx-W/2)>W/2+l.rx+30||
+Math.abs(l.y-cy-H/2)>H/2+l.ry+30)continue;
+for(let factor of [1.06,1,.88]){
+ctx.beginPath();
+ctx.ellipse(l.x-cx,l.y-cy,l.rx*factor,l.ry*factor,0,0,Math.PI*2);
+ctx.fillStyle=factor===1.06?"#c1b186":factor===1?"#286e81":"#347f94";
+ctx.fill();
+}
+ctx.strokeStyle="#90bfc3";
+ctx.globalAlpha=.25;
+for(let i=0;i<6;i++){
+let y=l.y-cy-l.ry/2+i*30;
+ctx.beginPath();
+ctx.moveTo(l.x-cx-l.rx*.45,y);
+ctx.lineTo(l.x-cx+l.rx*.45,y);
+ctx.stroke();
+}
+ctx.globalAlpha=1;
+}
+let points=[];
+for(let x=Math.max(3220,Math.floor(cx/35)*35);x<Math.min(5480,cx+W+60);x+=24){
+let y=2300+(x-3220)*.57+Math.sin(x*.004)*75;
+points.push([x-cx,y-cy]);
+}
+if(points.length>1){
+ctx.strokeStyle="#b8b293";ctx.lineWidth=92;
+ctx.lineJoin="round";ctx.lineCap="round";
+ctx.beginPath();
+points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));
+ctx.stroke();
+ctx.strokeStyle="#35849a";ctx.lineWidth=68;ctx.stroke();
+}
 }
 function tree(x,y,n){
- ctx.save();
- ctx.translate(x,y);
- ctx.scale(.85+n.variant*.35,.85+n.variant*.35);
- ctx.fillStyle="#142a2066";
- ctx.beginPath();ctx.ellipse(6,13,32,12,0,0,7);ctx.fill();
- ctx.fillStyle="#79502f";ctx.fillRect(-5,-18,10,34);
- for(let [h,w,c] of [
-  [-10,33,"#123d2d"],
-  [-31,27,"#21593b"],
-  [-51,21,"#307950"]
- ]){
-  ctx.fillStyle=c;ctx.beginPath();
-  ctx.moveTo(0,h-43);ctx.lineTo(-w,h);ctx.lineTo(w,h);ctx.fill();
- }
- ctx.fillStyle="#77a882";
- ctx.fillRect(3,-74,4,9);ctx.fillRect(-11,-27,4,9);
- ctx.restore();
+ctx.save();
+ctx.translate(x,y);
+ctx.scale(.85+n.variant*.35,.85+n.variant*.35);
+ctx.fillStyle="#142a2066";
+ctx.beginPath();ctx.ellipse(6,13,32,12,0,0,7);ctx.fill();
+ctx.fillStyle="#79502f";
+ctx.fillRect(-5,-18,10,34);
+for(let [h,w,c] of [
+[-10,33,"#123d2d"],
+[-31,27,"#21593b"],
+[-51,21,"#307950"]
+]){
+ctx.fillStyle=c;ctx.beginPath();
+ctx.moveTo(0,h-43);ctx.lineTo(-w,h);ctx.lineTo(w,h);ctx.fill();
+}
+ctx.fillStyle="#77a882";
+ctx.fillRect(3,-74,4,9);
+ctx.fillRect(-11,-27,4,9);
+ctx.restore();
 }
 function rock(x,y,n){
- let r=16+n.variant*12;
- ctx.fillStyle="#12272088";
- ctx.beginPath();ctx.ellipse(x+4,y+7,r+6,10,0,0,7);ctx.fill();
- ctx.fillStyle="#829289";
- ctx.beginPath();
- ctx.moveTo(x-r,y+5);ctx.lineTo(x-r*.7,y-r*.8);
- ctx.lineTo(x+r*.4,y-r);ctx.lineTo(x+r,y-r*.1);
- ctx.lineTo(x+r*.7,y+r*.55);ctx.fill();
- ctx.fillStyle="#b6c3b6";
- ctx.beginPath();
- ctx.moveTo(x-r*.7,y-r*.8);ctx.lineTo(x+r*.4,y-r);
- ctx.lineTo(x,y);ctx.lineTo(x-r*.6,y+2);ctx.fill();
+let r=16+n.variant*12;
+ctx.fillStyle="#12272088";
+ctx.beginPath();ctx.ellipse(x+4,y+7,r+6,10,0,0,7);ctx.fill();
+ctx.fillStyle="#829289";
+ctx.beginPath();
+ctx.moveTo(x-r,y+5);
+ctx.lineTo(x-r*.7,y-r*.8);
+ctx.lineTo(x+r*.4,y-r);
+ctx.lineTo(x+r,y-r*.1);
+ctx.lineTo(x+r*.7,y+r*.55);
+ctx.fill();
+ctx.fillStyle="#b6c3b6";
+ctx.beginPath();
+ctx.moveTo(x-r*.7,y-r*.8);
+ctx.lineTo(x+r*.4,y-r);
+ctx.lineTo(x,y);
+ctx.lineTo(x-r*.6,y+2);
+ctx.fill();
 }
 function berry(x,y){
- for(let [u,v] of [[-10,0],[9,-2],[0,-11]]){
-  ctx.fillStyle="#17452e";
-  ctx.beginPath();ctx.arc(x+u,y+v,14,0,7);ctx.fill();
- }
- ctx.fillStyle="#347e50";
- ctx.beginPath();ctx.arc(x,y-6,15,0,7);ctx.fill();
- ctx.fillStyle="#f36986";
- for(let [u,v] of [[-8,-10],[7,-14],[-1,-20],[12,-3],[-9,4]]){
-  ctx.beginPath();ctx.arc(x+u,y+v,3.5,0,7);ctx.fill();
- }
+for(let [u,v] of [[-10,0],[9,-2],[0,-11]]){
+ctx.fillStyle="#17452e";
+ctx.beginPath();ctx.arc(x+u,y+v,14,0,7);ctx.fill();
+}
+ctx.fillStyle="#347e50";
+ctx.beginPath();ctx.arc(x,y-6,15,0,7);ctx.fill();
+ctx.fillStyle="#f36986";
+for(let [u,v] of [[-8,-10],[7,-14],[-1,-20],[12,-3],[-9,4]]){
+ctx.beginPath();ctx.arc(x+u,y+v,3.5,0,7);ctx.fill();
+}
 }
 function branch(x,y,n){
- ctx.save();ctx.translate(x,y);ctx.rotate(n.variant*1.5-.75);
- ctx.strokeStyle="#ae8754";ctx.lineWidth=6;ctx.lineCap="round";
- ctx.beginPath();
- ctx.moveTo(-17,5);ctx.lineTo(15,-5);
- ctx.moveTo(-2,0);ctx.lineTo(3,-13);
- ctx.moveTo(8,-4);ctx.lineTo(15,4);
- ctx.stroke();ctx.restore();
+ctx.save();ctx.translate(x,y);
+ctx.rotate(n.variant*1.5-.75);
+ctx.strokeStyle="#ae8754";ctx.lineWidth=6;ctx.lineCap="round";
+ctx.beginPath();
+ctx.moveTo(-17,5);ctx.lineTo(15,-5);
+ctx.moveTo(-2,0);ctx.lineTo(3,-13);
+ctx.moveTo(8,-4);ctx.lineTo(15,4);
+ctx.stroke();ctx.restore();
 }
 function pebble(x,y){
- ctx.fillStyle="#bec9bd";
- ctx.beginPath();
- ctx.moveTo(x-12,y+5);ctx.lineTo(x-7,y-7);
- ctx.lineTo(x+3,y-9);ctx.lineTo(x+12,y);
- ctx.lineTo(x+7,y+7);ctx.fill();
- ctx.fillStyle="#7a9085";ctx.fillRect(x,y-4,5,8);
+ctx.fillStyle="#bec9bd";
+ctx.beginPath();
+ctx.moveTo(x-12,y+5);ctx.lineTo(x-7,y-7);
+ctx.lineTo(x+3,y-9);ctx.lineTo(x+12,y);
+ctx.lineTo(x+7,y+7);ctx.fill();
+ctx.fillStyle="#7a9085";ctx.fillRect(x,y-4,5,8);
 }
 function fire(f,cx,cy){
- let x=f.x-cx,y=f.y-cy;
- ctx.fillStyle="#8d8673";
- for(let i=0;i<8;i++){
-  let a=i*Math.PI/4;
-  ctx.beginPath();
-  ctx.arc(x+Math.cos(a)*15,y+Math.sin(a)*11,5,0,7);ctx.fill();
- }
- ctx.strokeStyle="#654329";ctx.lineWidth=7;
- ctx.beginPath();
- ctx.moveTo(x-17,y-7);ctx.lineTo(x+17,y+7);
- ctx.moveTo(x+17,y-7);ctx.lineTo(x-17,y+7);ctx.stroke();
- if(f.fuel<=0)return;
- let glow=ctx.createRadialGradient(x,y,2,x,y,105);
- glow.addColorStop(0,"#ffae4e66");
- glow.addColorStop(1,"#ffae4e00");
- ctx.fillStyle=glow;
- ctx.beginPath();ctx.arc(x,y,105,0,7);ctx.fill();
- ctx.fillStyle="#f05c24";
- ctx.beginPath();
- ctx.moveTo(x-12,y+5);
- ctx.quadraticCurveTo(x-12,y-15,
-  x+Math.sin(performance.now()*.02)*4,y-32);
- ctx.quadraticCurveTo(x+15,y-10,x+12,y+5);ctx.fill();
- ctx.fillStyle="#ffe076";
- ctx.beginPath();
- ctx.moveTo(x-5,y+5);ctx.lineTo(x+3,y-17);
- ctx.lineTo(x+7,y+5);ctx.fill();
+let x=f.x-cx,y=f.y-cy;
+ctx.fillStyle="#8d8673";
+for(let i=0;i<8;i++){
+let a=i*Math.PI/4;
+ctx.beginPath();ctx.arc(x+Math.cos(a)*15,y+Math.sin(a)*11,5,0,7);ctx.fill();
+}
+ctx.strokeStyle="#654329";ctx.lineWidth=7;
+ctx.beginPath();
+ctx.moveTo(x-17,y-7);ctx.lineTo(x+17,y+7);
+ctx.moveTo(x+17,y-7);ctx.lineTo(x-17,y+7);
+ctx.stroke();
+if(f.fuel<=0)return;
+let glow=ctx.createRadialGradient(x,y,2,x,y,105);
+glow.addColorStop(0,"#ffae4e66");
+glow.addColorStop(1,"#ffae4e00");
+ctx.fillStyle=glow;
+ctx.beginPath();ctx.arc(x,y,105,0,7);ctx.fill();
+ctx.fillStyle="#f05c24";
+ctx.beginPath();
+ctx.moveTo(x-12,y+5);
+ctx.quadraticCurveTo(x-12,y-15,x+Math.sin(performance.now()*.02)*4,y-32);
+ctx.quadraticCurveTo(x+15,y-10,x+12,y+5);
+ctx.fill();
+ctx.fillStyle="#ffe076";
+ctx.beginPath();
+ctx.moveTo(x-5,y+5);ctx.lineTo(x+3,y-17);ctx.lineTo(x+7,y+5);
+ctx.fill();
 }
 function avatar(x,y){
- let p=state.player;
- let step=p.moving?Math.sin(p.step*2)*2:0;
- let back=p.dir==="up";
- let side=p.dir==="left"||p.dir==="right";
-
- ctx.save();
- ctx.translate(Math.round(x),Math.round(y));
- ctx.fillStyle="#0c231970";
- ctx.beginPath();ctx.ellipse(0,4,19,8,0,0,7);ctx.fill();
- ctx.scale(2.05,2.05);
- if(p.dir==="left")ctx.scale(-1,1);
- let px=(a,b,w,h,c)=>{
-  ctx.fillStyle=c;
-  ctx.fillRect(Math.round(a),Math.round(b),w,h);
- };
- px(-8,-7+step,6,9,"#29312d");
- px(2,-7-step,6,9,"#29312d");
- px(-9,-1+step,7,3,"#221c19");
- px(2,-1-step,7,3,"#221c19");
- px(-13,-23,26,16,"#36583c");
- px(-9,-23,18,16,"#467552");
- px(-13,-10,5,4,"#cb9874");
- px(8,-10,5,4,"#cb9874");
- px(-9,-10,18,3,"#403624");
- px(-4,-26,8,5,"#af825e");
- px(-8,-35,16,12,"#d6a27b");
-
- if(back){
-  px(-9,-35,18,8,"#493728");
-  px(-9,-22,18,15,"#6b533b");
-  px(-7,-20,14,10,"#846944");
-  px(-2,-17,4,4,"#c0a574");
- }else if(side){
-  px(-9,-34,16,5,"#4a3628");
-  px(6,-28,3,3,"#392a23");
-  px(-12,-21,5,14,"#65503a");
- }else{
-  px(-8,-34,16,4,"#513b2a");
-  px(-5,-29,2,2,"#31261f");
-  px(3,-29,2,2,"#31261f");
-  px(-1,-25,3,1,"#a77853");
-  px(-6,-20,2,11,"#baa47e");
-  px(4,-20,2,11,"#baa47e");
- }
- px(-10,-39,20,6,"#56694c");
- px(-12,-34,24,3,"#475c42");
- px(-9,-40,18,2,"#879367");
- ctx.restore();
+let p=state.player;
+let step=p.moving?Math.sin(p.step*2)*2:0;
+let back=p.dir==="up";
+let side=p.dir==="left"||p.dir==="right";
+ctx.save();
+ctx.translate(Math.round(x),Math.round(y));
+ctx.fillStyle="#0c231970";
+ctx.beginPath();ctx.ellipse(0,4,19,8,0,0,7);ctx.fill();
+ctx.scale(2.05,2.05);
+if(p.dir==="left")ctx.scale(-1,1);
+let px=(a,b,w,h,c)=>{
+ctx.fillStyle=c;ctx.fillRect(Math.round(a),Math.round(b),w,h);
+};
+px(-8,-7+step,6,9,"#29312d");
+px(2,-7-step,6,9,"#29312d");
+px(-9,-1+step,7,3,"#221c19");
+px(2,-1-step,7,3,"#221c19");
+px(-13,-23,26,16,"#36583c");
+px(-9,-23,18,16,"#467552");
+px(-13,-10,5,4,"#cb9874");
+px(8,-10,5,4,"#cb9874");
+px(-9,-10,18,3,"#403624");
+px(-4,-26,8,5,"#af825e");
+px(-8,-35,16,12,"#d6a27b");
+if(back){
+px(-9,-35,18,8,"#493728");
+px(-9,-22,18,15,"#6b533b");
+px(-7,-20,14,10,"#846944");
+px(-2,-17,4,4,"#c0a574");
+}else if(side){
+px(-9,-34,16,5,"#4a3628");
+px(6,-28,3,3,"#392a23");
+px(-12,-21,5,14,"#65503a");
+}else{
+px(-8,-34,16,4,"#513b2a");
+px(-5,-29,2,2,"#31261f");
+px(3,-29,2,2,"#31261f");
+px(-1,-25,3,1,"#a77853");
+px(-6,-20,2,11,"#baa47e");
+px(4,-20,2,11,"#baa47e");
+}
+px(-10,-39,20,6,"#56694c");
+px(-12,-34,24,3,"#475c42");
+px(-9,-40,18,2,"#879367");
+ctx.restore();
 }
 function building(b,cx,cy,ghost=false){
- let x=b.x-cx,y=b.y-cy;
- ctx.save();ctx.translate(x,y);
- ctx.globalAlpha=ghost?.5:1;
- let rect=(a,d,w,h,c)=>{
-  ctx.fillStyle=c;ctx.fillRect(a,d,w,h);
- };
- ctx.fillStyle="#0b201a88";
- ctx.beginPath();
- ctx.ellipse(0,7,BUILDINGS[b.type].radius+6,13,0,0,7);
- ctx.fill();
- switch(b.type){
-  case "tent":
-   ctx.fillStyle=b.level>1?"#bea979":"#ad9768";
-   ctx.beginPath();
-   ctx.moveTo(0,-58);ctx.lineTo(-39,6);ctx.lineTo(39,6);ctx.fill();
-   ctx.fillStyle="#dcc590";
-   ctx.beginPath();
-   ctx.moveTo(0,-58);ctx.lineTo(0,6);ctx.lineTo(-39,6);ctx.fill();
-   ctx.fillStyle="#493d31";
-   ctx.beginPath();
-   ctx.moveTo(0,-36);ctx.lineTo(-14,5);ctx.lineTo(14,5);ctx.fill();
-   break;
-
-  case "cabin":
-   rect(-54,-48,108,52,"#735034");
-   for(let i=0;i<5;i++)rect(-53,-45+i*10,106,3,"#ae7846");
-   ctx.fillStyle=b.level>1?"#61776c":"#564738";
-   ctx.beginPath();
-   ctx.moveTo(-63,-47);ctx.lineTo(0,-91);ctx.lineTo(63,-47);ctx.fill();
-   rect(-13,-26,26,32,"#32271d");
-   for(let u of [-39,25])rect(u,-30,16,17,"#d4cb93");
-   break;
-
-  case "chest":
-   rect(-25,-28,50,31,"#916437");
-   rect(-26,-30,52,10,"#c49a59");
-   rect(-3,-13,6,7,"#f2ce72");
-   break;
-
-  case "workbench":
-   rect(-35,-14,8,22,"#745034");
-   rect(27,-14,8,22,"#745034");
-   rect(-40,-27,80,15,"#aa7d48");
-   rect(-17,-41,28,13,"#778882");
-   break;
-
-  case "garden":
-   rect(-42,-28,84,44,"#594029");
-   for(let i=0;i<4;i++)
-   for(let j=0;j<6;j++){
-    let u=-34+j*12,v=-20+i*11;
-    rect(u,v-7,4,9,"#599851");
-    if(b.ripe){
-     ctx.fillStyle="#f3687c";
-     ctx.beginPath();ctx.arc(u+4,v-6,3,0,7);ctx.fill();
-    }
-   }
-   break;
-
-  case "collector":
-   rect(-23,-12,46,18,"#775937");
-   rect(-21,-44,42,36,"#58869c");
-   rect(-23,-48,46,8,"#a0ada5");
-   ctx.fillStyle="#97d0d8";
-   ctx.beginPath();ctx.ellipse(0,-47,19,4,0,0,7);ctx.fill();
-   break;
- }
- if(b.level>1){
-  ctx.strokeStyle="#e7cc83";ctx.lineWidth=3;
-  ctx.strokeRect(-BUILDINGS[b.type].radius,-5,
-   BUILDINGS[b.type].radius*2,6);
- }
- ctx.restore();
+let x=b.x-cx,y=b.y-cy;
+ctx.save();ctx.translate(x,y);
+ctx.globalAlpha=ghost?.5:1;
+let rect=(a,d,w,h,c)=>{ctx.fillStyle=c;ctx.fillRect(a,d,w,h)};
+ctx.fillStyle="#0b201a88";
+ctx.beginPath();
+ctx.ellipse(0,7,BUILDINGS[b.type].radius+6,13,0,0,7);ctx.fill();
+switch(b.type){
+case "tent":
+ctx.fillStyle=b.level>1?"#bea979":"#ad9768";
+ctx.beginPath();ctx.moveTo(0,-58);ctx.lineTo(-39,6);ctx.lineTo(39,6);ctx.fill();
+ctx.fillStyle="#dcc590";
+ctx.beginPath();ctx.moveTo(0,-58);ctx.lineTo(0,6);ctx.lineTo(-39,6);ctx.fill();
+ctx.fillStyle="#493d31";
+ctx.beginPath();ctx.moveTo(0,-36);ctx.lineTo(-14,5);ctx.lineTo(14,5);ctx.fill();
+break;
+case "cabin":
+rect(-54,-48,108,52,"#735034");
+for(let i=0;i<5;i++)rect(-53,-45+i*10,106,3,"#ae7846");
+ctx.fillStyle=b.level>1?"#61776c":"#564738";
+ctx.beginPath();ctx.moveTo(-63,-47);ctx.lineTo(0,-91);ctx.lineTo(63,-47);ctx.fill();
+rect(-13,-26,26,32,"#32271d");
+for(let u of [-39,25])rect(u,-30,16,17,"#d4cb93");
+break;
+case "chest":
+rect(-25,-28,50,31,"#916437");
+rect(-26,-30,52,10,"#c49a59");
+rect(-3,-13,6,7,"#f2ce72");
+break;
+case "workbench":
+rect(-35,-14,8,22,"#745034");
+rect(27,-14,8,22,"#745034");
+rect(-40,-27,80,15,"#aa7d48");
+rect(-17,-41,28,13,"#778882");
+break;
+case "garden":
+rect(-42,-28,84,44,"#594029");
+for(let i=0;i<4;i++)
+for(let j=0;j<6;j++){
+let u=-34+j*12,v=-20+i*11;
+rect(u,v-7,4,9,"#599851");
+if(b.ripe){
+ctx.fillStyle="#f3687c";
+ctx.beginPath();ctx.arc(u+4,v-6,3,0,7);ctx.fill();
+}
+}
+break;
+case "collector":
+rect(-23,-12,46,18,"#775937");
+rect(-21,-44,42,36,"#58869c");
+rect(-23,-48,46,8,"#a0ada5");
+ctx.fillStyle="#97d0d8";
+ctx.beginPath();ctx.ellipse(0,-47,19,4,0,0,7);ctx.fill();
+break;
+}
+if(b.level>1){
+ctx.strokeStyle="#e7cc83";ctx.lineWidth=3;
+ctx.strokeRect(-BUILDINGS[b.type].radius,-5,BUILDINGS[b.type].radius*2,6);
+}
+ctx.restore();
 }
 function objectAt(wx,wy){
- let b=state.buildings.find(b=>
-  Math.hypot(wx-b.x,wy-b.y+25)<Math.max(28,BUILDINGS[b.type].radius));
- if(b)return {kind:"building",obj:b};
-
- let offsets={tree:-40,rock:-6,berry:-8,branch:0,pebble:0};
- let radii={tree:38,rock:30,berry:25,branch:24,pebble:22};
- let n=nodes.filter(n=>available(n)&&
-  Math.hypot(wx-n.x,wy-n.y-offsets[n.type])<radii[n.type])
-  .sort((a,b)=>dist(a,{x:wx,y:wy})-dist(b,{x:wx,y:wy}))[0];
- return n?{kind:"node",obj:n}:null;
+let b=state.buildings.find(b=>
+Math.hypot(wx-b.x,wy-b.y+25)<Math.max(28,BUILDINGS[b.type].radius));
+if(b)return {kind:"building",obj:b};
+let animal=animalAt(wx,wy);
+if(animal)return {kind:"animal",obj:animal};
+let offsets={tree:-40,rock:-6,berry:-8,branch:0,pebble:0,hardwood:-40};
+let radii={tree:38,rock:30,berry:25,branch:24,pebble:22,hardwood:38};
+let n=nodesNear(wx,wy,80).filter(n=>available(n)&&
+Math.hypot(wx-n.x,wy-n.y-(offsets[n.type]||0))<(radii[n.type]||23))
+.sort((a,b)=>dist(a,{x:wx,y:wy})-dist(b,{x:wx,y:wy}))[0];
+return n?{kind:"node",obj:n}:null;
 }
 function minimap(){
- let x=W-160,y=14,w=145,h=109;
- ctx.fillStyle="#0a221de0";ctx.fillRect(x,y,w,h);
- ctx.strokeStyle="#9bb59d";ctx.strokeRect(x,y,w,h);
- for(let l of LAKES){
-  ctx.fillStyle="#388da3";
-  ctx.beginPath();
-  ctx.ellipse(x+l.x/WW*w,y+l.y/WH*h,
-   l.rx/WW*w,l.ry/WH*h,0,0,7);ctx.fill();
- }
- for(let b of state.buildings){
-  ctx.fillStyle="#f5c06a";
-  ctx.fillRect(x+b.x/WW*w-2,y+b.y/WH*h-2,4,4);
- }
- ctx.fillStyle="white";
- ctx.beginPath();
- ctx.arc(x+state.player.x/WW*w,y+state.player.y/WH*h,3,0,7);
- ctx.fill();
+let x=W-186,y=14,w=171,h=129;
+ctx.fillStyle="#0a221de0";ctx.fillRect(x,y,w,h);
+for(let py=0;py<h;py+=4)
+for(let px=0;px<w;px+=4){
+ctx.fillStyle=BIOMES[biomeAt((px+2)/w*WW,(py+2)/h*WH)].color;
+ctx.fillRect(x+px,y+py,4,4);
+}
+ctx.strokeStyle="#9bb59d";ctx.strokeRect(x,y,w,h);
+for(let l of LAKES){
+ctx.fillStyle="#388da3";
+ctx.beginPath();
+ctx.ellipse(x+l.x/WW*w,y+l.y/WH*h,l.rx/WW*w,l.ry/WH*h,0,0,7);
+ctx.fill();
+}
+ctx.strokeStyle="#73bed2";ctx.lineWidth=2;ctx.beginPath();
+for(let vx=3220;vx<=5480;vx+=80){
+const vy=2300+(vx-3220)*.57+Math.sin(vx*.004)*75;
+if(vx===3220)ctx.moveTo(x+vx/WW*w,y+vy/WH*h);
+else ctx.lineTo(x+vx/WW*w,y+vy/WH*h);
+}
+ctx.stroke();
+for(let b of state.buildings){
+ctx.fillStyle="#f5c06a";
+ctx.fillRect(x+b.x/WW*w-2,y+b.y/WH*h-2,4,4);
+}
+ctx.fillStyle="white";ctx.beginPath();
+ctx.arc(x+state.player.x/WW*w,y+state.player.y/WH*h,3,0,7);
+ctx.fill();
 }
 function render(){
- let p=state.player;
- let cx=clamp(p.x-W/2,0,WW-W);
- let cy=clamp(p.y-H/2,0,WH-H);
- camera={x:cx,y:cy};
- ctx.clearRect(0,0,W,H);
- ground(cx,cy);drawLakes(cx,cy);
- let draw=[];
- for(let n of nodes){
-  if(available(n)&&n.x-cx>-110&&n.x-cx<W+110&&
-     n.y-cy>-110&&n.y-cy<H+110)
-   draw.push({kind:n.type,obj:n,y:n.y});
- }
- for(let f of state.fires)draw.push({kind:"fire",obj:f,y:f.y});
- for(let b of state.buildings)draw.push({kind:"building",obj:b,y:b.y});
- draw.push({kind:"player",obj:p,y:p.y});
- draw.sort((a,b)=>a.y-b.y);
-
- for(let d of draw){
-  let o=d.obj,x=o.x-cx,y=o.y-cy;
-  if(x<-140||x>W+140||y<-150||y>H+150)continue;
-  switch(d.kind){
-   case "tree":tree(x,y,o);break;
-   case "rock":rock(x,y,o);break;
-   case "berry":berry(x,y);break;
-   case "branch":branch(x,y,o);break;
-   case "pebble":pebble(x,y);break;
-   case "fire":fire(o,cx,cy);break;
-   case "building":building(o,cx,cy);break;
-   case "player":avatar(x,y);break;
-  }
- }
-
- if(upgrading){
-  $("placeHint").textContent="SELECT LEVEL 1 "+BUILDINGS[upgrading].name.toUpperCase()+" · CLICK TARGET";
- }
- if(placing&&mouse.inside){
-  let x=Math.round(mouse.x/16)*16;
-  let y=Math.round(mouse.y/16)*16;
-  let ok=canPlace(placing,x,y),r=BUILDINGS[placing].radius;
-  building({type:placing,x,y,level:1},cx,cy,true);
-  ctx.strokeStyle=ok?"#b4f5a5":"#ff8a72";
-  ctx.lineWidth=3;ctx.setLineDash([8,5]);
-  ctx.strokeRect(x-cx-r,y-cy-r*.7-18,r*2,r*1.5+18);
-  ctx.setLineDash([]);
-  $("placeHint").textContent=ok?"CLICK TO BUILD":"INVALID LOCATION";
- }else if(hover?.obj&&mouse.inside){
-  let o=hover.obj,x=o.x-cx,y=o.y-cy-85;
-  ctx.font="bold 12px Arial";
-  ctx.textAlign="center";ctx.fillStyle="#ffdda0";
-  ctx.fillText(
-   hover.kind==="building"?
-    BUILDINGS[o.type].name+" · CLICK TO USE":
-    o.type+" · "+(required(o)?"TOOL REQUIRED":
-      dist(o,p)<=range(o)?"CLICK TO GATHER":"MOVE CLOSER"),
-   x,y);
- }
-
- if(night()){
-  let dark=state.time>=1200?
-   Math.min(.6,(state.time-1200)/240*.6):.6;
-  ctx.fillStyle=`rgba(3,15,27,${dark})`;
-  ctx.fillRect(0,0,W,H);
-  for(let f of state.fires){
-   if(f.fuel<=0)continue;
-   let x=f.x-cx,y=f.y-cy;
-   let g=ctx.createRadialGradient(x,y,5,x,y,130);
-   g.addColorStop(0,"#ffc35b55");
-   g.addColorStop(1,"#ffc35b00");
-   ctx.fillStyle=g;
-   ctx.beginPath();ctx.arc(x,y,130,0,7);ctx.fill();
-  }
- }
- minimap();
- if(state.paused&&!anyModal()&&!state.dead){
-  ctx.fillStyle="#071610bb";ctx.fillRect(0,0,W,H);
-  ctx.fillStyle="#f0d28e";
-  ctx.font="bold 43px Arial";ctx.textAlign="center";
-  ctx.fillText("PAUSED",W/2,H/2);
- }
+let p=state.player;
+let cx=clamp(p.x-W/2,0,WW-W);
+let cy=clamp(p.y-H/2,0,WH-H);
+camera={x:cx,y:cy};
+ctx.clearRect(0,0,W,H);
+ground(cx,cy);drawLakes(cx,cy);
+let draw=[];
+for(let n of nodesVisible(cx,cy)){
+if(available(n)&&n.x-cx>-110&&n.x-cx<W+110&&
+n.y-cy>-110&&n.y-cy<H+110)
+draw.push({kind:n.type,obj:n,y:n.y});
+}
+for(let f of state.fires)draw.push({kind:"fire",obj:f,y:f.y});
+for(let b of state.buildings)draw.push({kind:"building",obj:b,y:b.y});
+for(let a of state.animals)
+if(a.x>cx-90&&a.x<cx+W+90&&a.y>cy-90&&a.y<cy+H+90)
+draw.push({kind:"animal",obj:a,y:a.y});
+draw.push({kind:"player",obj:p,y:p.y});
+draw.sort((a,b)=>a.y-b.y);
+for(let d of draw){
+let o=d.obj,x=o.x-cx,y=o.y-cy;
+if(x<-140||x>W+140||y<-150||y>H+150)continue;
+switch(d.kind){
+case "tree":tree(x,y,o);break;
+case "hardwood":tree(x,y,o);break;
+case "animal":drawAnimal(o,x,y);break;
+case "rock":rock(x,y,o);break;
+case "berry":berry(x,y);break;
+case "branch":branch(x,y,o);break;
+case "pebble":pebble(x,y);break;
+case "fire":fire(o,cx,cy);break;
+case "building":building(o,cx,cy);break;
+case "player":avatar(x,y);break;
+default:drawResource(d.kind,x,y,o);break;
+}
+}
+if(upgrading)
+$("placeHint").textContent="SELECT LEVEL 1 "+BUILDINGS[upgrading].name.toUpperCase()+" · CLICK TARGET";
+if(placing&&mouse.inside){
+let x=Math.round(mouse.x/16)*16;
+let y=Math.round(mouse.y/16)*16;
+let ok=canPlace(placing,x,y),r=BUILDINGS[placing].radius;
+building({type:placing,x,y,level:1},cx,cy,true);
+ctx.strokeStyle=ok?"#b4f5a5":"#ff8a72";
+ctx.lineWidth=3;ctx.setLineDash([8,5]);
+ctx.strokeRect(x-cx-r,y-cy-r*.7-18,r*2,r*1.5+18);
+ctx.setLineDash([]);
+$("placeHint").textContent=ok?"CLICK TO BUILD":"INVALID LOCATION";
+}else if(hover?.obj&&mouse.inside){
+let o=hover.obj,x=o.x-cx,y=o.y-cy-85;
+ctx.font="bold 12px Arial";
+ctx.textAlign="center";ctx.fillStyle="#ffdda0";
+ctx.fillText(
+hover.kind==="building"?
+BUILDINGS[o.type].name+" · CLICK TO USE":
+hover.kind==="animal"?ANIMALS[o.type].name+" · CLICK TO LURE":
+o.type+" · "+(required(o)?"TOOL REQUIRED":
+dist(o,p)<=range(o)?"CLICK TO GATHER":"MOVE CLOSER"),
+x,y);
+}
+if(night()){
+let dark=state.time>=1200?Math.min(.6,(state.time-1200)/240*.6):.6;
+ctx.fillStyle=`rgba(3,15,27,${dark})`;
+ctx.fillRect(0,0,W,H);
+for(let f of state.fires){
+if(f.fuel<=0)continue;
+let x=f.x-cx,y=f.y-cy;
+let g=ctx.createRadialGradient(x,y,5,x,y,130);
+g.addColorStop(0,"#ffc35b55");g.addColorStop(1,"#ffc35b00");
+ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,130,0,7);ctx.fill();
+}
+}
+minimap();
+if(state.paused&&!anyModal()&&!state.dead){
+ctx.fillStyle="#071610bb";ctx.fillRect(0,0,W,H);
+ctx.fillStyle="#f0d28e";
+ctx.font="bold 43px Arial";ctx.textAlign="center";
+ctx.fillText("PAUSED",W/2,H/2);
+}
 }
 function gamePoint(e){
- let r=canvas.getBoundingClientRect();
- return {
-  x:(e.clientX-r.left)*W/r.width+camera.x,
-  y:(e.clientY-r.top)*H/r.height+camera.y
- };
+let r=canvas.getBoundingClientRect();
+return {
+x:(e.clientX-r.left)*W/r.width+camera.x,
+y:(e.clientY-r.top)*H/r.height+camera.y
+};
 }
 function toggleFull(){
- if(document.fullscreenElement){
-  document.exitFullscreen().catch(()=>notice("Cannot exit fullscreen."));
- }else if($("gameArea").requestFullscreen){
-  $("gameArea").requestFullscreen().catch(()=>
-   notice("Browser blocked fullscreen."));
- }else{
-  notice("Fullscreen not supported.");
- }
+if(document.fullscreenElement){
+document.exitFullscreen().catch(()=>notice("Cannot exit fullscreen."));
+}else if($("gameArea").requestFullscreen){
+$("gameArea").requestFullscreen().catch(()=>notice("Browser blocked fullscreen."));
+}else notice("Fullscreen not supported.");
 }
 function setup(){
- let ignore=new Set([
-  "ArrowUp","ArrowDown","ArrowLeft","ArrowRight",
-  "Space","KeyW","KeyA","KeyS","KeyD","KeyE",
-  "KeyF","KeyQ","KeyR","KeyI"
- ]);
+let ignore=new Set([
+"ArrowUp","ArrowDown","ArrowLeft","ArrowRight",
+"Space","KeyW","KeyA","KeyS","KeyD","KeyE",
+"KeyF","KeyQ","KeyR","KeyI"
+]);
+document.addEventListener("keydown",e=>{
+if(e.target.matches("input,textarea"))return;
+if(ignore.has(e.code))e.preventDefault();
+if(e.repeat)return;
+if(anyModal()){
+if(e.code==="KeyI"&&$("inventoryDialog").open)closeInventory();
+return;
+}
+keys.add(e.code);
+switch(e.code){
+case "KeyI":openInventory();break;
+case "KeyE":gatherNear();break;
+case "KeyF":drink();break;
+case "KeyQ":eat();break;
+case "KeyR":rest();break;
+case "Space":
+state.paused=!state.paused;
+renderUI();
+break;
+case "Escape":
+if(document.fullscreenElement)
+document.exitFullscreen().catch(()=>{});
+else cancelPlace();
+break;
+}
+});
+document.addEventListener("keyup",e=>keys.delete(e.code));
+window.addEventListener("blur",()=>{keys.clear();touchKeys.clear()});
 
- document.addEventListener("keydown",e=>{
-  if(e.target.matches("input,textarea"))return;
-  if(ignore.has(e.code))e.preventDefault();
-  if(e.repeat)return;
-  if(anyModal()){
-   if(e.code==="KeyI"&&$("inventoryDialog").open)closeInventory();
-   return;
-  }
-  keys.add(e.code);
-  switch(e.code){
-   case "KeyI":openInventory();break;
-   case "KeyE":gatherNear();break;
-   case "KeyF":drink();break;
-   case "KeyQ":eat();break;
-   case "KeyR":rest();break;
-   case "Space":
-    state.paused=!state.paused;
-    renderUI();
-    break;
-   case "Escape":
-    if(document.fullscreenElement)
-     document.exitFullscreen().catch(()=>{});
-    else cancelPlace();
-    break;
-  }
- });
- document.addEventListener("keyup",e=>keys.delete(e.code));
- window.addEventListener("blur",()=>{
-  keys.clear();touchKeys.clear();
- });
-
- let actions={
-  workbenchBtn:buildFirstWorkbench,
-  inventoryBtn:openInventory,
-  inventoryClose:closeInventory,
-  fullBtn:toggleFull,
-  cancelPlacement:cancelPlace,
-  eatBtn:eat,
-  rationBtn:ration,
-  drinkBtn:drink,
-  restBtn:rest,
-  gatherBtn:gatherNear,
-  pauseBtn:()=>{
-   state.paused=!state.paused;
-   renderUI();
-  },
-  saveBtn:()=>save(true),
-  helpBtn:()=>{
-   state.paused=true;
-   $("helpDialog").showModal();
-  },
-  restartBtn:reset,
-  restartDeath:reset,
-  touchGather:gatherNear,
-  touchDrink:drink,
-  touchWorkbench:buildFirstWorkbench,
-  craftClose:closeCraft,
-  helpClose:()=>$("helpDialog").close(),
-  structureClose:()=>$("structureDialog").close(),
-  storageClose:()=>$("storageDialog").close(),
-  structureUse:()=>active&&useStructure(active)
- };
- for(let [id,fn] of Object.entries(actions)){
-  $(id).addEventListener("click",fn);
- }
-
- $("tabs").addEventListener("click",e=>{
-  let b=e.target.closest("[data-tab]");
-  if(b){selectedTab=b.dataset.tab;renderRecipes()}
- });
-
- $("recipes").addEventListener("click",e=>{
-  let b=e.target.closest("[data-recipe]");
-  if(!b)return;
-  let r=recipes().find(r=>r.id===b.dataset.recipe);
-  if(r&&!recipeState(r)){
-   r.run();
-   if($("craftDialog").open)renderUI();
-  }
- });
-
- $("storageTable").addEventListener("click",e=>{
-  let b=e.target.closest("[data-transfer]");
-  if(b)
-   transfer(b.dataset.item,Number(b.dataset.qty),
-    b.dataset.transfer==="in");
- });
-
- for(let id of [
-  "craftDialog","inventoryDialog","helpDialog",
-  "structureDialog","storageDialog"
- ]){
-  $(id).addEventListener("close",()=>{
-   if(anyModal())return;
-   if(!state.dead){
-    state.paused=id==="craftDialog"?previousPause:
-     id==="inventoryDialog"?modalPause:false;
-   }
-   active=null;
-   if(id==="craftDialog")activeWorkbench=null;
-   keys.clear();touchKeys.clear();
-   renderUI();
-  });
- }
-
- document.addEventListener("fullscreenchange",renderUI);
-
- canvas.addEventListener("pointermove",e=>{
-  mouse={...gamePoint(e),inside:true};
-  hover=placing?null:objectAt(mouse.x,mouse.y);
-  canvas.style.cursor=hover?"pointer":"crosshair";
- });
- canvas.addEventListener("pointerleave",()=>{
-  mouse.inside=false;hover=null;
- });
- canvas.addEventListener("click",e=>{
-  if(state.paused||state.dead)return;
-  let p=gamePoint(e);
-  if(placing)return buildAt(p.x,p.y);
-  let target=objectAt(p.x,p.y);
-  if(upgrading){
-   if(target?.kind==="building")return upgrade(target.obj);
-   return notice("Click the target structure to apply its upgrade, or cancel.");
-  }
-  if(target){
-   if(target.kind==="building")openStructure(target.obj);
-   else gather(target.obj);
-  }else if(water(p.x,p.y)){
-   drink();
-  }
- });
- canvas.addEventListener("contextmenu",e=>e.preventDefault());
-
- for(let b of document.querySelectorAll("[data-dir]")){
-  let d=b.dataset.dir;
-  b.addEventListener("pointerdown",e=>{
-   e.preventDefault();
-   b.setPointerCapture(e.pointerId);
-   touchKeys.add(d);
-  });
-  for(let ev of ["pointerup","pointercancel","lostpointercapture"]){
-   b.addEventListener(ev,()=>touchKeys.delete(d));
-  }
- }
-
- document.addEventListener("visibilitychange",()=>{
-  if(document.hidden&&!state.dead){
-   state.paused=true;
-   save();
-  }
- });
- window.addEventListener("beforeunload",()=>{
-  if(!state.dead)save();
- });
+let actions={
+workbenchBtn:buildFirstWorkbench,
+inventoryBtn:openInventory,
+inventoryClose:closeInventory,
+fullBtn:toggleFull,
+cancelPlacement:cancelPlace,
+eatBtn:eat,
+rationBtn:ration,
+drinkBtn:drink,
+restBtn:rest,
+gatherBtn:gatherNear,
+pauseBtn:()=>{state.paused=!state.paused;renderUI()},
+saveBtn:()=>save(true),
+helpBtn:()=>{state.paused=true;$("helpDialog").showModal()},
+restartBtn:reset,
+restartDeath:reset,
+touchGather:gatherNear,
+touchDrink:drink,
+touchWorkbench:buildFirstWorkbench,
+craftClose:closeCraft,
+helpClose:()=>$("helpDialog").close(),
+structureClose:()=>$("structureDialog").close(),
+storageClose:()=>$("storageDialog").close(),
+structureUse:()=>active&&useStructure(active),
+animalClose:()=>$("animalDialog").close(),
+animalLure:lureAnimal,
+penGate:toggleGate,penFeed:feedPen,penCollect:collectPen,
+penBait:baitPen,penClose:()=>$("penDialog").close(),
+troughAdd:baitPen,troughClose:()=>$("troughDialog").close()
+};
+for(let [id,fn] of Object.entries(actions))
+$(id).addEventListener("click",fn);
+$("tabs").addEventListener("click",e=>{
+let b=e.target.closest("[data-tab]");
+if(b){selectedTab=b.dataset.tab;renderRecipes()}
+});
+$("recipes").addEventListener("click",e=>{
+let b=e.target.closest("[data-recipe]");
+if(!b)return;
+let r=recipes().find(r=>r.id===b.dataset.recipe);
+if(r&&!recipeState(r)){
+r.run();
+if($("craftDialog").open)renderUI();
+}
+});
+$("storageTable").addEventListener("click",e=>{
+let b=e.target.closest("[data-transfer]");
+if(b)transfer(b.dataset.item,Number(b.dataset.qty),b.dataset.transfer==="in");
+});
+for(let id of [
+"craftDialog","inventoryDialog","helpDialog","structureDialog",
+"storageDialog","animalDialog","penDialog","troughDialog"
+]){
+$(id).addEventListener("close",()=>{
+if(anyModal())return;
+if(!state.dead){
+state.paused=id==="craftDialog"?previousPause:
+id==="inventoryDialog"?modalPause:false;
+}
+active=null;
+if(id==="craftDialog")activeWorkbench=null;
+keys.clear();touchKeys.clear();
+renderUI();
+});
+}
+document.addEventListener("fullscreenchange",renderUI);
+canvas.addEventListener("pointermove",e=>{
+mouse={...gamePoint(e),inside:true};
+hover=placing?null:objectAt(mouse.x,mouse.y);
+canvas.style.cursor=hover?"pointer":"crosshair";
+});
+canvas.addEventListener("pointerleave",()=>{
+mouse.inside=false;hover=null;
+});
+canvas.addEventListener("click",e=>{
+if(state.paused||state.dead)return;
+let p=gamePoint(e);
+if(placing)return buildAt(p.x,p.y);
+let target=objectAt(p.x,p.y);
+if(upgrading){
+if(target?.kind==="building")return upgrade(target.obj);
+return notice("Click the target structure to apply its upgrade, or cancel.");
+}
+if(target){
+if(target.kind==="animal")openAnimal(target.obj);
+else if(target.kind==="building")openStructure(target.obj);
+else gather(target.obj);
+}else if(water(p.x,p.y))drink();
+});
+canvas.addEventListener("contextmenu",e=>e.preventDefault());
+for(let b of document.querySelectorAll("[data-dir]")){
+let d=b.dataset.dir;
+b.addEventListener("pointerdown",e=>{
+e.preventDefault();
+b.setPointerCapture(e.pointerId);
+touchKeys.add(d);
+});
+for(let ev of ["pointerup","pointercancel","lostpointercapture"])
+b.addEventListener(ev,()=>touchKeys.delete(d));
+}
+document.addEventListener("visibilitychange",()=>{
+if(document.hidden&&!state.dead){
+state.paused=true;save();
+}
+});
+window.addEventListener("beforeunload",()=>{
+if(!state.dead)save();
+});
 }
 function frame(t){
- let dt=(t-last)/1000;
- last=t;
- update(dt);
- render();
- requestAnimationFrame(frame);
+let dt=(t-last)/1000;
+last=t;
+update(dt);render();
+requestAnimationFrame(frame);
 }
 function start(){
- let resumed=load();
- setup();
- renderUI();
- if(resumed){
-  notice("Welcome back to the wilderness!");
- }else{
-  state.paused=true;
-  $("helpDialog").showModal();
- }
- requestAnimationFrame(frame);
+let resumed=load();
+if(!resumed)state.animals=makeAnimals();
+if(!Array.isArray(state.animals)||!state.animals.length)
+state.animals=makeAnimals();
+initializeWorld();
+setup();renderUI();
+if(resumed)notice("Welcome back to the wilderness!");
+else{
+state.paused=true;
+$("helpDialog").showModal();
+}
+requestAnimationFrame(frame);
 }
 window.addEventListener("error",e=>{
- console.error("Wilderness error:",e.message);
+console.error("Wilderness error:",e.message);
 });
+
+// =============================================================
+// VERSION 2.2: BIOMES, WILDLIFE AND LIVESTOCK
+// The original 3200 x 2400 map and resource IDs are unchanged.
+// =============================================================
+const BIOMES={
+pine:{name:"Pine Forest",color:"#3c6040",speed:1},
+grasslands:{name:"Grasslands",color:"#91a961",speed:1},
+highlands:{name:"Rocky Highlands",color:"#818579",speed:.85},
+wetlands:{name:"Wetlands",color:"#577f65",speed:.72},
+snow:{name:"Snowy Mountains",color:"#dce6e5",speed:.83},
+hardwood:{name:"Hardwood Forest",color:"#877d4b",speed:1},
+badlands:{name:"Badlands",color:"#b47d56",speed:1}
+};
+const BIOME_SITES=[
+["pine",1600,1200,2200,1900],
+["grasslands",3850,1350,1900,1600],
+["highlands",5200,2210,1600,1580],
+["wetlands",3600,3540,1570,1320],
+["snow",5720,370,1630,1450],
+["hardwood",1700,3600,1880,1350],
+["badlands",5650,4380,1740,1450]
+];
+function biomeScores(x,y){
+let noise=Math.sin(x*.0042+y*.002)*130+Math.cos(y*.0051-x*.0022)*100;
+return BIOME_SITES.map(([id,bx,by,rx,ry],i)=>{
+const wobble=noise*Math.sin(i*1.63+1);
+return {id,score:Math.exp(-((x-bx+wobble)**2/rx**2+
+(y-by-wobble)**2/ry**2)*1.6)};
+});
+}
+function biomeAt(x,y){
+if(x<=3200&&y<=2400)return "pine";
+const edgeNoise=45*Math.sin(y*.008)+55*Math.cos(x*.006);
+if((x<3200+185+edgeNoise&&y<2550)||
+(y<2400+175+edgeNoise&&x<3350))return "pine";
+return biomeScores(x,y).reduce((best,z)=>z.score>best.score?z:best).id;
+}
+const groundColorCache=new Map();
+function biomeColor(id,n,gx,gy){
+const key=gx+":"+gy;
+if(groundColorCache.has(key))return groundColorCache.get(key);
+const palettes={
+pine:["#35593b","#3b603f","#426543"],
+grasslands:["#86a35d","#9cb76b","#acc779"],
+highlands:["#767d73","#8b9187","#a1a094"],
+wetlands:["#42694f","#547f62","#68896b"],
+snow:["#d0dedb","#e0e9e8","#f2f4ed"],
+hardwood:["#76653b","#8a804c","#a49a62"],
+badlands:["#ac7755","#bd8d64","#c69d74"]
+};
+const idx=n<.28?0:n>.75?2:1;
+let col=palettes[id][idx];
+const wx=gx*40,wy=gy*40;
+if(!(wx<=3200&&wy<=2400)){
+const scores=biomeScores(wx,wy).sort((a,b)=>b.score-a.score);
+const leader=scores[0],second=scores[1];
+const weight=clamp((leader.score-second.score)/
+Math.max(.00001,leader.score)*1.75,0,1);
+col=blendColor(palettes[second.id][idx],
+palettes[leader.id][idx],.5+weight*.5);
+let legacyFade=1;
+if(wy<=2400&&wx>3200)
+legacyFade=clamp((wx-3200)/390,0,1);
+else if(wx<=3200&&wy>2400)
+legacyFade=clamp((wy-2400)/390,0,1);
+else if(wx>3200&&wy>2400)
+legacyFade=clamp(Math.hypot(wx-3200,wy-2400)/390,0,1);
+if(legacyFade<1)
+col=blendColor(palettes.pine[idx],col,legacyFade);
+}
+groundColorCache.set(key,col);
+return col;
+}
+function blendColor(a,b,t){
+const A=[1,3,5].map(i=>parseInt(a.slice(i,i+2),16));
+const B=[1,3,5].map(i=>parseInt(b.slice(i,i+2),16));
+return "#"+A.map((v,i)=>
+Math.round(v*(1-t)+B[i]*t).toString(16).padStart(2,"0")).join("");
+}
+const RESOURCE_TYPES={
+seeds:{item:"seeds",qty:2,icon:"🌻"},
+grass:{item:"grass",qty:2,icon:"🌾"},
+hay:{item:"hay",qty:1,icon:"🌿"},
+flowers:{item:"flowers",qty:1,icon:"🌼"},
+hardwood:{item:"hardwood",qty:3,icon:"🌳",tool:"axe"},
+reeds:{item:"reeds",qty:2,icon:"🌱"},
+clay:{item:"clay",qty:2,icon:"🧱"},
+mushrooms:{item:"mushrooms",qty:2,icon:"🍄"},
+nuts:{item:"nuts",qty:2,icon:"🌰"},
+iron:{item:"iron",qty:2,icon:"⚙️",tool:"pickaxe"},
+coal:{item:"coal",qty:2,icon:"⬛",tool:"pickaxe"},
+minerals:{item:"minerals",qty:1,icon:"💎",tool:"pickaxe"},
+alpine:{item:"alpine",qty:2,icon:"🌿"}
+};
+const RESOURCE_BY_BIOME={
+pine:["tree","rock","berry","branch","pebble"],
+grasslands:["seeds","grass","hay","flowers","branch","pebble","berry"],
+highlands:["rock","iron","coal","rock","branch","pebble"],
+wetlands:["reeds","clay","mushrooms","berry","pebble"],
+snow:["rock","minerals","alpine","pebble","tree"],
+hardwood:["hardwood","mushrooms","nuts","berry","branch","pebble"],
+badlands:["clay","rock","minerals","pebble","coal"]
+};
+let nodeGrid=new Map();
+const CELL=190;
+function cellKey(x,y){
+return Math.floor(x/CELL)+":"+Math.floor(y/CELL);
+}
+function indexNodes(){
+nodeGrid=new Map();
+for(const n of nodes){
+let k=cellKey(n.x,n.y);
+if(!nodeGrid.has(k))nodeGrid.set(k,[]);
+nodeGrid.get(k).push(n);
+}
+}
+function nodesBox(x0,y0,x1,y1){
+let result=[];
+for(let iy=Math.floor(y0/CELL);iy<=Math.floor(y1/CELL);iy++)
+for(let ix=Math.floor(x0/CELL);ix<=Math.floor(x1/CELL);ix++)
+result.push(...(nodeGrid.get(ix+":"+iy)||[]));
+return result;
+}
+function nodesNear(x,y,r){
+return nodesBox(x-r,y-r,x+r,y+r);
+}
+function nodesVisible(cx,cy){
+return nodesBox(cx-120,cy-120,cx+W+120,cy+H+120);
+}
+function initializeWorld(){
+for(let gy=0;gy<Math.ceil(WH/84);gy++)
+for(let gx=0;gx<Math.ceil(WW/84);gx++){
+let x=gx*84+10+hash(gx,gy,1)*60;
+let y=gy*84+10+hash(gx,gy,2)*60;
+if(x<3200&&y<2400)continue;
+if(x>WW-25||y>WH-25||water(x,y)||water(x+20,y)||
+water(x-20,y)||hash(gx,gy,19)>=.731)continue;
+const list=RESOURCE_BY_BIOME[biomeAt(x,y)];
+let kind=list[Math.floor(hash(gx,gy,3)*list.length)];
+nodes.push({
+id:`ext_${gx}_${gy}`,x,y,type:kind,variant:hash(gx,gy,4)
+});
+}
+indexNodes();
+}
+const oldRequired=required;
+required=function(n){
+let t=RESOURCE_TYPES[n.type]?.tool;
+if(t&&!state.tools[t])return t;
+return oldRequired(n);
+};
+const oldRange=range;
+range=function(n){
+return RESOURCE_TYPES[n.type]?55:oldRange(n);
+};
+const oldGather=gather;
+gather=function(n){
+if(!RESOURCE_TYPES[n?.type])return oldGather(n);
+if(!available(n)||state.paused||state.dead)return;
+if(dist(n,state.player)>range(n))return notice("Move closer to gather.");
+const tool=required(n);
+if(tool)return notice("Craft a "+(tool==="axe"?"stone axe":"pickaxe")+" first.");
+const r=RESOURCE_TYPES[n.type],q=r.qty+Math.floor(n.variant*2);
+state.inventory[r.item]=(state.inventory[r.item]||0)+q;
+if(n.type==="hardwood")state.inventory.logs+=2;
+state.gathered[n.id]=true;
+state.totalGathered++;
+notice(`Collected ${q} ${ITEMS[r.item][1]}!`);
+checkMissions();renderUI();save();
+};
+nearbyNode=function(){
+return nodesNear(state.player.x,state.player.y,75)
+.filter(n=>available(n)&&dist(n,state.player)<=range(n))
+.sort((a,b)=>dist(a,state.player)-dist(b,state.player))[0]||null;
+};
+canWalk=function(x,y){
+if(!canStand(x,y))return false;
+for(const n of nodesNear(x,y,35)){
+if(available(n)&&["tree","rock","hardwood"].includes(n.type)&&
+dist({x,y},n)<(n.type==="rock"?17:20))return false;
+}
+return state.buildings.every(b=>{
+if(isPen(b.type)||b.type==="trough")return true;
+const r=BUILDINGS[b.type].radius;
+return !(Math.abs(x-b.x)<r+12&&Math.abs(y-b.y+8)<r*.55+10);
+});
+};
+function drawResource(type,x,y,n){
+const data=RESOURCE_TYPES[type];
+if(!data)return;
+if(["iron","coal","minerals","clay"].includes(type)){
+rock(x,y,{variant:.15+n.variant*.38});
+}else{
+ctx.fillStyle=type==="mushrooms"?"#cba58b":
+type==="hay"?"#d3b76b":"#327446";
+ctx.fillRect(x-3,y-18,6,20);
+ctx.fillStyle="#476d37";
+ctx.fillRect(x-10,y-10,9,4);
+ctx.fillRect(x+2,y-13,10,4);
+}
+ctx.font="18px Arial";ctx.textAlign="center";
+ctx.fillText(data.icon,x,y-12);
+}
+const PEN_TYPES=["coop","sheepPen","cattlePasture"];
+function isPen(t){return PEN_TYPES.includes(t)}
+function penAt(x,y){
+return state?.buildings?.find(b=>isPen(b.type)&&
+Math.abs(x-b.x)<BUILDINGS[b.type].radius*.62&&
+Math.abs(y-b.y)<BUILDINGS[b.type].radius*.44)||null;
+}
+function normalizeLivestock(b){
+if(!isPen(b.type)&&b.type!=="trough")return;
+b.gateOpen=!!b.gateOpen;
+b.feed=Number(b.feed)||0;
+b.products=b.products||{};
+b.livestockTimer=Number(b.livestockTimer)||0;
+b.breedTimer=Number(b.breedTimer)||0;
+b.bait=Number(b.bait)||0;
+b.penId=b.penId||null;
+}
+const ANIMALS={
+chicken:{name:"Chicken",icon:"🐔",bait:["seeds"],speed:86,biomes:["grasslands"],color:"#e8d8b4"},
+sheep:{name:"Sheep",icon:"🐑",bait:["grass","hay"],speed:75,biomes:["grasslands"],color:"#e5dfca"},
+cow:{name:"Cow",icon:"🐄",bait:["grass","hay"],speed:67,biomes:["grasslands"],color:"#dfd1b6"},
+deer:{name:"Deer",icon:"🦌",speed:108,biomes:["pine","hardwood"],color:"#b88554"},
+rabbit:{name:"Rabbit",icon:"🐇",speed:112,biomes:["pine","grasslands","hardwood","badlands"],color:"#b4a88c"},
+wolf:{name:"Wolf",icon:"🐺",speed:105,biomes:["pine","highlands","snow"],color:"#697981"},
+bear:{name:"Bear",icon:"🐻",speed:75,biomes:["hardwood","snow"],color:"#674c36"},
+goat:{name:"Mountain Goat",icon:"🐐",speed:82,biomes:["highlands","snow"],color:"#c0bdb0"},
+duck:{name:"Duck",icon:"🦆",speed:83,biomes:["wetlands"],color:"#bcbfa5"},
+frog:{name:"Frog",icon:"🐸",speed:57,biomes:["wetlands"],color:"#519b63"},
+fish:{name:"Fish",icon:"🐟",speed:92,biomes:["wetlands"],color:"#67b4c4"},
+coyote:{name:"Coyote",icon:"🐕",speed:106,biomes:["badlands"],color:"#b69c79"}
+};
+function makeAnimals(){
+const a=[];
+for(let gy=0;gy<Math.ceil(WH/215);gy++)
+for(let gx=0;gx<Math.ceil(WW/215);gx++){
+if(hash(gx,gy,93)>.61)continue;
+let x=90+gx*215+hash(gx,gy,94)*115;
+let y=90+gy*215+hash(gx,gy,95)*115;
+if(x>WW-75||y>WH-75||dist({x,y},SPAWN)<340)continue;
+const biome=biomeAt(x,y);
+const options=Object.keys(ANIMALS).filter(k=>ANIMALS[k].biomes.includes(biome));
+const type=options[Math.floor(hash(gx,gy,96)*options.length)];
+if(!type||!(type==="fish"?water(x,y):canStand(x,y)))continue;
+a.push({
+id:`wild_${gx}_${gy}`,type,x,y,homeX:x,homeY:y,
+mode:"wild",penId:null,age:1,feed:80,production:0,
+roam:0,phase:hash(gx,gy,97)*Math.PI*2
+});
+}
+for(let i=0;i<8;i++){
+const theta=i*Math.PI/4;
+const x=4780+Math.cos(theta)*74;
+const y=3770+Math.sin(theta)*58;
+a.push({
+id:`pond_fish_${i}`,type:"fish",x,y,
+homeX:x,homeY:y,mode:"wild",penId:null,
+age:1,feed:70,production:0,roam:0,phase:i
+});
+}
+return a;
+}
+function animalAt(x,y){
+return state.animals?.find(a=>
+dist(a,{x,y})<(a.type==="cow"||a.type==="bear"?35:27))||null;
+}
+function penAnimals(p){
+return state.animals.filter(a=>a.penId===p.id);
+}
+function penCapacity(p){
+return BUILDINGS[p.type].capacity||0;
+}
+function penFood(p){
+const type=BUILDINGS[p.type].animal;
+const choices=ANIMALS[type].bait;
+return choices.find(k=>state.inventory[k]>0)||choices[0];
+}
+function penTrough(p){
+return state.buildings.find(b=>b.type==="trough"&&b.penId===p.id)||null;
+}
+function animalMove(a,x,y,speed){
+const dx=x-a.x,dy=y-a.y,len=Math.hypot(dx,dy);
+if(len<2)return;
+const step=Math.min(speed,len);
+const nx=a.x+dx/len*step,ny=a.y+dy/len*step;
+if(a.type==="fish"){
+if(water(nx,ny)){a.x=nx;a.y=ny}
+}else if(canStand(nx,ny)){
+const blocked=state.buildings.some(b=>{
+if(b.type==="trough")return false;
+if(isPen(b.type)){
+const r=BUILDINGS[b.type].radius;
+const inside=Math.abs(nx-b.x)<r*.73&&Math.abs(ny-b.y)<r*.52;
+return inside&&a.penId!==b.id&&
+(!b.gateOpen||BUILDINGS[b.type].animal!==a.type);
+}
+return dist({x:nx,y:ny},b)<BUILDINGS[b.type].radius+8;
+});
+if(!blocked){a.x=nx;a.y=ny}
+}
+}
+let animalElapsed=0;
+function updateAnimals(dt){
+animalElapsed+=dt;
+if(animalElapsed<.18)return;
+dt=animalElapsed;animalElapsed=0;
+const p=state.player;
+for(const a of state.animals){
+a.phase=(a.phase||0)+dt*2;
+if(a.penId){
+const pen=state.buildings.find(b=>b.id===a.penId);
+if(!pen){a.penId=null;a.mode="wild";continue}
+const r=BUILDINGS[pen.type].radius;
+let tx=pen.x+Math.cos(a.phase*.7+Number(a.age||1))*r*.28;
+let ty=pen.y+Math.sin(a.phase*.53+Number(a.age||1))*r*.22;
+animalMove(a,tx,ty,ANIMALS[a.type].speed*dt*.28);
+continue;
+}
+if(dist(a,p)>1000&&a.mode!=="attracted")continue;
+if(a.mode==="follow"){
+const bait=ANIMALS[a.type].bait||[];
+if(dist(a,p)>450||!bait.some(k=>state.inventory[k]>0)){
+a.mode="wild";
+notice(ANIMALS[a.type].name+" lost interest.");
+continue;
+}
+animalMove(a,p.x,p.y,ANIMALS[a.type].speed*dt);
+tryEnterPen(a);
+continue;
+}
+const target=findBaitedPen(a);
+if(target){
+a.mode="attracted";
+animalMove(a,target.x,
+target.y+BUILDINGS[target.type].radius*.55,
+ANIMALS[a.type].speed*dt*.72);
+tryEnterPen(a);
+continue;
+}
+if(a.mode==="attracted")a.mode="wild";
+let flee=dist(a,p)<95&&["rabbit","deer","frog"].includes(a.type);
+if(flee){
+animalMove(a,a.x+(a.x-p.x)*4,
+a.y+(a.y-p.y)*4,ANIMALS[a.type].speed*dt);
+continue;
+}
+a.roam=(a.roam||0)-dt;
+if(a.roam<=0){
+a.roam=3+hash(Math.floor(a.x),Math.floor(a.y),11)*8;
+a.dx=Math.cos(a.phase*3.3);
+a.dy=Math.sin(a.phase*2.7);
+}
+if(Math.hypot(a.x-a.homeX,a.y-a.homeY)>260){
+a.dx=(a.homeX-a.x)/280;
+a.dy=(a.homeY-a.y)/280;
+}
+animalMove(a,a.x+(a.dx||0)*60,a.y+(a.dy||0)*60,
+ANIMALS[a.type].speed*dt*.2);
+}
+}
+function findBaitedPen(a){
+if(!ANIMALS[a.type].bait)return null;
+return state.buildings.find(p=>
+isPen(p.type)&&p.gateOpen&&
+BUILDINGS[p.type].animal===a.type&&
+penAnimals(p).length<penCapacity(p)&&
+penTrough(p)?.bait>0&&dist(p,a)<390)||null;
+}
+function tryEnterPen(a){
+const p=state.buildings.find(p=>
+isPen(p.type)&&p.gateOpen&&
+BUILDINGS[p.type].animal===a.type&&
+penAnimals(p).length<penCapacity(p)&&
+dist(p,a)<BUILDINGS[p.type].radius+24);
+if(!p)return;
+a.penId=p.id;a.mode="inside";
+a.x=p.x;a.y=p.y;
+if(penTrough(p)?.bait>0)penTrough(p).bait--;
+else{
+const food=ANIMALS[a.type].bait.find(k=>state.inventory[k]>0);
+if(food)state.inventory[food]--;
+}
+notice(ANIMALS[a.type].name+" entered the "+
+BUILDINGS[p.type].name+". Close the gate!");
+checkMissions();renderUI();save();
+}
+
+const oldBuildAt=buildAt;
+buildAt=function(x,y){
+const before=state.buildings.length;
+oldBuildAt(x,y);
+if(state.buildings.length>before){
+const b=state.buildings.at(-1);
+normalizeLivestock(b);
+if(b.type==="trough")
+notice("Trough placed inside "+
+BUILDINGS[state.buildings.find(v=>v.id===b.penId)?.type]?.name+".");
+}
+};
+const previousCanPlace=canPlace;
+canPlace=function(type,x,y){
+if(type==="trough"){
+const p=penAt(x,y);
+return !!p&&!penTrough(p)&&dist(state.player,{x,y})<205&&
+!state.buildings.some(b=>b.type==="trough"&&dist(b,{x,y})<40);
+}
+return previousCanPlace(type,x,y);
+};
+const previousDrawBuilding=building;
+building=function(b,cx,cy,ghost=false){
+if(!isPen(b.type)&&b.type!=="trough")
+return previousDrawBuilding(b,cx,cy,ghost);
+const x=b.x-cx,y=b.y-cy,r=BUILDINGS[b.type].radius;
+ctx.save();ctx.translate(x,y);
+ctx.globalAlpha=ghost?.5:1;
+if(b.type==="trough"){
+ctx.fillStyle="#664c2b";ctx.fillRect(-17,-10,34,17);
+ctx.fillStyle=b.bait>0?"#b5ad65":"#3c372d";
+ctx.fillRect(-13,-8,26,8);
+ctx.font="14px Arial";ctx.textAlign="center";
+ctx.fillText("🥕",0,-11);
+}else{
+ctx.fillStyle="#71965766";
+ctx.fillRect(-r*.72,-r*.5,r*1.44,r);
+ctx.lineWidth=5;
+ctx.strokeStyle="#a88759";
+ctx.strokeRect(-r*.72,-r*.5,r*1.44,r);
+for(let q=-r*.7;q<r*.7;q+=18){
+ctx.fillStyle="#7e5b33";
+ctx.fillRect(q,-r*.52,5,10);
+ctx.fillRect(q,r*.48,5,10);
+}
+const gate=b.gateOpen?"#4b9d66":"#d7c18a";
+ctx.fillStyle=gate;
+ctx.fillRect(-17,r*.5-4,34,7);
+ctx.font="bold 14px Arial";
+ctx.fillStyle="#fff7d5";
+ctx.textAlign="center";
+const num=state?.animals?penAnimals(b).length:0;
+ctx.fillText(`${BUILDINGS[b.type].icon} ${num}/${penCapacity(b)}`,
+0,-r*.53-9);
+if(b.level>1){
+ctx.strokeStyle="#ebd18a";
+ctx.strokeRect(-r*.74,-r*.52,r*1.48,r*1.04);
+}
+}
+ctx.restore();
+};
+function drawAnimal(a,x,y){
+const cfg=ANIMALS[a.type];
+ctx.save();ctx.translate(x,y);
+const bob=Math.sin(a.phase||0)*1.5;
+const young=(a.age||1)<1;
+const size=(a.type==="cow"||a.type==="bear"?31:
+a.type==="sheep"||a.type==="deer"?26:20)*(young?.75:1);
+ctx.fillStyle="#081b1788";
+ctx.beginPath();ctx.ellipse(0,5,size*.65,7,0,0,7);ctx.fill();
+ctx.fillStyle=cfg.color;
+ctx.beginPath();
+ctx.ellipse(0,-size*.43+bob,size*.6,size*.44,0,0,7);
+ctx.fill();
+ctx.font=`${Math.round(size)}px Arial`;
+ctx.textAlign="center";
+ctx.fillText(cfg.icon,0,-size*.1+bob);
+if(a.mode==="follow"){
+ctx.font="14px Arial";
+ctx.fillText("♥",0,-size-9);
+}else if(a.mode==="attracted"){
+ctx.font="12px Arial";
+ctx.fillText("🌾",0,-size-8);
+}
+ctx.restore();
+}
+
+let selectedAnimal=null,selectedPen=null;
+function openAnimal(a){
+if(state.paused||state.dead||dist(a,state.player)>135)
+return notice("Walk closer to the animal.");
+selectedAnimal=a;
+$("animalTitle").textContent=ANIMALS[a.type].icon+" "+ANIMALS[a.type].name;
+const bait=ANIMALS[a.type].bait||[];
+$("animalInfo").textContent=bait.length?
+`${a.mode==="follow"?"Following you. ":""}Preferred food: ${bait.map(k=>ITEMS[k][1]).join(" or ")}. Carry some food and lead this animal to an open matching enclosure.`:
+"Wild animal. It is not domestic livestock.";
+$("animalLure").disabled=!bait.some(k=>state.inventory[k]>0)||!!a.penId;
+state.paused=true;
+$("animalDialog").showModal();
+}
+function lureAnimal(){
+const a=selectedAnimal;
+if(!a||dist(a,state.player)>135||a.penId)return;
+if(!(ANIMALS[a.type].bait||[]).some(k=>state.inventory[k]>0))return;
+a.mode="follow";
+$("animalDialog").close();
+notice("The "+ANIMALS[a.type].name+" is following your food.");
+}
+function openPen(b){
+if(dist(b,state.player)>=135)return notice("Move closer to the gate.");
+selectedPen=b;
+normalizeLivestock(b);
+state.paused=true;
+$("penDialog").showModal();
+showPen();
+}
+function showPen(){
+const p=selectedPen;
+if(!p||!$("penDialog").open)return;
+const herd=penAnimals(p);
+const locked=herd.filter(a=>a.mode==="pen").length;
+const trough=penTrough(p);
+const products=Object.entries(p.products||{})
+.filter(([k,v])=>v>0)
+.map(([k,v])=>`${ITEMS[k]?.[1]||k}: ${v}`)
+.join(" · ")||"No products ready";
+$("penTitle").textContent=BUILDINGS[p.type].icon+" "+BUILDINGS[p.type].name;
+$("penInfo").textContent=
+`${herd.length}/${penCapacity(p)} animals (${locked} secured) · Gate ${p.gateOpen?"OPEN":"CLOSED"} · Feed ${Math.ceil(p.feed||0)} · ${products}. `+
+(trough?`Trough bait: ${trough.bait||0}`:
+"Build a trough at your workbench, then place it inside the pen.");
+$("penGate").textContent=p.gateOpen?"Close Gate":"Open Gate";
+$("penFeed").textContent="Feed ("+ITEMS[penFood(p)][1]+")";
+$("penFeed").disabled=!state.inventory[penFood(p)];
+$("penCollect").disabled=!Object.values(p.products||{}).some(n=>n>0);
+$("penBait").disabled=!trough||!state.inventory[penFood(p)]||trough.bait>=10;
+}
+function toggleGate(){
+if(!selectedPen)return;
+const p=selectedPen;
+p.gateOpen=!p.gateOpen;
+if(!p.gateOpen){
+for(const a of penAnimals(p)){
+if(a.mode!=="pen"){
+a.mode="pen";
+state.captured[a.type]=(state.captured[a.type]||0)+1;
+}
+}
+notice("Gate closed. Livestock secured!");
+}else notice("Gate opened for animals to enter.");
+showPen();checkMissions();save();
+}
+function feedPen(){
+const p=selectedPen;
+if(!p)return;
+const food=penFood(p);
+if(!state.inventory[food])
+return notice("Gather "+ITEMS[food][1]+" first.");
+state.inventory[food]--;
+p.feed=Math.min(300,(p.feed||0)+150);
+for(const a of penAnimals(p))
+a.feed=Math.min(100,(a.feed||0)+45);
+notice("Animals fed!");
+showPen();renderUI();save();
+}
+function baitPen(){
+const p=selectedPen||state.buildings.find(b=>b.id===active?.penId);
+if(!p)return notice("No livestock enclosure selected.");
+const trough=penTrough(p);
+if(!trough)
+return notice("Place a feeding trough inside this enclosure first.");
+if(trough.bait>=10)return notice("The trough is full.");
+const food=penFood(p);
+if(!state.inventory[food])
+return notice("Need "+ITEMS[food][1]+".");
+state.inventory[food]--;
+trough.bait=Math.min(10,(trough.bait||0)+2);
+notice("Trough loaded. Open the gate to lure wild animals.");
+showPen();showTrough();renderUI();save();
+}
+function collectPen(){
+const p=selectedPen;
+if(!p)return;
+let amount=0;
+for(const [k,n] of Object.entries(p.products||{})){
+if(n>0){
+state.inventory[k]=(state.inventory[k]||0)+n;
+state.livestockProducts[k]=(state.livestockProducts[k]||0)+n;
+amount+=n;
+p.products[k]=0;
+}
+}
+if(!amount)return notice("No products ready yet.");
+notice("Collected "+amount+" livestock products!");
+showPen();checkMissions();renderUI();save();
+}
+function openTrough(b){
+selectedPen=state.buildings.find(p=>p.id===b.penId);
+active=b;state.paused=true;
+$("troughDialog").showModal();
+showTrough();
+}
+function showTrough(){
+if(!$("troughDialog").open)return;
+const p=selectedPen,t=active;
+$("troughInfo").textContent=p?
+`Inside ${BUILDINGS[p.type].name}. Bait ${t.bait||0}/10. Preferred food: ${ITEMS[penFood(p)][1]}. Animals approach only while the pen gate is open.`:
+"No enclosure linked to this trough.";
+$("troughAdd").disabled=!p||!state.inventory[penFood(p)]||
+(t.bait||0)>=10;
+}
+function updateLivestock(minutes){
+if(!state?.animals)return;
+for(const p of state.buildings){
+if(!isPen(p.type))continue;
+normalizeLivestock(p);
+const herd=penAnimals(p).filter(a=>a.mode==="pen");
+if(!herd.length)continue;
+let fed=0;
+for(const a of herd){
+a.age=Math.min(1,(a.age||0)+minutes/900);
+if(p.feed>0){
+a.feed=Math.min(100,(a.feed||0)+minutes*.1);
+p.feed=Math.max(0,p.feed-minutes*.03);
+}else a.feed=Math.max(0,(a.feed||0)-minutes*.055);
+if(a.feed>30&&a.age>=1)fed++;
+}
+p.livestockTimer+=fed>0?minutes:0;
+const products={
+chicken:["eggs",180,2],
+sheep:["wool",260,1],
+cow:["milk",230,2]
+};
+const [item,duration,qty]=products[BUILDINGS[p.type].animal];
+while(p.livestockTimer>=duration&&fed>0){
+p.livestockTimer-=duration;
+p.products[item]=(p.products[item]||0)+qty*Math.min(fed,2);
+if(item==="eggs")
+p.products.feathers=(p.products.feathers||0)+1;
+}
+if(fed>=2&&herd.length<penCapacity(p)){
+p.breedTimer+=minutes;
+if(p.breedTimer>=480){
+p.breedTimer=0;
+const type=BUILDINGS[p.type].animal;
+state.animals.push({
+id:"baby_"+p.id+"_"+Date.now()+"_"+state.animals.length,
+type,x:p.x+7,y:p.y+7,
+homeX:p.x,homeY:p.y,
+mode:"pen",penId:p.id,
+age:.18,feed:65,production:0,roam:0,phase:0
+});
+notice("A baby "+ANIMALS[type].name+" was born!");
+}
+}else p.breedTimer=Math.max(0,p.breedTimer-minutes*.15);
+}
+}
+
+const LIVESTOCK_MISSIONS=[
+{name:"Discover the Grasslands",text:"Explore outside the original valley.",done:s=>!!s.discovered.grasslands,progress:s=>s.discovered.grasslands?"Discovered":"Look east"},
+{name:"Gather Animal Bait",text:"Find wild seeds or tall grass.",done:s=>s.inventory.seeds>0||s.inventory.grass>0||s.inventory.hay>0||!!s.baitGathered,progress:s=>"Collect seeds or grass"},
+{name:"Chicken Coop",text:"Build a chicken coop from your workbench.",done:s=>s.buildings.some(b=>b.type==="coop"),progress:s=>"Construct a coop"},
+{name:"First Chicken",text:"Lure a chicken inside an open coop, then close the gate.",done:s=>(s.captured.chicken||0)>0,progress:s=>`${s.captured.chicken||0}/1 captured`},
+{name:"First Eggs",text:"Feed chickens and collect eggs.",done:s=>(s.livestockProducts.eggs||0)>0,progress:s=>`${s.livestockProducts.eggs||0}/1 eggs`},
+{name:"Sheep Pen",text:"Build a sheep pen.",done:s=>s.buildings.some(b=>b.type==="sheepPen"),progress:s=>"Construct a sheep pen"},
+{name:"Sheep and Wool",text:"Catch sheep and collect wool.",done:s=>(s.captured.sheep||0)>0&&(s.livestockProducts.wool||0)>0,progress:s=>`Sheep ${s.captured.sheep||0} · Wool ${s.livestockProducts.wool||0}`},
+{name:"Cattle Pasture",text:"Build a cattle pasture.",done:s=>s.buildings.some(b=>b.type==="cattlePasture"),progress:s=>"Construct a cattle pasture"},
+{name:"Cow and Milk",text:"Catch a cow and collect milk.",done:s=>(s.captured.cow||0)>0&&(s.livestockProducts.milk||0)>0,progress:s=>`Cows ${s.captured.cow||0} · Milk ${s.livestockProducts.milk||0}`},
+{name:"Working Farm",text:"Keep chickens, sheep, and cattle on your homestead.",done:s=>["chicken","sheep","cow"].every(k=>(s.captured[k]||0)>0),progress:s=>`${["chicken","sheep","cow"].filter(k=>(s.captured[k]||0)>0).length}/3 livestock species`}
+];
+function checkLivestockMissions(){
+if(state.mission<7)return;
+while(state.livestockMission<LIVESTOCK_MISSIONS.length&&
+LIVESTOCK_MISSIONS[state.livestockMission].done(state)){
+notice("Livestock mission completed: "+
+LIVESTOCK_MISSIONS[state.livestockMission].name);
+state.livestockMission++;
+}
+}
+function renderFrontierMission(){
+const el=$("frontierMission");
+if(!el)return;
+const b=biomeAt(state.player.x,state.player.y);
+if(!state.discovered[b]){
+state.discovered[b]=true;
+notice("Biome discovered: "+BIOMES[b].name);
+}
+if(state.inventory.seeds||state.inventory.grass||state.inventory.hay)
+state.baitGathered=true;
+checkLivestockMissions();
+const m=LIVESTOCK_MISSIONS[state.livestockMission];
+el.innerHTML=m?
+`<strong>LIVESTOCK: ${m.name}</strong> — ${m.text} (${m.progress(state)})`:
+`<strong>LIVESTOCK MASTERED!</strong> All farming objectives completed.`;
+}
+const originalCheckMissions=checkMissions;
+checkMissions=function(announce=true){
+originalCheckMissions(announce);
+checkLivestockMissions();
+};
+
 start();
 </script>
 </body>
