@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Wilderness: Last Frontier — Version 2.0</title>
+<title>Wilderness: Last Frontier — Version 2.1</title>
 <style>
 *{box-sizing:border-box}
 html,body{margin:0;background:#0c1815;color:#eef3e8;font-family:Trebuchet MS,Arial,sans-serif}
@@ -29,7 +29,7 @@ header{background:#12271e;border-bottom:1px solid #4e7055;padding:11px 18px;disp
 .toolbar{display:flex;flex-wrap:wrap;gap:5px}
 .toolbar button,.action{background:#254536;border:1px solid #5e8a6d;border-radius:7px;padding:8px 12px;font-size:12px}
 .toolbar button:hover,.action:hover:not(:disabled){background:#39634a}
-#craftBtn{background:#62582d;border-color:#ddc078}
+#workbenchBtn{background:#62582d;border-color:#ddc078}
 #fullBtn{background:#27515a;border-color:#80c4cd}
 #inventoryBtn{background:#2d465a;border-color:#8aafc5}
 #mission{background:#19382b;border:1px solid #607b52;border-radius:6px;padding:9px;font-size:12px}
@@ -47,6 +47,8 @@ dialog h2{margin:0 0 10px;color:#ebcf86}
 dialog p{font-size:13px;line-height:1.65}
 dialog button{background:#2e5d42;border:1px solid #7aab81;border-radius:7px;padding:8px 12px}
 #craftDialog{width:min(95vw,730px)}
+#cancelPlacement:not([hidden]){border-color:#f4c176;background:#643c2e}
+#workbenchBtn{font-weight:bold}
 .dialoghead{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:14px 0}
 .tabs button{font-size:12px;padding:10px 4px}
@@ -110,7 +112,7 @@ dialog button{background:#2e5d42;border:1px solid #7aab81;border-radius:7px;padd
  <div id="viewport">
   <canvas id="game" width="960" height="600"></canvas>
   <div id="region" class="tag">REGION: PINE VALLEY</div>
-  <div id="tip" class="tag">WASD Walk · E Gather · K Craft · I Inventory · B Build</div>
+  <div id="tip" class="tag">WASD Walk · E Gather · I Inventory · Click Workbench to Craft</div>
   <div id="notice"></div>
   <div id="placeHint"></div>
   <div id="death"><h1>YOU DID NOT SURVIVE</h1><button id="restartDeath">Begin New Journey</button></div>
@@ -124,13 +126,13 @@ dialog button{background:#2e5d42;border:1px solid #7aab81;border-radius:7px;padd
   <div class="touchActs">
    <button id="touchGather">Gather</button>
    <button id="touchDrink">Drink</button>
-   <button id="touchFire">Fire</button>
+   <button id="touchWorkbench">Workbench</button>
   </div>
  </div>
  <div class="hud" id="stats"></div>
  <div class="huditems" id="items"></div>
  <div class="toolbar">
-  <button id="craftBtn">🛠 Craft & Build (K)</button>
+  <button id="workbenchBtn" title="First workbench: 5 sticks and 3 pebbles">🔨 Build Workbench (5 sticks · 3 pebbles)</button>
   <button id="inventoryBtn">🎒 Inventory (I)</button>
   <button id="fullBtn">⛶ Fullscreen</button>
   <button id="cancelPlacement" hidden>✕ Cancel Placement</button>
@@ -160,10 +162,10 @@ dialog button{background:#2e5d42;border:1px solid #7aab81;border-radius:7px;padd
 
 <dialog id="craftDialog">
  <div class="dialoghead">
-  <h2>🛠 Crafting & Building</h2>
-  <button id="craftClose">Close (K)</button>
+  <h2>🔨 Workbench — Crafting & Building</h2>
+  <button id="craftClose">Close</button>
  </div>
- <p>Everything you can craft or build is here. A recipe unlocks as you progress.</p>
+ <p id="stationInfo">Craft tools, survival supplies, buildings, and upgrades while standing beside your workbench.</p>
  <div class="tabs" id="tabs">
   <button class="active" data-tab="tools">🪓 Tools</button>
   <button data-tab="survival">🔥 Survival</button>
@@ -176,9 +178,9 @@ dialog button{background:#2e5d42;border:1px solid #7aab81;border-radius:7px;padd
 
 <dialog id="helpDialog">
  <h2>Welcome to the Wilderness</h2>
- <p>Gather fallen sticks and loose pebbles by hand. Craft an axe to chop trees and a pickaxe to mine boulders. Complete missions to unlock buildings.</p>
- <p><b>WASD / Arrow keys:</b> Walk · <b>E:</b> Gather · <b>K:</b> Craft & Build · <b>I:</b> Inventory · <b>B:</b> Buildings · <b>F:</b> Drink near water · <b>Q:</b> Eat berries · <b>R:</b> Rest · <b>C:</b> Campfire · <b>Space:</b> Pause · <b>Esc:</b> Exit fullscreen</p>
- <p>Click nearby resources and structures with the mouse. Click a building recipe, then select a clear spot to place it.</p>
+ <p>Gather fallen sticks and loose pebbles by hand. Build your first workbench for 5 sticks and 3 pebbles, then walk near it and click it to craft your axe, pickaxe, and other recipes.</p>
+ <p><b>WASD / Arrow keys:</b> Walk · <b>E:</b> Gather · <b>I:</b> Inventory · <b>Mouse:</b> Click workbench to craft / interact · <b>F:</b> Drink near water · <b>Q:</b> Eat berries · <b>R:</b> Rest · <b>Space:</b> Pause · <b>Esc:</b> Cancel placement or exit fullscreen. K and B are no longer crafting shortcuts.</p>
+ <p>Click nearby resources and structures with the mouse. Click a built workbench to craft. Choose a building or upgrade recipe, close the workbench automatically, then select its placement or target in the world.</p>
  <button id="helpClose">Enter Wilderness</button>
 </dialog>
 
@@ -187,7 +189,6 @@ dialog button{background:#2e5d42;border:1px solid #7aab81;border-radius:7px;padd
  <p id="structureInfo"></p>
  <div class="dialogfooter">
   <button id="structureUse">Use Structure</button>
-  <button id="structureUpgrade">Upgrade</button>
   <button id="structureClose">Close</button>
  </div>
 </dialog>
@@ -197,7 +198,6 @@ dialog button{background:#2e5d42;border:1px solid #7aab81;border-radius:7px;padd
  <p id="storageInfo"></p>
  <div id="storageTable"></div>
  <div class="dialogfooter">
-  <button id="storageUpgrade">Upgrade Chest</button>
   <button id="storageClose">Close</button>
  </div>
 </dialog>
@@ -225,8 +225,8 @@ const LAKES=[
 ];
 const keys=new Set(),touchKeys=new Set();
 let state,nodes=[],camera={x:0,y:0};
-let hover=null,placing=null,mouse={x:0,y:0,inside:false};
-let active=null,selectedTab="tools",previousPause=false,modalPause=false;
+let hover=null,placing=null,upgrading=null,mouse={x:0,y:0,inside:false};
+let active=null,activeWorkbench=null,selectedTab="tools",previousPause=false,modalPause=false;
 let last=performance.now(),uiElapsed=0,saveElapsed=0,toastTime=0;
 
 function hash(x,y,seed=0){
@@ -277,12 +277,12 @@ const ITEMS={
  rations:["🥫","Trail Rations"]
 };
 const BUILDINGS={
- tent:{name:"Tent",icon:"⛺",unlock:1,cost:{sticks:8,pebbles:4},radius:38,description:"Sleep four hours and recover energy."},
- workbench:{name:"Workbench",icon:"🔨",unlock:3,cost:{logs:7,stone:5,sticks:3},radius:37,description:"Craft trail rations from berries and sticks."},
- chest:{name:"Storage Chest",icon:"📦",unlock:4,cost:{logs:4,sticks:4},radius:29,description:"Deposit or withdraw supplies."},
- cabin:{name:"Log Cabin",icon:"🏠",unlock:5,cost:{logs:12,stone:8,sticks:6},radius:57,description:"Warm permanent shelter with six-hour sleep."},
- garden:{name:"Berry Garden",icon:"🌱",unlock:6,cost:{logs:2,sticks:6,berries:3},radius:38,description:"Plant, grow, and harvest berries."},
- collector:{name:"Water Collector",icon:"💧",unlock:6,cost:{logs:4,stone:4,pebbles:4},radius:30,description:"Generates stored drinking water."}
+ tent:{name:"Tent",icon:"⛺",unlock:4,cost:{sticks:8,pebbles:4},radius:38,description:"Sleep four hours and recover energy."},
+ workbench:{name:"Workbench",icon:"🔨",unlock:0,cost:{sticks:5,pebbles:3},radius:37,description:"Craft all survival tools, buildings, rations, and upgrades here."},
+ chest:{name:"Storage Chest",icon:"📦",unlock:5,cost:{logs:4,sticks:4},radius:29,description:"Deposit or withdraw supplies."},
+ cabin:{name:"Log Cabin",icon:"🏠",unlock:6,cost:{logs:12,stone:8,sticks:6},radius:57,description:"Warm permanent shelter with six-hour sleep."},
+ garden:{name:"Berry Garden",icon:"🌱",unlock:7,cost:{logs:2,sticks:6,berries:3},radius:38,description:"Plant, grow, and harvest berries."},
+ collector:{name:"Water Collector",icon:"💧",unlock:7,cost:{logs:4,stone:4,pebbles:4},radius:30,description:"Generates stored drinking water."}
 };
 const UPGRADES={
  tent:{sticks:6,pebbles:3},
@@ -305,7 +305,7 @@ function fresh(){
    stored:0,harvestedGarden:0,collectorDrinks:0
   },
   time:480,day:1,totalGathered:0,
-  distanceWalked:0,paused:false,dead:false
+  distanceWalked:0,paused:false,dead:false,workbenchCraftVersion:2
  };
 }
 
@@ -368,8 +368,13 @@ function load(){
      state.milestones.gathered[k],state.inventory[k]||0);
    }
   }
+  // Migrate Version 2.0 mission indexes to the new progression.
+  if(s.workbenchCraftVersion!==2){
+   state.mission=0;
+   state.workbenchCraftVersion=2;
+  }
   checkMissions(false);
-  if(old)save();
+  if(old||s.workbenchCraftVersion!==2)save();
   return true;
  }catch(e){
   state=fresh();
@@ -453,8 +458,31 @@ function spend(cost){
  for(const [k,v] of Object.entries(cost))state.inventory[k]-=v;
  return true;
 }
+function stationReady(){
+ return !state.dead&&activeWorkbench&&
+  state.buildings.includes(activeWorkbench)&&
+  activeWorkbench.type==="workbench"&&
+  dist(state.player,activeWorkbench)<135&&$("craftDialog").open;
+}
+function requireStation(){
+ if(stationReady())return true;
+ notice("Walk beside a workbench and click it to craft.");
+ return false;
+}
+function buildFirstWorkbench(){
+ if(state.dead||state.paused||anyModal())return;
+ if(state.buildings.some(b=>b.type==="workbench"))
+  return notice("Click your workbench to craft additional workbenches.");
+ if(!has(BUILDINGS.workbench.cost))
+  return notice("First workbench requires 5 sticks and 3 pebbles.");
+ placing="workbench";upgrading=null;
+ $("placeHint").style.display="block";
+ $("cancelPlacement").hidden=false;
+ $("cancelPlacement").textContent="✕ Cancel Placement";
+ notice("Click a clear spot nearby to place your first workbench.");
+}
 function craftTool(type){
- if(state.dead)return;
+ if(!requireStation())return;
  let key=type==="axe"?"axe":"pickaxe";
  let cost=key==="axe"?{sticks:3,pebbles:2}:{sticks:4,pebbles:3};
  if(state.tools[key])return notice("Already crafted.");
@@ -464,7 +492,7 @@ function craftTool(type){
  checkMissions();renderUI();save();
 }
 function makeFire(){
- if(state.dead)return;
+ if(!requireStation())return;
  let cost={sticks:5,pebbles:3};
  if(!has(cost))return notice("Campfire requires "+costs(cost));
  if(nearFire())return notice("You already have a fire nearby.");
@@ -477,6 +505,7 @@ function makeFire(){
  renderUI();save();
 }
 function refuel(){
+ if(!requireStation())return;
  let f=nearFire();
  if(!f)return notice("Stand near a burning campfire.");
  if(state.inventory.sticks>=3)state.inventory.sticks-=3;
@@ -557,12 +586,13 @@ function rest(){
 }
 
 const MISSIONS=[
- {name:"First Supplies",text:"Gather 8 sticks and 4 pebbles.",unlock:"Tent",done:s=>s.milestones.gathered.sticks>=8&&s.milestones.gathered.pebbles>=4,progress:s=>`${s.milestones.gathered.sticks}/8 sticks · ${s.milestones.gathered.pebbles}/4 pebbles`},
- {name:"First Shelter",text:"Construct a tent.",unlock:"Survival Tools",done:s=>s.buildings.some(b=>b.type==="tent"),progress:s=>"Build a tent"},
- {name:"Frontier Tools",text:"Craft an axe and pickaxe; gather 7 logs and 5 mined stone.",unlock:"Workbench",done:s=>s.tools.axe&&s.tools.pickaxe&&s.milestones.gathered.logs>=7&&s.milestones.gathered.stone>=5,progress:s=>`${s.milestones.gathered.logs}/7 logs · ${s.milestones.gathered.stone}/5 stone`},
- {name:"A Place to Craft",text:"Construct a workbench.",unlock:"Storage Chest",done:s=>s.buildings.some(b=>b.type==="workbench"),progress:s=>"Build a workbench"},
+ {name:"First Supplies",text:"Gather 5 sticks and 3 pebbles for your first workbench.",unlock:"First Workbench",done:s=>s.milestones.gathered.sticks>=5&&s.milestones.gathered.pebbles>=3,progress:s=>`${s.milestones.gathered.sticks}/5 sticks · ${s.milestones.gathered.pebbles}/3 pebbles`},
+ {name:"Establish a Workbench",text:"Use Build Workbench and click a clear location.",unlock:"Workbench Crafting",done:s=>s.buildings.some(b=>b.type==="workbench"),progress:s=>"Build your first workbench"},
+ {name:"Frontier Tools",text:"Click the workbench and craft a stone axe and a pickaxe.",unlock:"Resource Harvesting",done:s=>s.tools.axe&&s.tools.pickaxe,progress:s=>`Axe ${s.tools.axe?"✓":"✕"} · Pickaxe ${s.tools.pickaxe?"✓":"✕"}`},
+ {name:"Gather Logs and Stone",text:"Harvest at least 7 logs and 5 mined stone using tools.",unlock:"Tent",done:s=>s.milestones.gathered.logs>=7&&s.milestones.gathered.stone>=5,progress:s=>`${s.milestones.gathered.logs}/7 logs · ${s.milestones.gathered.stone}/5 stone`},
+ {name:"First Shelter",text:"Craft and place a tent using your workbench.",unlock:"Storage Chest",done:s=>s.buildings.some(b=>b.type==="tent"),progress:s=>"Build a tent"},
  {name:"Stockpile Supplies",text:"Build a chest and deposit five items.",unlock:"Log Cabin",done:s=>s.buildings.some(b=>b.type==="chest")&&s.milestones.stored>=5,progress:s=>`${s.milestones.stored}/5 items deposited`},
- {name:"Permanent Homestead",text:"Build a log cabin.",unlock:"Garden and Collector",done:s=>s.buildings.some(b=>b.type==="cabin"),progress:s=>"Build a cabin"},
+ {name:"Permanent Homestead",text:"Build a log cabin.",unlock:"Garden and Water Collector",done:s=>s.buildings.some(b=>b.type==="cabin"),progress:s=>"Build a cabin"},
  {name:"Self-Sufficiency",text:"Harvest berries from a garden and drink from a collector.",unlock:"First Winter",done:s=>s.milestones.harvestedGarden>0&&s.milestones.collectorDrinks>0,progress:s=>`${s.milestones.harvestedGarden}/1 garden · ${s.milestones.collectorDrinks}/1 collector`},
  {name:"Frontier Pioneer",text:"Reach Day 7.",unlock:"Long Frontier",done:s=>s.day>=7,progress:s=>`Day ${s.day}/7`},
  {name:"The Long Frontier",text:"Survive 365 days.",unlock:"Legendary Survivor",done:s=>s.day>=365,progress:s=>`Day ${s.day}/365`}
@@ -603,15 +633,17 @@ function canWalk(x,y){
 }
 function place(type){
  if(!BUILDINGS[type]||state.dead)return;
+ if(!requireStation())return;
  let b=BUILDINGS[type];
  if(state.mission<b.unlock)
   return notice("Complete mission "+b.unlock+" to unlock "+b.name);
  if(!has(b.cost))return notice("Requires "+costs(b.cost));
- placing=type;
+ placing=type;upgrading=null;
  closeCraft();
  $("placeHint").style.display="block";
  $("cancelPlacement").hidden=false;
- notice("Move your mouse to a green spot, then click.");
+ $("cancelPlacement").textContent="✕ Cancel Placement";
+ notice("Move nearby and click a clear place to construct "+b.name+".");
 }
 function buildAt(x,y){
  if(!placing||state.dead)return;
@@ -641,21 +673,35 @@ function nearestUpgrade(type){
   b.type===type&&b.level<2&&dist(b,state.player)<135)
   .sort((a,b)=>dist(a,state.player)-dist(b,state.player))[0]||null;
 }
+function armUpgrade(type){
+ if(!requireStation())return;
+ if(!state.buildings.some(b=>b.type===type&&b.level<2))
+  return notice("No Level 1 "+BUILDINGS[type].name+" exists yet.");
+ if(!has(UPGRADES[type]))return notice("Requires "+costs(UPGRADES[type]));
+ upgrading=type;placing=null;
+ closeCraft();
+ $("placeHint").style.display="block";
+ $("cancelPlacement").hidden=false;
+ $("cancelPlacement").textContent="✕ Cancel Upgrade";
+ notice("Walk to a Level 1 "+BUILDINGS[type].name+" and click it to upgrade.");
+}
 function upgrade(b){
- if(!b||dist(b,state.player)>135)
-  return notice("Move closer to the structure.");
+ if(!upgrading)return notice("Select an upgrade at your workbench first.");
+ if(!b||b.type!==upgrading)return notice("Click a Level 1 "+BUILDINGS[upgrading].name+" to upgrade it.");
+ if(dist(b,state.player)>=135)return notice("Walk closer to the target structure.");
  if(b.level>=2)return notice("Already fully upgraded.");
- let cost=UPGRADES[b.type];
+ const cost=UPGRADES[b.type];
  if(!spend(cost))return notice("Requires "+costs(cost));
  b.level=2;
+ upgrading=null;
+ $("placeHint").style.display="none";
+ $("cancelPlacement").hidden=true;
  notice(BUILDINGS[b.type].name+" upgraded to Level 2!");
  renderUI();save();
- if($("structureDialog").open)describe(b);
- if($("storageDialog").open)showStorage(b);
 }
 
 // Add any future tool or survival recipe here.
-// The K menu automatically reads this registry.
+// The workbench automatically reads this registry.
 const CRAFT_RECIPES=[
  {id:"axe",tab:"tools",name:"Stone Axe",icon:"🪓",cost:{sticks:3,pebbles:2},owned:()=>state.tools.axe,run:()=>craftTool("axe")},
  {id:"pickaxe",tab:"tools",name:"Stone Pickaxe",icon:"⛏️",cost:{sticks:4,pebbles:3},owned:()=>state.tools.pickaxe,run:()=>craftTool("pickaxe")},
@@ -674,8 +720,8 @@ function recipes(){
    id:"upgrade:"+id,tab:"upgrades",
    name:"Upgrade "+BUILDINGS[id].name,icon:BUILDINGS[id].icon,
    cost,unlock:BUILDINGS[id].unlock,
-   status:()=>!nearestUpgrade(id)?"Stand by a Level 1 structure":null,
-   run:()=>upgrade(nearestUpgrade(id))
+   status:()=>!state.buildings.some(b=>b.type===id&&b.level<2)?"Requires a Level 1 structure":null,
+   run:()=>armUpgrade(id)
   }))
  ];
 }
@@ -701,21 +747,32 @@ function renderRecipes(){
  $("materials").textContent=["sticks","pebbles","logs","stone","berries"]
   .map(k=>`${ITEMS[k][1]}: ${state.inventory[k]}`).join(" · ");
 }
-function openCraft(tab="tools"){
+function openCraft(tab="tools",bench=null){
  if(state.dead||anyModal())return;
- selectedTab=tab;previousPause=state.paused;state.paused=true;
- $("craftDialog").showModal();renderRecipes();renderUI();
+ if(!bench||bench.type!=="workbench"||!state.buildings.includes(bench)||
+    dist(bench,state.player)>=135)
+  return notice("Move beside a workbench and click it to craft.");
+ activeWorkbench=bench;
+ selectedTab=tab;
+ previousPause=state.paused;
+ state.paused=true;
+ $("stationInfo").textContent= "Craft at this Level "+bench.level+" workbench. All materials come from your backpack.";
+ $("craftDialog").showModal();
+ renderRecipes();renderUI();
 }
 function closeCraft(){
  if(!$("craftDialog").open)return;
- $("craftDialog").close();state.paused=previousPause;renderUI();
+ $("craftDialog").close();
+ state.paused=previousPause;
+ renderUI();
 }
 function anyModal(){
  return ["craftDialog","inventoryDialog","helpDialog",
          "structureDialog","storageDialog"].some(id=>$(id).open);
 }
 function craftRations(){
- let b=nearStructure("workbench");
+ if(!requireStation())return;
+ let b=activeWorkbench;
  if(!b)return notice("Stand by a workbench.");
  if(!spend({berries:3,sticks:1}))
   return notice("Need 3 berries and 1 stick.");
@@ -723,6 +780,7 @@ function craftRations(){
  notice("Crafted trail rations!");
  renderUI();save();
 }
+
 
 function describe(b){
  let cfg=BUILDINGS[b.type];
@@ -740,13 +798,9 @@ function describe(b){
  $("structureUse").textContent={
   tent:"Sleep 4 Hours",
   cabin:"Sleep 6 Hours",
-  workbench:"Craft Trail Rations",
   garden:b.ripe?"Harvest Berries":b.planted?"Check Growth":"Plant Berries",
   collector:"Drink Stored Water"
  }[b.type];
- $("structureUpgrade").disabled=b.level>=2;
- $("structureUpgrade").textContent=b.level>=2?
-  "Fully Upgraded":"Upgrade: "+costs(UPGRADES[b.type]);
 }
 function capacity(b){return b.level>1?100:40}
 function stored(b){
@@ -769,9 +823,6 @@ function showStorage(b){
         <button data-transfer="out" data-item="${k}" data-qty="5">−5</button></td>
    </tr>`).join("")}
  </table>`;
- $("storageUpgrade").disabled=b.level>=2;
- $("storageUpgrade").textContent=b.level>=2?
-  "Fully Upgraded":"Upgrade: "+costs(UPGRADES.chest);
 }
 function transfer(k,n,into){
  let b=active;
@@ -797,10 +848,6 @@ function useStructure(b){
    $("structureDialog").close();
    state.paused=false;
    return rest();
-
-  case "workbench":
-   craftRations();
-   break;
 
   case "garden":
    if(b.ripe){
@@ -835,6 +882,7 @@ function openStructure(b){
  if(state.paused||state.dead)return;
  if(dist(b,state.player)>=135)
   return notice("Walk closer to use this structure.");
+ if(b.type==="workbench")return openCraft("tools",b);
  active=b;state.paused=true;
  if(b.type==="chest"){
   showStorage(b);
@@ -846,7 +894,7 @@ function openStructure(b){
  renderUI();
 }
 function cancelPlace(){
- placing=null;
+ placing=null;upgrading=null;
  $("placeHint").style.display="none";
  $("cancelPlacement").hidden=true;
 }
@@ -858,7 +906,7 @@ function reset(){
  for(let id of ["craftDialog","inventoryDialog","structureDialog",
                 "storageDialog","helpDialog"])
   if($(id).open)$(id).close();
- state=fresh();active=null;cancelPlace();hover=null;
+ state=fresh();active=null;activeWorkbench=null;cancelPlace();hover=null;
  $("death").style.display="none";
  notice("New wilderness journey begins.");
  renderUI();save();
@@ -930,6 +978,9 @@ function renderUI(){
   String(Math.floor(state.time%60)).padStart(2,"0");
  $("weather").textContent=night()?"🌙 Cold Night":"☀ Clear Skies";
  $("pauseBtn").textContent=state.paused?"▶ Resume":"⏸ Pause";
+ $("workbenchBtn").title=state.buildings.some(b=>b.type==="workbench")?
+   "Additional workbenches: click your workbench and choose Buildings":
+   "First workbench costs 5 sticks and 3 pebbles";
  $("fullBtn").textContent=document.fullscreenElement?
   "⛶ Exit Fullscreen":"⛶ Fullscreen";
 
@@ -1334,6 +1385,9 @@ function render(){
   }
  }
 
+ if(upgrading){
+  $("placeHint").textContent="SELECT LEVEL 1 "+BUILDINGS[upgrading].name.toUpperCase()+" · CLICK TARGET";
+ }
  if(placing&&mouse.inside){
   let x=Math.round(mouse.x/16)*16;
   let y=Math.round(mouse.y/16)*16;
@@ -1400,7 +1454,7 @@ function setup(){
  let ignore=new Set([
   "ArrowUp","ArrowDown","ArrowLeft","ArrowRight",
   "Space","KeyW","KeyA","KeyS","KeyD","KeyE",
-  "KeyF","KeyQ","KeyC","KeyR","KeyK","KeyB","KeyI"
+  "KeyF","KeyQ","KeyR","KeyI"
  ]);
 
  document.addEventListener("keydown",e=>{
@@ -1408,19 +1462,15 @@ function setup(){
   if(ignore.has(e.code))e.preventDefault();
   if(e.repeat)return;
   if(anyModal()){
-   if(e.code==="KeyK"&&$("craftDialog").open)closeCraft();
    if(e.code==="KeyI"&&$("inventoryDialog").open)closeInventory();
    return;
   }
   keys.add(e.code);
   switch(e.code){
    case "KeyI":openInventory();break;
-   case "KeyK":openCraft();break;
-   case "KeyB":openCraft("buildings");break;
    case "KeyE":gatherNear();break;
    case "KeyF":drink();break;
    case "KeyQ":eat();break;
-   case "KeyC":makeFire();break;
    case "KeyR":rest();break;
    case "Space":
     state.paused=!state.paused;
@@ -1439,7 +1489,7 @@ function setup(){
  });
 
  let actions={
-  craftBtn:()=>openCraft(),
+  workbenchBtn:buildFirstWorkbench,
   inventoryBtn:openInventory,
   inventoryClose:closeInventory,
   fullBtn:toggleFull,
@@ -1462,14 +1512,12 @@ function setup(){
   restartDeath:reset,
   touchGather:gatherNear,
   touchDrink:drink,
-  touchFire:makeFire,
+  touchWorkbench:buildFirstWorkbench,
   craftClose:closeCraft,
   helpClose:()=>$("helpDialog").close(),
   structureClose:()=>$("structureDialog").close(),
   storageClose:()=>$("storageDialog").close(),
-  structureUse:()=>active&&useStructure(active),
-  structureUpgrade:()=>upgrade(active),
-  storageUpgrade:()=>active&&upgrade(active)
+  structureUse:()=>active&&useStructure(active)
  };
  for(let [id,fn] of Object.entries(actions)){
   $(id).addEventListener("click",fn);
@@ -1508,6 +1556,7 @@ function setup(){
      id==="inventoryDialog"?modalPause:false;
    }
    active=null;
+   if(id==="craftDialog")activeWorkbench=null;
    keys.clear();touchKeys.clear();
    renderUI();
   });
@@ -1528,6 +1577,10 @@ function setup(){
   let p=gamePoint(e);
   if(placing)return buildAt(p.x,p.y);
   let target=objectAt(p.x,p.y);
+  if(upgrading){
+   if(target?.kind==="building")return upgrade(target.obj);
+   return notice("Click the target structure to apply its upgrade, or cancel.");
+  }
   if(target){
    if(target.kind==="building")openStructure(target.obj);
    else gather(target.obj);
