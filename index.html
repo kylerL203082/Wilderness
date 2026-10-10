@@ -1,505 +1,4708 @@
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Wilderness: Last Frontier 2.7</title></head>
-<body style="background:#13251b;color:#f0e1b8;font:18px Arial;text-align:center;padding:2rem"><p id="loading">Loading Wilderness: Last Frontier 2.7...</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Wilderness: Last Frontier — Version 2.7</title>
+<style>
+*{box-sizing:border-box}
+html,body{
+ margin:0;
+ background:#0c1815;
+ color:#f0f3e8;
+ font:13px Trebuchet MS,Arial,sans-serif
+}
+button,input,select{font:inherit}
+button{
+ cursor:pointer;
+ color:inherit;
+ background:#294d39;
+ border:1px solid #75967b;
+ border-radius:6px;
+ padding:8px
+}
+button:hover:not(:disabled){background:#3c694c}
+button:disabled{opacity:.44;cursor:default}
+header{
+ padding:9px 16px;
+ background:#142b21;
+ border-bottom:1px solid #50765a;
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ flex-wrap:wrap;
+ gap:8px
+}
+header strong{
+ font-size:20px;
+ letter-spacing:3px;
+ color:#eacd88
+}
+header small{
+ display:block;
+ letter-spacing:4px;
+ color:#bed0c0;
+ font-size:10px
+}
+#app{
+ max-width:1700px;
+ margin:auto;
+ padding:7px;
+ display:grid;
+ gap:6px
+}
+#screen{
+ position:relative;
+ margin:auto;
+ width:100%;
+ height:clamp(350px,70dvh,1000px);
+ border:2px solid #617d63;
+ border-radius:8px;
+ overflow:hidden;
+ background:#3b633e;
+ display:grid;
+ place-items:center
+}
+#game{
+ display:block;
+ width:100%;
+ height:100%;
+ object-fit:contain;
+ image-rendering:pixelated;
+ cursor:crosshair;
+ touch-action:none
+}
+#overlay{
+ position:absolute;
+ left:10px;
+ top:10px;
+ background:#10251de5;
+ padding:8px;
+ border-radius:6px;
+ pointer-events:none
+}
+#toast{
+ position:absolute;
+ top:45px;
+ left:50%;
+ transform:translateX(-50%);
+ padding:9px 16px;
+ background:#0d261ef4;
+ border:1px solid #edce88;
+ border-radius:7px;
+ max-width:90%;
+ text-align:center;
+ pointer-events:none;
+ opacity:0;
+ z-index:2
+}
+#hint{
+ position:absolute;
+ bottom:10px;
+ left:50%;
+ transform:translateX(-50%);
+ padding:7px 12px;
+ background:#10251de5;
+ border-radius:6px;
+ text-align:center;
+ pointer-events:none;
+ font-size:11px
+}
+#stats{
+ display:grid;
+ grid-template-columns:repeat(5,minmax(0,1fr));
+ gap:5px
+}
+.stat{
+ padding:6px;
+ background:#1b372a;
+ border:1px solid #52725c;
+ border-radius:6px
+}
+.stat span{float:right}
+.meter{
+ height:6px;
+ background:#0a1c13;
+ border-radius:4px;
+ margin-top:6px;
+ overflow:hidden
+}
+.meter div{height:100%}
+#quick,#toolbar{
+ display:flex;
+ flex-wrap:wrap;
+ gap:5px
+}
+#quick span{
+ border:1px solid #55765a;
+ background:#173226;
+ border-radius:5px;
+ padding:5px 9px
+}
+#toolbar button{
+ font-size:12px;
+ padding:7px 10px
+}
+#removeBtn.active{
+ background:#a34a34;
+ border-color:#ffd18c
+}
+#missions{display:grid;gap:4px}
+#missions>div{
+ background:#1b3529;
+ border:1px solid #547456;
+ border-radius:6px;
+ padding:7px 10px
+}
+#missions strong{color:#efd391}
+#progress{cursor:pointer}
+#controls{
+ display:none;
+ justify-content:space-between;
+ gap:12px
+}
+#arrows{
+ display:grid;
+ grid-template-columns:repeat(3,46px);
+ grid-template-rows:repeat(3,40px);
+ gap:3px
+}
+#arrows button{
+ padding:2px;
+ touch-action:none
+}
+#touchActions{
+ display:flex;
+ flex-wrap:wrap;
+ gap:4px;
+ justify-content:flex-end;
+ align-content:center
+}
+dialog{
+ background:#173125;
+ color:#f3f2e7;
+ border:2px solid #829e7a;
+ border-radius:12px;
+ padding:18px;
+ width:min(96vw,690px);
+ max-height:85dvh;
+ overflow:auto
+}
+dialog::backdrop{background:#000b}
+dialog h2{
+ margin:0 0 10px;
+ color:#f2d28a
+}
+dialog p{line-height:1.5}
+.row{
+ display:flex;
+ flex-wrap:wrap;
+ gap:7px;
+ margin:9px 0
+}
+.row>*{flex:1 1 auto}
+.grid{
+ display:grid;
+ grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:7px
+}
+.recipe{
+ text-align:left;
+ padding:10px;
+ line-height:1.6
+}
+.recipe small{
+ display:block;
+ color:#c5d4c2
+}
+.section{
+ margin:12px 0 7px;
+ color:#e6ca86;
+ font-size:15px
+}
+#inventoryItems{
+ display:grid;
+ grid-template-columns:repeat(5,minmax(0,1fr));
+ gap:6px
+}
+#inventoryItems>div{
+ border:1px solid #70856a;
+ padding:8px 4px;
+ border-radius:6px;
+ text-align:center;
+ min-height:68px;
+ background:#243e2e
+}
+#storageItems{
+ width:100%;
+ border-collapse:collapse
+}
+#storageItems td,#storageItems th{
+ padding:6px;
+ border-bottom:1px solid #476750
+}
+#storageItems td:not(:first-child){text-align:center}
+#storageItems button{padding:5px}
+#map{
+ width:100%;
+ height:auto;
+ max-height:63dvh;
+ object-fit:contain;
+ background:#0d1e17;
+ image-rendering:pixelated;
+ cursor:crosshair
+}
+input,select{
+ color:#fff;
+ background:#132d20;
+ border:1px solid #66856f;
+ border-radius:5px;
+ padding:7px;
+ min-width:100px
+}
+@media(max-width:750px){
+ #screen{height:60dvh;min-height:340px}
+ #stats{grid-template-columns:repeat(3,1fr)}
+ #controls{display:flex}
+ .grid{grid-template-columns:1fr}
+ #inventoryItems{grid-template-columns:repeat(3,1fr)}
+ header strong{font-size:15px}
+}
+#app:fullscreen{
+ height:100dvh;
+ max-width:none;
+ overflow:auto
+}
+#app:fullscreen #screen{height:75dvh}
+</style>
+</head>
+<body>
+
+<header>
+ <div>
+  <strong>WILDERNESS</strong>
+  <small>LAST FRONTIER · V2.7</small>
+ </div>
+ <div id="time">DAY 1 · 08:00</div>
+ <div id="saved">Ready</div>
+</header>
+
+<main id="app">
+
+<div id="screen">
+ <canvas id="game" width="960" height="600"></canvas>
+ <div id="overlay">PINE VALLEY</div>
+ <div id="toast"></div>
+ <div id="hint">
+  WASD: Move · E: Gather · I: Inventory · M: Map ·
+  1/2/3: Weapon · Shift: Sneak · Delete: Remove mode
+ </div>
+</div>
+
+<div id="controls">
+ <div id="arrows">
+  <span></span>
+  <button data-dir="up">▲</button>
+  <span></span>
+  <button data-dir="left">◀</button>
+  <span></span>
+  <button data-dir="right">▶</button>
+  <span></span>
+  <button data-dir="down">▼</button>
+  <span></span>
+ </div>
+ <div id="touchActions">
+  <button id="touchGather">Gather</button>
+  <button id="touchAttack">Attack</button>
+  <button id="touchBuild">Build</button>
+  <button id="touchRemove">Remove</button>
+ </div>
+</div>
+
+<div id="stats"></div>
+<div id="quick"></div>
+
+<div id="toolbar">
+ <button id="benchBtn">🔨 Build First Workbench</button>
+ <button id="inventoryBtn">🎒 Inventory (I)</button>
+ <button id="craftBtn">🔧 Craft / Build</button>
+ <button id="mapBtn">🗺 Map (M)</button>
+ <button id="gatherBtn">✋ Gather (E)</button>
+ <button id="eatBtn">🍓 Eat</button>
+ <button id="drinkBtn">💧 Drink</button>
+ <button id="restBtn">💤 Sleep</button>
+ <button id="roastBtn">🔥 Cook</button>
+ <button id="removeBtn">🗑 Remove Objects</button>
+ <button id="cancelBtn">✕ Cancel</button>
+ <button id="pauseBtn">⏸ Pause</button>
+ <button id="fullBtn">⛶ Fullscreen</button>
+ <button id="saveBtn">💾 Save</button>
+ <button id="helpBtn">? Help</button>
+ <button id="newBtn">New Game</button>
+</div>
+
+<div id="missions">
+ <div id="mission"></div>
+ <div id="farmMission"></div>
+ <div id="huntingMission"></div>
+ <div id="progress" tabindex="0" role="button"></div>
+</div>
+
+</main>
+
+<dialog id="menu">
+ <h2 id="menuTitle"></h2>
+ <p id="menuText"></p>
+ <div id="menuContent"></div>
+ <div class="row">
+  <button id="menuClose">Close</button>
+ </div>
+</dialog>
+
+<dialog id="invDialog">
+ <h2>🎒 Backpack</h2>
+ <div id="inventoryItems"></div>
+ <div class="row">
+  <button id="inventoryClose">Close</button>
+ </div>
+</dialog>
+
+<dialog id="mapDialog">
+ <h2>🗺 Explorer's Map</h2>
+ <p>Travel to reveal the world. Click explored ground to add or edit a marker.</p>
+ <canvas id="map" width="800" height="600"></canvas>
+ <div class="row">
+  <input id="markerName" placeholder="Marker name" maxlength="28">
+  <select id="markerKind">
+   <option value="home">⌂ Home</option>
+   <option value="ore">◆ Resource</option>
+   <option value="water">● Water</option>
+   <option value="danger">! Danger</option>
+   <option value="other">✦ Other</option>
+  </select>
+  <button id="markerSave">Save marker</button>
+  <button id="markerDelete">Delete marker</button>
+  <button id="mapClose">Close</button>
+ </div>
+ <p id="mapInfo"></p>
+</dialog>
+
 <script>
-// Self-contained copy-paste edition.
-// Paste Parts 1, 2 and 3 together into ONE index.html.
-const GAME_PARTS=[
-`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
-gEDgjw1rxzkro22Y5lbD`,`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
-w+EWgtCDdpMU9Tiw6UsV`,`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
-P2+uLk8P/g9+d0WxtskCAA==`
+"use strict";
+
+const $=id=>document.getElementById(id);
+const cv=$("game");
+const ctx=cv.getContext("2d");
+const MW=$("map");
+const mc=MW.getContext("2d");
+
+const WIDTH=6400;
+const HEIGHT=4800;
+const SAVE="wilderness_frontier_v13_wasd";
+const SPAWN={x:1600,y:1200};
+const VIEW={w:750,h:468};
+
+const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
+const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+
+const rand=(x,y,seed=0)=>{
+ let n=Math.imul(x,374761393)+
+       Math.imul(y,668265263)+
+       Math.imul(seed,1442695041);
+ n=Math.imul(n^(n>>>13),1274126177);
+ return ((n^(n>>>16))>>>0)/4294967295;
+};
+
+const lakes=[
+ {x:1110,y:860,rx:275,ry:190},
+ {x:2360,y:1580,rx:340,ry:250},
+ {x:710,y:1880,rx:235,ry:200},
+ {x:2720,y:390,rx:290,ry:170},
+ {x:4780,y:3770,rx:195,ry:132},
+ {x:5610,y:1300,rx:155,ry:115}
 ];
-(async()=>{
-  const text=GAME_PARTS.join('').replace(/\s+/g,'');
-  const bytes=Uint8Array.from(atob(text),x=>x.charCodeAt(0));
-  const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
-  const html=await new Response(stream).text();
-  document.open();document.write(html);document.close();
-})().catch(error=>{
-  document.getElementById('loading').textContent='Game could not load. All 3 code blocks must be copied in order, without missing text. '+error.message;
-  console.error(error);
-});
+
+function water(x,y){
+ if(lakes.some(l=>
+  ((x-l.x)/l.rx)**2+((y-l.y)/l.ry)**2<1
+ ))return true;
+
+ if(x>3220&&x<5480&&y>1650&&y<4300){
+  return Math.abs(
+   y-(2300+(x-3220)*.57+Math.sin(x*.004)*75)
+  )<36;
+ }
+ return false;
+}
+
+function dry(x,y){
+ return x>25&&y>25&&
+        x<WIDTH-25&&y<HEIGHT-25&&
+        !water(x,y)&&!water(x-13,y)&&
+        !water(x+13,y)&&!water(x,y-13)&&!water(x,y+13);
+}
+
+const BIOMES={
+ pine:["Pine Forest","#3c6040"],
+ grasslands:["Grasslands","#94a967"],
+ highlands:["Rocky Highlands","#80877a"],
+ wetlands:["Wetlands","#527e65"],
+ snow:["Snowy Mountains","#d9e6e3"],
+ hardwood:["Hardwood Forest","#877d4b"],
+ badlands:["Badlands","#b47d56"]
+};
+
+const sites=[
+ ["grasslands",3850,1350,1900,1600],
+ ["highlands",5200,2210,1600,1580],
+ ["wetlands",3600,3540,1570,1320],
+ ["snow",5720,370,1630,1450],
+ ["hardwood",1700,3600,1880,1350],
+ ["badlands",5650,4380,1740,1450]
+];
+
+function biome(x,y){
+ if(x<3280&&y<2500)return"pine";
+ let score=-1,b="pine";
+ for(const [id,sx,sy,rx,ry] of sites){
+  const v=Math.exp(-(
+   (x-sx)**2/rx**2+(y-sy)**2/ry**2
+  )*1.6);
+  if(v>score){score=v;b=id}
+ }
+ return b;
+}
+
+const ITEMS={
+ sticks:["🌿","Sticks"],
+ pebbles:["🪨","Pebbles"],
+ logs:["🪵","Logs"],
+ stone:["⛏️","Stone"],
+ berries:["🍓","Berries"],
+ rations:["🥫","Rations"],
+ seeds:["🌻","Wild Seeds"],
+ grass:["🌾","Grass"],
+ hay:["🌿","Hay"],
+ eggs:["🥚","Eggs"],
+ feathers:["🪶","Feathers"],
+ wool:["🧶","Wool"],
+ milk:["🥛","Milk"],
+ hardwood:["🪵","Hardwood"],
+ reeds:["🌱","Reeds"],
+ clay:["🧱","Clay"],
+ mushrooms:["🍄","Mushrooms"],
+ nuts:["🌰","Nuts"],
+ iron:["⚙️","Iron Ore"],
+ coal:["⬛","Coal"],
+ minerals:["💎","Minerals"],
+ alpine:["🌿","Alpine Plants"],
+ flowers:["🌼","Flowers"],
+ bricks:["🧱","Bricks"],
+ ironBars:["🔩","Iron Bars"],
+ jugs:["🏺","Water Jugs"],
+ arrows:["🏹","Arrows"],
+ rawMeat:["🥩","Raw Meat"],
+ cookedMeat:["🍖","Roasted Meat"],
+ hides:["🟤","Hides"],
+ potatoSeeds:["🥔","Potato Seeds"],
+ carrotSeeds:["🥕","Carrot Seeds"],
+ wheatSeeds:["🌾","Wheat Seeds"],
+ potatoes:["🥔","Potatoes"],
+ carrots:["🥕","Carrots"],
+ wheat:["🌾","Wheat"],
+ bakedPotatoes:["🍠","Baked Potatoes"],
+ smokedMeat:["🥩","Smoked Meat"]
+};
+
+const BUILD={
+ workbench:["🔨","Workbench",{sticks:5,pebbles:3},37,0],
+ tent:["⛺","Tent",{sticks:8,pebbles:4},38,1],
+ chest:["📦","Storage Chest",{logs:4,sticks:4},29,1],
+ cabin:["🏠","Log Cabin",{logs:12,stone:8,sticks:6},57,2],
+ garden:["🌱","Berry Garden",{logs:2,sticks:6,berries:3},38,2],
+ collector:["💧","Water Collector",{logs:4,stone:4,pebbles:4},30,2],
+ coop:["🐔","Chicken Coop",{sticks:8,logs:3,pebbles:4},60,2],
+ sheepPen:["🐑","Sheep Pen",{logs:8,sticks:6},75,2],
+ cattlePasture:["🐄","Cattle Pasture",{logs:12,sticks:8,stone:4},90,2],
+ trough:["🥕","Feeding Trough",{sticks:4,logs:2,pebbles:2},18,2],
+ furnace:["🔥","Stone Furnace",{stone:12,clay:8,logs:4},38,2],
+ hearth:["♨️","Brick Hearth",{bricks:8,stone:4,logs:2},38,2],
+ farmPlot:["🌱","Farm Plot",{logs:2,sticks:3},34,1],
+ fence:["🪵","Wooden Fence",{sticks:2},14,1],
+ gate:["🚪","Wooden Gate",{logs:1,sticks:2},14,1],
+ woodshed:["🪵","Woodshed",{logs:6,sticks:5},44,1],
+ smokehouse:["🥩","Smokehouse",{logs:9,stone:5,sticks:4},46,2],
+ rootCellar:["🥔","Root Cellar",{logs:8,stone:10,clay:4},45,2],
+ well:["🪣","Water Well",{stone:12,logs:6,sticks:4},37,2],
+ barn:["🐄","Large Barn",{logs:18,stone:10,sticks:8},82,2]
+};
+
+const CROP={
+ potatoes:["🥔","potatoSeeds",260,4],
+ carrots:["🥕","carrotSeeds",210,5],
+ wheat:["🌾","wheatSeeds",360,6]
+};
+
+const PENS={
+ coop:["chicken",6,"seeds","eggs",180,2],
+ sheepPen:["sheep",4,"grass","wool",260,1],
+ cattlePasture:["cow",3,"grass","milk",230,2]
+};
+
+const ANIMALS={
+ chicken:["🐔","Grasslands",60,0,0],
+ sheep:["🐑","Grasslands",60,0,0],
+ cow:["🐄","Grasslands",60,0,0],
+ rabbit:["🐇","Forest",20,0,0],
+ deer:["🦌","Forest",55,0,0],
+ goat:["🐐","Highlands",55,0,0],
+ duck:["🦆","Wetlands",25,0,0],
+ wolf:["🐺","Forest",65,9,2],
+ bear:["🐻","Forest",150,19,4],
+ coyote:["🐕","Badlands",45,6,2],
+ frog:["🐸","Wetlands",20,0,0],
+ fish:["🐟","Water",15,0,0]
+};
+
+const loot={
+ rabbit:[1,1],
+ deer:[4,2],
+ goat:[3,2],
+ duck:[1,0],
+ wolf:[2,2],
+ bear:[6,4],
+ coyote:[1,1]
+};
+
+const STORAGE={
+ chest:Object.keys(ITEMS),
+ woodshed:["logs","sticks","hardwood"],
+ rootCellar:[
+  "berries","rations","potatoes","carrots","wheat",
+  "bakedPotatoes","rawMeat","cookedMeat","smokedMeat",
+  "mushrooms","nuts","eggs","milk",
+  "potatoSeeds","carrotSeeds","wheatSeeds"
+ ],
+ barn:["hay","grass","seeds","wheat"]
+};
+
+const STORAGE_CAP={
+ chest:[40,100],
+ woodshed:[140,300],
+ rootCellar:[180,400],
+ barn:[160,320]
+};
+
+const resourceBiomes={
+ pine:["tree","rock","berry","branch","pebble"],
+ grasslands:["seeds","grass","hay","flowers","branch","pebble","berry"],
+ highlands:["rock","iron","coal","rock","branch","pebble"],
+ wetlands:["reeds","clay","mushrooms","berry","pebble"],
+ snow:["rock","minerals","alpine","pebble","tree"],
+ hardwood:["hardwood","mushrooms","nuts","berry","branch","pebble"],
+ badlands:["clay","rock","minerals","pebble","coal"]
+};
+
+let nodes=[];
+let nodeGrid=new Map();
+let S;
+let cam={x:0,y:0};
+let keys=new Set();
+let pressed=new Set();
+let mouse={x:0,y:0,inside:false};
+let mode="";
+let buildType="";
+let target=null;
+let pausedBefore=false;
+let selectedMarker=null;
+let mapPosition=null;
+let toastTimer=0;
+let uiTimer=0;
+let saveTimer=0;
+let frameLast=performance.now();
+
+function makeNodes(){
+ nodes=[];
+ nodeGrid=new Map();
+ for(let gy=0;gy<Math.ceil(HEIGHT/84);gy++){
+  for(let gx=0;gx<Math.ceil(WIDTH/84);gx++){
+   let x=gx*84+10+rand(gx,gy,1)*60;
+   let y=gy*84+10+rand(gx,gy,2)*60;
+   if(!dry(x,y)||rand(gx,gy,19)>=.731)continue;
+   let nearOld=x<3200&&y<2400;
+   let b=biome(x,y);
+   let arr=resourceBiomes[b];
+   let t=nearOld?
+    (r=>r<.35?"tree":r<.53?"rock":r<.67?"berry":r<.84?"branch":"pebble")(rand(gx,gy,3)):
+    arr[Math.floor(rand(gx,gy,3)*arr.length)];
+   if(distance({x,y},SPAWN)<70&&["tree","rock"].includes(t))continue;
+   nodes.push({
+    id:nearOld?`${gx}_${gy}`:`ext_${gx}_${gy}`,
+    x,y,type:t,variant:rand(gx,gy,4)
+   });
+  }
+ }
+ for(let i=0;i<10;i++){
+  let t=i*Math.PI/5;
+  let r=115+(i%3)*35;
+  let x=SPAWN.x+Math.cos(t)*r;
+  let y=SPAWN.y+Math.sin(t)*r;
+  if(dry(x,y))nodes.push({
+   id:`starter_${i}`,x,y,
+   type:i%2?"pebble":"branch",
+   variant:.55
+  });
+ }
+ for(let i=0;i<8;i++){
+  let a=i*2.39996;
+  let x=SPAWN.x+Math.cos(a)*(290+i*19);
+  let y=SPAWN.y+Math.sin(a)*(290+i*19);
+  if(dry(x,y))nodes.push({
+   id:`farm_seed_patch_${i}`,
+   x,y,type:"seeds",variant:.4
+  });
+ }
+ for(const n of nodes){
+  const k=`${Math.floor(n.x/160)}:${Math.floor(n.y/160)}`;
+  if(!nodeGrid.has(k))nodeGrid.set(k,[]);
+  nodeGrid.get(k).push(n);
+ }
+}
+
+function nearNodes(x,y,r=100){
+ let arr=[];
+ for(let a=Math.floor((x-r)/160);a<=Math.floor((x+r)/160);a++){
+  for(let b=Math.floor((y-r)/160);b<=Math.floor((y+r)/160);b++){
+   arr.push(...(nodeGrid.get(a+":"+b)||[]));
+  }
+ }
+ return arr;
+}
+
+function createAnimals(){
+ let a=[];
+ for(let gy=0;gy<23;gy++){
+  for(let gx=0;gx<30;gx++){
+   if(rand(gx,gy,93)>.61)continue;
+   let x=90+gx*215+rand(gx,gy,94)*115;
+   let y=90+gy*215+rand(gx,gy,95)*115;
+   if(x>WIDTH-75||y>HEIGHT-75||
+      distance({x,y},SPAWN)<340||!dry(x,y))continue;
+   let b=biome(x,y);
+   let types=b==="grasslands"?["chicken","sheep","cow","rabbit"]:
+    b==="pine"?["rabbit","deer","wolf"]:
+    b==="hardwood"?["deer","bear","rabbit"]:
+    b==="snow"?["wolf","goat","bear"]:
+    b==="highlands"?["goat","wolf"]:
+    b==="wetlands"?["duck","frog"]:
+    ["coyote","rabbit"];
+   let type=types[Math.floor(rand(gx,gy,96)*types.length)];
+   a.push({
+    id:`wild_${gx}_${gy}`,
+    type,x,y,
+    homeX:x,homeY:y,
+    hp:ANIMALS[type][2],
+    mode:"wild",
+    phase:rand(gx,gy,97)*6,
+    age:1,feed:80,penId:null
+   });
+  }
+ }
+ return a;
+}
+
+function fresh(){
+ return {
+  player:{x:1600,y:1200,dir:"down",moving:false,step:0},
+  stats:{health:100,hunger:85,thirst:82,energy:95,warmth:90},
+  inventory:Object.fromEntries(
+   Object.keys(ITEMS).map(k=>[k,k==="berries"?3:0])
+  ),
+  tools:{
+   axe:false,pickaxe:false,spear:false,bow:false,
+   hideArmor:false,woolWrap:false,farmBucket:false,
+   ironAxe:false,ironPickaxe:false,ironSpear:false
+  },
+  gathered:{},
+  buildings:[],
+  fires:[],
+  animals:createAnimals(),
+  carcasses:[],
+  time:480,day:1,
+  paused:false,dead:false,mission:0,
+  discovered:{pine:true},
+  exploredTiles:[],
+  mapMarkers:[],
+  farmWater:0,jugWater:0,
+  homestead:{
+   harvested:0,planted:0,waterings:0,
+   types:{},highestStage:0
+  },
+  milestones:{
+   gathered:{sticks:0,pebbles:0,logs:0,stone:0},
+   stored:0,
+   harvestedGarden:0,
+   collectorDrinks:0
+  },
+  combat:{
+   equipped:"hands",kills:{},shots:0,roasted:0,
+   predatorEncounters:0,huntingMission:0,loot:0
+  },
+  captured:{},
+  livestockProducts:{},
+  livestockMission:0,
+  totalGathered:0,
+  distanceWalked:0
+ };
+}
+
+function normalize(){
+ let F=fresh();
+ for(const k of [
+  "player","stats","inventory","tools",
+  "milestones","homestead","combat"
+ ]){
+  S[k]={...F[k],...(S[k]||{})};
+ }
+ S.milestones.gathered={
+  ...F.milestones.gathered,
+  ...S.milestones.gathered
+ };
+ S.homestead.types||={};
+ S.combat.kills||={};
+
+ for(const key of [
+  "gathered","discovered","captured","livestockProducts"
+ ])S[key]||={};
+
+ for(const key of [
+  "buildings","fires","carcasses",
+  "mapMarkers","exploredTiles"
+ ]){
+  if(!Array.isArray(S[key]))S[key]=[];
+ }
+ if(!Array.isArray(S.animals)||!S.animals.length){
+  S.animals=createAnimals();
+ }
+ for(const b of S.buildings){
+  b.level||=1;
+  b.storage||={};
+  b.products||={};
+  b.progress||=0;
+  b.charges||=0;
+  b.feed||=0;
+  b.growth||=0;
+  b.waterProgress||=0;
+  b.smokeRemaining||=0;
+  b.smokeAmount||=0;
+  b.smokeReady||=0;
+  b.bait||=0;
+  b.open=!!(b.open??b.gateOpen);
+ }
+ S.paused=false;
+ S.dead=false;
+ if(!dry(S.player.x,S.player.y)){
+  S.player.x=1600;
+  S.player.y=1200;
+ }
+ S.farmWater||=0;
+ S.jugWater||=0;
+}
+
+function load(){
+ try{
+  let raw=localStorage.getItem(SAVE);
+  if(!raw){
+   S=fresh();
+   return false;
+  }
+  S=JSON.parse(raw);
+  if(!S?.player||!S.inventory)throw Error("Bad saved game");
+  normalize();
+  return true;
+ }catch(e){
+  S=fresh();
+  return false;
+ }
+}
+
+function save(msg=false){
+ if(S.dead)return;
+ try{
+  localStorage.setItem(SAVE,JSON.stringify(S));
+  $("saved").textContent="✓ Saved";
+  if(msg)notice("Progress saved.");
+ }catch(e){
+  $("saved").textContent="Storage unavailable";
+ }
+}
+
+function notice(t){
+ $("toast").textContent=t;
+ $("toast").style.opacity=1;
+ toastTimer=3;
+}
+
+function has(cost){
+ return Object.entries(cost).every(
+  ([k,v])=>(S.inventory[k]||0)>=v
+ );
+}
+function take(cost){
+ if(!has(cost))return false;
+ for(const [k,v] of Object.entries(cost))S.inventory[k]-=v;
+ return true;
+}
+function gain(item,n){
+ S.inventory[item]=(S.inventory[item]||0)+n;
+}
+function costText(cost){
+ return Object.entries(cost)
+  .map(([k,v])=>`${v} ${ITEMS[k]?.[1]||k}`)
+  .join(" + ");
+}
+
+function isNight(){
+ return S.time<360||S.time>=1200;
+}
+
+function wolfActive(a){
+ return a.type!=="wolf"||isNight()||
+  rand(
+   Math.floor((a.homeX||a.x)/215),
+   Math.floor((a.homeY||a.y)/215),
+   729
+  )<.2;
+}
+
+function nearBuilding(type,range=135){
+ return S.buildings.filter(b=>
+  (!type||b.type===type)&&distance(b,S.player)<range
+ ).sort((a,b)=>distance(a,S.player)-distance(b,S.player))[0];
+}
+
+function nearWater(){
+ for(let a=0;a<6.28;a+=.2){
+  if(water(
+   S.player.x+Math.cos(a)*43,
+   S.player.y+Math.sin(a)*43
+  ))return true;
+ }
+ return false;
+}
+
+function nearFire(){
+ return S.fires.some(f=>
+  f.fuel>0&&distance(f,S.player)<125
+ )||S.buildings.some(b=>
+  b.type==="hearth"&&b.fuel>0&&distance(b,S.player)<145
+ );
+}
+function nearShelter(){
+ return nearBuilding("cabin")||nearBuilding("tent");
+}
+function nearWell(){
+ return S.buildings.find(b=>
+  b.type==="well"&&
+  distance(b,S.player)<135&&
+  b.charges>0
+ );
+}
+
+function gathered(n){
+ return !!S.gathered[n.id];
+}
+
+function canWalk(x,y){
+ if(!dry(x,y))return false;
+ for(const n of nearNodes(x,y,33)){
+  if(!gathered(n)&&
+     ["tree","hardwood","rock"].includes(n.type)&&
+     distance(n,{x,y})<(n.type==="rock"?18:21)){
+   return false;
+  }
+ }
+ for(const b of S.buildings){
+  if(["coop","sheepPen","cattlePasture","trough"]
+    .includes(b.type))continue;
+  if(b.type==="gate"&&b.open)continue;
+  if(["fence","gate"].includes(b.type)){
+   if(Math.abs(x-b.x)<23&&Math.abs(y-b.y)<23)return false;
+  }else if(
+   Math.abs(x-b.x)<BUILD[b.type][3]+9&&
+   Math.abs(y-b.y)<BUILD[b.type][3]*.55+12
+  )return false;
+ }
+ return true;
+}
+
+function explored(x,y){
+ return S.exploredTiles.includes(
+  Math.floor(y/80)*80+Math.floor(x/80)
+ );
+}
+
+function reveal(x,y){
+ let i=Math.floor(x/80),j=Math.floor(y/80);
+ let a=new Set(S.exploredTiles);
+ for(let dy=-3;dy<=3;dy++){
+  for(let dx=-3;dx<=3;dx++){
+   if(dx*dx+dy*dy<13&&
+      i+dx>=0&&i+dx<80&&
+      j+dy>=0&&j+dy<60){
+    a.add((j+dy)*80+i+dx);
+   }
+  }
+ }
+ S.exploredTiles=[...a];
+}
+
+function timeString(){
+ let t=Math.floor(S.time);
+ return String(Math.floor(t/60)).padStart(2,"0")+
+ ":"+String(t%60).padStart(2,"0");
+}
+
+function closeMenu(){
+ if($("menu").open)$("menu").close();
+}
+
+function showMenu(title,text,html,click){
+ if($("menu").open)$("menu").close();
+ pausedBefore=S.paused;
+ S.paused=true;
+ $("menuTitle").textContent=title;
+ $("menuText").textContent=text;
+ $("menuContent").innerHTML=html;
+ $("menuContent").onclick=e=>{
+  const b=e.target.closest("[data-act]");
+  if(b&&!b.disabled)click(b.dataset.act,b);
+ };
+ $("menu").showModal();
+}
+
+function modalOpen(){
+ return $("menu").open||
+        $("invDialog").open||
+        $("mapDialog").open;
+}
+
+function renderUI(){
+ if(!S)return;
+
+ let cols={
+  health:"#de695c",
+  hunger:"#e6b55c",
+  thirst:"#58b4eb",
+  energy:"#87d27b",
+  warmth:"#e99159"
+ };
+
+ $("stats").innerHTML=Object.entries(S.stats)
+  .map(([k,v])=>`
+   <div class="stat">
+    ${k[0].toUpperCase()+k.slice(1)}
+    <span>${Math.ceil(v)}/100</span>
+    <div class="meter">
+     <div style="
+      width:${clamp(v,0,100)}%;
+      background:${cols[k]}
+     "></div>
+    </div>
+   </div>
+  `).join("");
+
+ $("quick").innerHTML=[
+  "sticks","pebbles","logs","stone",
+  "berries","arrows","smokedMeat"
+ ].map(k=>`
+  <span>${ITEMS[k][0]} ${ITEMS[k][1]}:
+   ${S.inventory[k]||0}</span>
+ `).join("")+
+ `<span>⚔ ${S.combat.equipped}</span>`;
+
+ $("time").textContent=
+  `DAY ${S.day} · ${timeString()} · `+
+  (isNight()?"🌙 Night":"☀ Day");
+
+ $("overlay").textContent=
+  BIOMES[biome(S.player.x,S.player.y)][0].toUpperCase();
+
+ $("pauseBtn").textContent=
+  S.paused?"▶ Resume":"⏸ Pause";
+
+ $("removeBtn").classList.toggle("active",mode==="delete");
+
+ $("removeBtn").textContent=
+  mode==="delete"?
+  "🗑 Exit Remove Mode":
+  "🗑 Remove Objects";
+
+ $("benchBtn").hidden=
+  S.buildings.some(b=>b.type==="workbench");
+
+ renderMissions();
+}
+  // PART 2 — WORLD, SURVIVAL, WILDLIFE, MISSIONS, AND GRAPHICS
+
+const MISSIONS=[
+ ["First Supplies","Collect five sticks and three pebbles.",s=>(s.milestones.gathered.sticks||0)>=5&&(s.milestones.gathered.pebbles||0)>=3],
+ ["Your First Workbench","Build a workbench.",s=>s.buildings.some(b=>b.type==="workbench")],
+ ["Frontier Tools","Craft an axe and a pickaxe.",s=>s.tools.axe&&s.tools.pickaxe],
+ ["Gather Timber and Stone","Harvest seven logs and five stone.",s=>(s.milestones.gathered.logs||0)>=7&&(s.milestones.gathered.stone||0)>=5],
+ ["First Shelter","Build your tent.",s=>s.buildings.some(b=>b.type==="tent")],
+ ["Stockpile Supplies","Build a storage chest and deposit five items.",s=>s.buildings.some(b=>b.type==="chest")&&(s.milestones.stored||0)>=5],
+ ["Permanent Homestead","Build a log cabin.",s=>s.buildings.some(b=>b.type==="cabin")],
+ ["Self-Sufficiency","Harvest from a berry garden and drink from a collector.",s=>(s.milestones.harvestedGarden||0)>0&&(s.milestones.collectorDrinks||0)>0],
+ ["Frontier Pioneer","Reach Day 7.",s=>s.day>=7],
+ ["The Long Frontier","Survive 365 days.",s=>s.day>=365]
+];
+
+const HUNT_MISSIONS=[
+ ["Stone Spear","Craft a stone spear.",s=>s.tools.spear],
+ ["First Rabbit","Hunt and harvest a rabbit.",s=>(s.combat.kills.rabbit||0)>0&&(s.combat.loot||0)>0],
+ ["Primitive Archer","Craft a bow and fire an arrow.",s=>s.tools.bow&&s.combat.shots>0],
+ ["Campfire Meal","Roast raw meat.",s=>s.combat.roasted>0],
+ ["Hide Armor","Craft armor from six hides.",s=>s.tools.hideArmor],
+ ["Survive a Predator","Survive a wolf, coyote or bear attack.",s=>s.combat.predatorEncounters>0]
+];
+
+const LIVESTOCK_MISSIONS=[
+ ["Discover Grasslands","Explore east to the grasslands.",s=>s.discovered.grasslands],
+ ["Gather Bait","Collect wild seeds or grass.",s=>s.milestones.baitGathered],
+ ["Build a Coop","Build a chicken coop.",s=>s.buildings.some(b=>b.type==="coop")],
+ ["Capture Chicken","Lure a chicken into an open coop, then close its gate.",s=>(s.captured.chicken||0)>0],
+ ["Collect Eggs","Feed chickens and collect eggs.",s=>(s.livestockProducts.eggs||0)>0],
+ ["Build Sheep Pen","Build a sheep pen.",s=>s.buildings.some(b=>b.type==="sheepPen")],
+ ["Wool Production","Capture sheep and harvest wool.",s=>(s.captured.sheep||0)>0&&(s.livestockProducts.wool||0)>0],
+ ["Build Cattle Pasture","Build a cattle pasture.",s=>s.buildings.some(b=>b.type==="cattlePasture")],
+ ["Milk Production","Capture cattle and collect milk.",s=>(s.captured.cow||0)>0&&(s.livestockProducts.milk||0)>0]
+];
+
+const STAGES=[
+ ["Wilderness Camp",[]],
+ ["Established Homestead",[
+  ["Workbench",s=>s.buildings.some(b=>b.type==="workbench")],
+  ["Tent or cabin",s=>s.buildings.some(b=>["tent","cabin"].includes(b.type))],
+  ["Storage chest",s=>s.buildings.some(b=>b.type==="chest")],
+  ["One farm plot",s=>s.buildings.some(b=>b.type==="farmPlot")]
+ ]],
+ ["Working Farm",[
+  ["Three farm plots",s=>s.buildings.filter(b=>b.type==="farmPlot").length>=3],
+  ["Harvest six crops",s=>s.homestead.harvested>=6],
+  ["Livestock enclosure",s=>s.buildings.some(b=>PENS[b.type])],
+  ["Eight fence sections",s=>s.buildings.filter(b=>b.type==="fence").length>=8]
+ ]],
+ ["Prosperous Homestead",[
+  ["Log cabin",s=>s.buildings.some(b=>b.type==="cabin")],
+  ["Harvest 25 crops",s=>s.homestead.harvested>=25],
+  ["Grow all three crops",s=>Object.keys(CROP).every(k=>s.homestead.types[k]>0)],
+  ["Two livestock enclosures",s=>s.buildings.filter(b=>PENS[b.type]).length>=2],
+  ["16 fences and one gate",s=>s.buildings.filter(b=>b.type==="fence").length>=16&&s.buildings.some(b=>b.type==="gate")],
+  ["Water collector",s=>s.buildings.some(b=>b.type==="collector")]
+ ]],
+ ["Frontier Settlement",[
+  ["Survive 15 days",s=>s.day>=15],
+  ["Harvest 80 crops",s=>s.homestead.harvested>=80],
+  ["Three animal pens",s=>Object.keys(PENS).every(k=>s.buildings.some(b=>b.type===k))],
+  ["Capture all three livestock species",s=>["chicken","sheep","cow"].every(k=>s.captured[k]>0)],
+  ["32 fences and two gates",s=>s.buildings.filter(b=>b.type==="fence").length>=32&&s.buildings.filter(b=>b.type==="gate").length>=2]
+ ]]
+];
+
+function checkMissions(){
+ while(S.mission<MISSIONS.length&&MISSIONS[S.mission][2](S)){
+  notice("Mission complete: "+MISSIONS[S.mission][0]);
+  S.mission++;
+ }
+
+ while(
+  S.combat.huntingMission<HUNT_MISSIONS.length&&
+  HUNT_MISSIONS[S.combat.huntingMission][2](S)
+ ){
+  S.combat.huntingMission++;
+ }
+
+ while(
+  S.livestockMission<LIVESTOCK_MISSIONS.length&&
+  LIVESTOCK_MISSIONS[S.livestockMission][2](S)
+ ){
+  S.livestockMission++;
+ }
+
+ let i=level();
+
+ if(i>S.homestead.highestStage){
+  S.homestead.highestStage=i;
+  notice("Homestead advanced: "+STAGES[i][0]);
+ }
+}
+
+function level(){
+ let n=0;
+ for(let i=1;i<STAGES.length;i++){
+  if(!STAGES[i][1].every(v=>v[1](S)))break;
+  n=i;
+ }
+ return n;
+}
+
+function renderMissions(){
+ const m=MISSIONS[S.mission];
+ const h=HUNT_MISSIONS[S.combat.huntingMission];
+ const l=LIVESTOCK_MISSIONS[S.livestockMission];
+ const i=level();
+ const next=STAGES[i+1];
+
+ const complete=next?
+  next[1].filter(g=>g[1](S)).length:0;
+
+ $("mission").innerHTML=`
+  <strong>🎯 SURVIVAL:
+  ${m?m[0]:"All milestones complete"}</strong>
+  — ${m?m[1]:"You mastered the frontier!"}
+ `;
+
+ $("huntingMission").innerHTML=`
+  <strong>⚔ HUNTING:
+  ${h?h[0]:"Hunting mastered"}</strong>
+  — ${h?h[1]:"All hunting objectives complete!"}
+  · ${S.combat.equipped} · ${S.inventory.arrows} arrows
+ `;
+
+ $("farmMission").innerHTML=`
+  <strong>🐓 LIVESTOCK:
+  ${l?l[0]:"Livestock mastered"}</strong>
+  — ${l?l[1]:"All livestock objectives complete!"}
+ `;
+
+ $("progress").innerHTML=`
+  <strong>🏡 ${STAGES[i][0]} (${i+1}/5)</strong>
+  · ${next?
+    "Next: "+next[0]+" ("+complete+"/"+next[1].length+")":
+    "Settlement established!"}
+  · Crops harvested: ${S.homestead.harvested}
+ `;
+}
+
+function showProgress(){
+ let i=level();
+ let n=STAGES[i+1];
+
+ showMenu(
+  "🏡 Homestead Development",
+  `Current: ${STAGES[i][0]} (${i+1}/5).
+   Harvested: ${S.homestead.harvested}.`,
+  n?
+   `<h3 class="section">Next: ${n[0]}</h3>`+
+   n[1].map(v=>`
+    <p>${v[1](S)?"✅":"○"} ${v[0]}</p>
+   `).join(""):
+   "🏆 All five stages achieved!",
+  ()=>{}
+ );
+}
+
+function nearbyGather(){
+ const corpse=S.carcasses
+  .filter(c=>distance(c,S.player)<80)
+  .sort((a,b)=>distance(a,S.player)-distance(b,S.player))[0];
+
+ if(corpse)return harvestCarcass(corpse);
+
+ let n=nearNodes(S.player.x,S.player.y,80)
+  .filter(n=>!gathered(n)&&distance(n,S.player)<65)
+  .sort((a,b)=>distance(a,S.player)-distance(b,S.player))[0];
+
+ if(n)gather(n);
+ else notice("Move closer to a fallen resource.");
+}
+
+function gather(n){
+ if(gathered(n)||S.paused||S.dead)return;
+
+ if(distance(n,S.player)>66){
+  return notice("Move closer.");
+ }
+
+ const t=n.type;
+
+ if(["tree","hardwood"].includes(t)&&!S.tools.axe){
+  return notice("Craft an axe to harvest trees.");
+ }
+
+ if(["rock","iron","coal","minerals"].includes(t)&&
+    !S.tools.pickaxe){
+  return notice("Craft a pickaxe to mine stone or ore.");
+ }
+
+ let k={
+  tree:"logs",
+  branch:"sticks",
+  pebble:"pebbles",
+  rock:"stone"
+ }[t]||t;
+
+ let base=["tree","hardwood"].includes(t)?
+  3:["rock","berry"].includes(t)?2:1;
+
+ let nQty=base+Math.floor(n.variant*3);
+
+ if(t==="berry")k="berries";
+
+ gain(k,nQty);
+
+ if(t==="hardwood")gain("logs",2);
+
+ if(S.tools.ironAxe&&["tree","hardwood"].includes(t)){
+  gain("logs",2);
+ }
+
+ if(S.tools.ironPickaxe&&
+    ["rock","iron","coal","minerals"].includes(t)){
+  gain(k,1);
+ }
+
+ S.milestones.gathered[k]=
+  (S.milestones.gathered[k]||0)+nQty;
+
+ if(["grass","seeds","hay"].includes(k)){
+  S.milestones.baitGathered=true;
+ }
+
+ S.gathered[n.id]=true;
+ S.totalGathered++;
+
+ notice("Collected "+nQty+" "+(ITEMS[k]?.[1]||k)+".");
+
+ checkMissions();
+ renderUI();
+ save();
+}
+
+function tickWorld(minutes){
+ S.time+=minutes;
+
+ while(S.time>=1440){
+  S.time-=1440;
+  S.day++;
+  notice("Day "+S.day+" begins!");
+ }
+
+ for(const b of S.buildings){
+
+  if(b.type==="farmPlot"&&b.crop&&b.watered&&!b.ripe){
+   b.growth=(Number(b.growth)||0)+minutes;
+
+   if(b.growth>=CROP[b.crop][2]){
+    b.ripe=true;
+   }
+  }
+
+  if(b.type==="garden"&&b.planted&&!b.ripe){
+   b.progress=(b.progress||0)+minutes;
+
+   if(b.progress>=240){
+    b.ripe=true;
+   }
+  }
+
+  if(["collector","well"].includes(b.type)){
+   let cap=b.type==="well"?
+    (b.level>1?10:6):
+    (b.level>1?6:3);
+
+   let duration=b.type==="well"?
+    (b.level>1?90:120):180;
+
+   b.waterProgress=(b.waterProgress||0)+minutes;
+
+   while(b.charges<cap&&b.waterProgress>=duration){
+    b.charges++;
+    b.waterProgress-=duration;
+   }
+
+   if(b.charges>=cap){
+    b.waterProgress=Math.min(duration,b.waterProgress);
+   }
+  }
+
+  if(b.type==="smokehouse"&&b.smokeRemaining>0){
+   b.smokeRemaining=Math.max(0,b.smokeRemaining-minutes);
+
+   if(!b.smokeRemaining){
+    b.smokeReady=(b.smokeReady||0)+b.smokeAmount;
+    b.smokeAmount=0;
+   }
+  }
+
+  if(b.type==="hearth"){
+   b.fuel=Math.max(0,(b.fuel||0)-minutes);
+  }
+ }
+
+ for(const f of S.fires){
+  f.fuel=Math.max(0,f.fuel-minutes);
+ }
+}
+
+function sleep(){
+ if(S.dead)return;
+
+ const b=nearShelter();
+
+ if(!nearFire()&&!b){
+  return notice("Rest near a campfire, tent, or cabin.");
+ }
+
+ if(S.stats.hunger<12||S.stats.thirst<12){
+  return notice("Eat and drink first.");
+ }
+
+ let minutes=b?.type==="cabin"?360:240;
+
+ tickWorld(minutes);
+ livestockTick(minutes);
+
+ S.stats.energy=clamp(
+  S.stats.energy+(b?.type==="cabin"?90:70),0,100
+ );
+
+ S.stats.health=clamp(S.stats.health+15,0,100);
+
+ S.stats.hunger=clamp(
+  S.stats.hunger-minutes/240*14,0,100
+ );
+
+ S.stats.thirst=clamp(
+  S.stats.thirst-minutes/240*17,0,100
+ );
+
+ notice(`Rested ${minutes/60} hours.`);
+
+ checkMissions();
+ renderUI();
+ save();
+}
+
+function eat(item){
+ if(S.dead)return;
+
+ const effects={
+  berries:22,
+  rations:48,
+  cookedMeat:38,
+  smokedMeat:54,
+  carrots:17,
+  bakedPotatoes:34,
+  mushrooms:12,
+  nuts:12
+ };
+
+ if(!effects[item]||!S.inventory[item]){
+  return notice(
+   "You have no "+(ITEMS[item]?.[1]||item)+"."
+  );
+ }
+
+ if(S.stats.hunger>=99){
+  return notice("Already full.");
+ }
+
+ S.inventory[item]--;
+
+ S.stats.hunger=clamp(
+  S.stats.hunger+effects[item],0,100
+ );
+
+ S.stats.health=clamp(S.stats.health+3,0,100);
+
+ notice("Ate "+ITEMS[item][1]+".");
+ renderUI();
+ save();
+}
+
+function drink(){
+ if(S.dead)return;
+
+ const well=nearWell();
+ const collector=nearBuilding("collector");
+
+ if(
+  !nearWater()&&!well&&
+  !(collector&&collector.charges>0)&&
+  !(S.jugWater>0)
+ ){
+  return notice(
+   "Find lake water, a well, filled collector, or a jug."
+  );
+ }
+
+ if(S.stats.thirst>=99){
+  return notice("You're not thirsty.");
+ }
+
+ if(!nearWater()){
+  if(well){
+   well.charges--;
+  }else if(collector&&collector.charges>0){
+   collector.charges--;
+   S.milestones.collectorDrinks++;
+  }else{
+   S.jugWater--;
+  }
+ }
+
+ S.stats.thirst=100;
+
+ notice("Drank clean water.");
+ checkMissions();
+ renderUI();
+ save();
+}
+
+function movePlayer(dt){
+ let p=S.player;
+
+ let dx=
+  Number(keys.has("d")||
+         keys.has("arrowright")||
+         pressed.has("right"))-
+  Number(keys.has("a")||
+         keys.has("arrowleft")||
+         pressed.has("left"));
+
+ let dy=
+  Number(keys.has("s")||
+         keys.has("arrowdown")||
+         pressed.has("down"))-
+  Number(keys.has("w")||
+         keys.has("arrowup")||
+         pressed.has("up"));
+
+ p.moving=!!(dx||dy);
+
+ if(!p.moving){
+  S.stats.energy=clamp(S.stats.energy+dt*.1,0,100);
+  return;
+ }
+
+ const len=Math.hypot(dx,dy);
+
+ dx/=len;
+ dy/=len;
+
+ p.dir=Math.abs(dx)>Math.abs(dy)?
+  dx>0?"right":"left":
+  dy>0?"down":"up";
+
+ let speed=
+  (keys.has("shift")?75:145)*
+  (S.stats.energy<10?.55:1);
+
+ let x=p.x,y=p.y;
+
+ if(canWalk(p.x+dx*speed*dt,p.y)){
+  p.x+=dx*speed*dt;
+ }
+
+ if(canWalk(p.x,p.y+dy*speed*dt)){
+  p.y+=dy*speed*dt;
+ }
+
+ if(x!==p.x||y!==p.y){
+  p.step+=dt*8;
+
+  S.distanceWalked+=
+   Math.hypot(p.x-x,p.y-y)/10;
+
+  S.stats.energy-=dt*.07;
+  S.stats.thirst-=dt*.04;
+ }
+}
+
+function updateAnimals(dt){
+ for(const a of S.animals){
+
+  if(!wolfActive(a)||
+     a.penId&&a.mode==="pen"){
+   continue;
+  }
+
+  const d=distance(a,S.player);
+
+  if(d>900&&a.mode!=="follow")continue;
+
+  a.phase=(a.phase||0)+dt*2;
+
+  const info=ANIMALS[a.type];
+  const isPredator=info[3]>0;
+  const speed=isPredator?
+   95:info[0]==="🐇"?112:68;
+
+  if(a.mode==="follow"){
+
+   if(d>450){
+    a.mode="wild";
+    continue;
+   }
+
+   moveAnimal(a,S.player.x,S.player.y,speed*dt);
+
+   let pen=S.buildings.find(b=>
+    PENS[b.type]&&
+    PENS[b.type][0]===a.type&&
+    b.gateOpen&&
+    distance(b,a)<BUILD[b.type][3]+25&&
+    S.animals.filter(v=>v.penId===b.id).length<
+     PENS[b.type][1]+(b.level>1?2:0)
+   );
+
+   if(pen){
+    a.penId=pen.id;
+    a.mode="inside";
+    a.x=pen.x;
+    a.y=pen.y;
+
+    notice(
+     info[0]+" entered the pen. Close the gate!"
+    );
+   }
+
+  }else if(
+   isPredator&&
+   d<145*(isNight()?1.18:1)&&
+   !nearFire()&&!nearShelter()&&
+   distance(S.player,SPAWN)>180
+  ){
+
+   if(d>39){
+    moveAnimal(
+     a,S.player.x,S.player.y,speed*dt
+    );
+   }else if(!a.attackCooldown){
+    let damage=info[3]*
+     (S.tools.hideArmor?.55:1);
+
+    S.stats.health-=damage;
+    a.attackCooldown=3;
+    S.combat.predatorEncounters++;
+
+    notice(
+     "A "+a.type+
+     " attacked! Run toward shelter."
+    );
+   }
+
+  }else if(
+   d<95&&!isPredator&&
+   ["deer","rabbit","goat","duck"]
+    .includes(a.type)
+  ){
+   moveAnimal(
+    a,
+    a.x+(a.x-S.player.x),
+    a.y+(a.y-S.player.y),
+    speed*dt
+   );
+
+  }else if(
+   rand(
+    Math.floor(a.x/30),
+    Math.floor(a.y/30),
+    Math.floor(a.phase)
+   )>.82
+  ){
+   let tx=a.homeX+Math.cos(a.phase)*125;
+   let ty=a.homeY+Math.sin(a.phase)*125;
+
+   moveAnimal(a,tx,ty,speed*dt*.2);
+  }
+
+  a.attackCooldown=Math.max(
+   0,(a.attackCooldown||0)-dt
+  );
+ }
+}
+
+function moveAnimal(a,x,y,step){
+ let d=Math.hypot(x-a.x,y-a.y);
+
+ if(d<2)return;
+
+ let nx=a.x+(x-a.x)/d*Math.min(d,step);
+ let ny=a.y+(y-a.y)/d*Math.min(d,step);
+
+ if(dry(nx,ny)){
+  a.x=nx;
+  a.y=ny;
+ }
+}
+
+function livestockTick(minutes){
+ for(const barn of S.buildings.filter(b=>b.type==="barn")){
+
+  barn.feedClock=(barn.feedClock||0)+minutes;
+
+  if(barn.feedClock>=120){
+   barn.feedClock%=120;
+
+   for(const p of S.buildings.filter(b=>
+    PENS[b.type]&&
+    distance(b,barn)<390&&
+    b.feed<280
+   )){
+    const food=[
+     "hay","grass","wheat","seeds"
+    ].find(k=>(barn.storage[k]||0)>0);
+
+    if(!food)break;
+
+    barn.storage[food]--;
+    p.feed+=140;
+   }
+  }
+ }
+
+ for(const p of S.buildings.filter(b=>PENS[b.type])){
+  const animals=S.animals.filter(a=>
+   a.penId===p.id&&a.mode==="pen"
+  );
+
+  const cfg=PENS[p.type];
+
+  if(!animals.length)continue;
+
+  if(p.feed>0){
+
+   p.feed=Math.max(0,p.feed-minutes*.03);
+
+   p.livestockTimer=
+    (p.livestockTimer||0)+minutes;
+
+   if(p.livestockTimer>=cfg[4]*(p.level>1?.7:1)){
+    p.livestockTimer=0;
+
+    p.products[cfg[3]]=
+     (p.products[cfg[3]]||0)+
+     cfg[5]*Math.min(animals.length,2)+
+     (p.level>1?1:0);
+
+    if(cfg[3]==="eggs"){
+     p.products.feathers=
+      (p.products.feathers||0)+1;
+    }
+   }
+
+   if(animals.length>=2){
+    p.breedTimer=(p.breedTimer||0)+minutes;
+
+    if(
+     p.breedTimer>=(p.level>1?340:480)&&
+     animals.length<
+      cfg[1]+(p.level>1?2:0)
+    ){
+     p.breedTimer=0;
+
+     S.animals.push({
+      id:"baby"+Date.now()+S.animals.length,
+      type:cfg[0],
+      x:p.x+8,
+      y:p.y+8,
+      homeX:p.x,
+      homeY:p.y,
+      hp:60,
+      age:.2,
+      mode:"pen",
+      penId:p.id,
+      phase:0
+     });
+
+     notice(
+      "A baby "+cfg[0]+" was born!"
+     );
+    }
+   }
+  }
+ }
+}
+
+function hitAnimal(a,damage){
+ if(a.penId){
+  return notice(
+   "Domestic livestock cannot be hunted."
+  );
+ }
+
+ if(!loot[a.type]){
+  return notice(
+   "This animal isn't huntable."
+  );
+ }
+
+ a.hp=(a.hp??ANIMALS[a.type][2])-damage;
+
+ if(a.hp>0){
+  return notice(
+   a.type+": "+a.hp+" health remaining."
+  );
+ }
+
+ S.animals=S.animals.filter(v=>v!==a);
+
+ const [meat,hides]=loot[a.type];
+
+ S.carcasses.push({
+  id:"corpse"+Date.now(),
+  x:a.x,
+  y:a.y,
+  type:a.type,
+  meat,
+  hides,
+  decay:720
+ });
+
+ S.combat.kills[a.type]=
+  (S.combat.kills[a.type]||0)+1;
+
+ notice(
+  a.type+
+  " hunted! Click or press E near the remains."
+ );
+
+ checkMissions();
+}
+
+function attack(targetAnimal=null,point=null){
+ if(S.dead||S.paused)return;
+
+ const weapon=S.combat.equipped;
+
+ if(weapon==="hands"){
+  return notice(
+   "Craft and equip a spear or bow (2 or 3)."
+  );
+ }
+
+ const t=targetAnimal||
+  S.animals.filter(a=>
+   loot[a.type]&&!a.penId&&wolfActive(a)
+  ).sort((a,b)=>
+   distance(a,S.player)-distance(b,S.player)
+  )[0];
+
+ if(!t){
+  return notice(
+   "No huntable animal nearby."
+  );
+ }
+
+ let d=distance(t,S.player);
+
+ if(weapon==="spear"){
+  if(d>96){
+   return notice(
+    "Get within spear range."
+   );
+  }
+
+  hitAnimal(
+   t,S.tools.ironSpear?53:33
+  );
+
+ }else{
+
+  if(!S.inventory.arrows){
+   return notice(
+    "Craft arrows at a workbench."
+   );
+  }
+
+  if(d>500){
+   return notice(
+    "Target out of bow range."
+   );
+  }
+
+  S.inventory.arrows--;
+  S.combat.shots++;
+
+  hitAnimal(t,42);
+ }
+
+ S.stats.energy=Math.max(
+  0,S.stats.energy-2
+ );
+
+ checkMissions();
+ renderUI();
+ save();
+}
+
+function harvestCarcass(c){
+ if(distance(c,S.player)>80){
+  return notice(
+   "Move closer to the remains."
+  );
+ }
+
+ gain("rawMeat",c.meat);
+ gain("hides",c.hides);
+
+ S.carcasses=S.carcasses.filter(v=>v!==c);
+
+ S.combat.loot++;
+
+ notice(
+  "Harvested "+c.meat+
+  " meat and "+c.hides+" hides."
+ );
+
+ checkMissions();
+ renderUI();
+ save();
+}
+
+function advance(dt){
+ if(S.dead||S.paused)return;
+
+ movePlayer(dt);
+ tickWorld(dt*2);
+
+ const b=biome(
+  S.player.x,S.player.y
+ );
+
+ const stats=S.stats;
+
+ stats.hunger-=dt*.055;
+
+ stats.thirst-=dt*
+  (b==="badlands"?.18:.09);
+
+ let target=
+  nearFire()?100:
+  nearShelter()?85:
+  b==="snow"?(isNight()?8:29):
+  isNight()?22:82;
+
+ if(S.tools.woolWrap){
+  target=Math.min(100,target+22);
+ }
+
+ stats.warmth+=
+  (target-stats.warmth)*
+  Math.min(1,dt*.065);
+
+ if(stats.hunger<=0||stats.thirst<=0){
+  stats.health-=dt*.9;
+ }
+
+ if(stats.warmth<16){
+  stats.health-=dt*.45;
+ }
+
+ if(stats.energy<1){
+  stats.health-=dt*.22;
+ }
+
+ if(stats.health<=0){
+  die();
+  return;
+ }
+
+ for(const k of Object.keys(stats)){
+  stats[k]=clamp(stats[k],0,100);
+ }
+
+ updateAnimals(dt);
+ livestockTick(dt*2);
+
+ const bname=biome(
+  S.player.x,S.player.y
+ );
+
+ if(!S.discovered[bname]){
+  S.discovered[bname]=true;
+
+  notice(
+   "Discovered "+BIOMES[bname][0]
+  );
+ }
+
+ reveal(S.player.x,S.player.y);
+ checkMissions();
+
+ uiTimer+=dt;
+ saveTimer+=dt;
+
+ if(uiTimer>.36){
+  renderUI();
+  uiTimer=0;
+ }
+
+ if(saveTimer>15){
+  save();
+  saveTimer=0;
+ }
+}
+
+function die(){
+ S.dead=true;
+ S.stats.health=0;
+
+ notice(
+  "You did not survive. Start a new game to begin again."
+ );
+
+ S.paused=true;
+}
+
+// WORLD RENDERING
+// The world is generated using canvas drawing.
+// No external images or internet connection required.
+
+function paint(){
+ const p=S.player;
+
+ cam.x=clamp(
+  p.x-VIEW.w/2,0,WIDTH-VIEW.w
+ );
+
+ cam.y=clamp(
+  p.y-VIEW.h/2,0,HEIGHT-VIEW.h
+ );
+
+ ctx.clearRect(0,0,960,600);
+ ctx.save();
+
+ ctx.scale(
+  960/VIEW.w,
+  600/VIEW.h
+ );
+
+ ctx.fillStyle=BIOMES[
+  biome(p.x,p.y)
+ ][1];
+
+ ctx.fillRect(
+  0,0,VIEW.w,VIEW.h
+ );
+
+ for(
+  let gy=Math.floor(cam.y/40);
+  gy<Math.ceil((cam.y+VIEW.h)/40);
+  gy++
+ ){
+  for(
+   let gx=Math.floor(cam.x/40);
+   gx<Math.ceil((cam.x+VIEW.w)/40);
+   gx++
+  ){
+   let x=gx*40-cam.x;
+   let y=gy*40-cam.y;
+   let bi=biome(gx*40,gy*40);
+   let n=rand(gx,gy,7);
+
+   ctx.fillStyle=BIOMES[bi][1];
+   ctx.fillRect(x,y,41,41);
+
+   if(n>.68&&bi!=="snow"){
+    ctx.fillStyle="#496d3c";
+    ctx.fillRect(x+7,y+17,3,7);
+    ctx.fillRect(x+26,y+9,2,5);
+   }
+  }
+ }
+
+ // LAKES
+
+ for(const l of lakes){
+  if(
+   Math.abs(l.x-cam.x)>VIEW.w+l.rx||
+   Math.abs(l.y-cam.y)>VIEW.h+l.ry
+  )continue;
+
+  ctx.fillStyle="#c4b68b";
+  ctx.beginPath();
+
+  ctx.ellipse(
+   l.x-cam.x,
+   l.y-cam.y,
+   l.rx*1.06,
+   l.ry*1.06,
+   0,0,7
+  );
+
+  ctx.fill();
+
+  ctx.fillStyle="#347f94";
+  ctx.beginPath();
+
+  ctx.ellipse(
+   l.x-cam.x,
+   l.y-cam.y,
+   l.rx,l.ry,
+   0,0,7
+  );
+
+  ctx.fill();
+ }
+
+ // RIVER
+
+ ctx.strokeStyle="#35849a";
+ ctx.lineWidth=70;
+ ctx.lineCap="round";
+ ctx.lineJoin="round";
+ ctx.beginPath();
+
+ for(let x=3220;x<=5480;x+=35){
+  let y=
+   2300+
+   (x-3220)*.57+
+   Math.sin(x*.004)*75;
+
+  if(x===3220){
+   ctx.moveTo(
+    x-cam.x,
+    y-cam.y
+   );
+  }else{
+   ctx.lineTo(
+    x-cam.x,
+    y-cam.y
+   );
+  }
+ }
+
+ ctx.stroke();
+
+ // DRAW ALL WORLD OBJECTS IN DEPTH ORDER
+
+ let draw=[];
+
+ for(const n of nearNodes(p.x,p.y,650)){
+  if(
+   !gathered(n)&&
+   Math.abs(n.x-cam.x)<VIEW.w+90&&
+   Math.abs(n.y-cam.y)<VIEW.h+90
+  ){
+   draw.push({
+    type:"node",
+    obj:n,
+    y:n.y
+   });
+  }
+ }
+
+ for(const b of S.buildings){
+  draw.push({
+   type:"building",
+   obj:b,
+   y:b.y
+  });
+ }
+
+ for(const f of S.fires){
+  draw.push({
+   type:"fire",
+   obj:f,
+   y:f.y
+  });
+ }
+
+ for(const a of S.animals){
+  if(
+   wolfActive(a)&&
+   Math.abs(a.x-cam.x)<VIEW.w+50&&
+   Math.abs(a.y-cam.y)<VIEW.h+50
+  ){
+   draw.push({
+    type:"animal",
+    obj:a,
+    y:a.y
+   });
+  }
+ }
+
+ for(const c of S.carcasses){
+  draw.push({
+   type:"corpse",
+   obj:c,
+   y:c.y
+  });
+ }
+
+ draw.push({
+  type:"player",
+  obj:p,
+  y:p.y
+ });
+
+ draw.sort((a,b)=>a.y-b.y);
+
+ for(const d of draw){
+  const o=d.obj;
+
+  const x=o.x-cam.x;
+  const y=o.y-cam.y;
+
+  if(
+   x<-100||x>VIEW.w+100||
+   y<-120||y>VIEW.h+100
+  )continue;
+
+  if(d.type==="node"){
+   drawNode(o,x,y);
+  }
+
+  if(d.type==="building"){
+   drawBuilding(o,x,y);
+  }
+
+  if(d.type==="animal"){
+   drawAnimal(o,x,y);
+  }
+
+  if(d.type==="corpse"){
+   ctx.fillStyle="#603d2d";
+   ctx.beginPath();
+
+   ctx.ellipse(
+    x,y,17,9,0,0,7
+   );
+
+   ctx.fill();
+
+   ctx.font="19px Arial";
+   ctx.fillText("🥩",x-12,y-8);
+  }
+
+  if(d.type==="player"){
+   drawPlayer(x,y);
+  }
+
+  if(d.type==="fire"){
+   drawFire(o,x,y);
+  }
+ }
+
+ // BUILDING PLACEMENT PREVIEW
+
+ if(mode==="build"&&mouse.inside){
+  let x=
+   buildType==="fence"||
+   buildType==="gate"?
+   Math.round(mouse.x/32)*32:
+   Math.round(mouse.x/16)*16;
+
+  let y=
+   buildType==="fence"||
+   buildType==="gate"?
+   Math.round(mouse.y/32)*32:
+   Math.round(mouse.y/16)*16;
+
+  let r=BUILD[buildType][3];
+
+  ctx.strokeStyle=
+   validSpot(buildType,x,y)?
+   "#bdf3a4":"#f4836e";
+
+  ctx.lineWidth=3;
+  ctx.setLineDash([7,5]);
+
+  ctx.strokeRect(
+   x-cam.x-r,
+   y-cam.y-r,
+   r*2,r*2
+  );
+
+  ctx.setLineDash([]);
+ }
+
+ // DELETE MODE PREVIEW
+
+ if(mode==="delete"&&mouse.inside){
+  let t=objectAt(
+   mouse.x,mouse.y
+  );
+
+  if(t){
+   ctx.strokeStyle="#ff695c";
+   ctx.lineWidth=4;
+
+   ctx.strokeRect(
+    t.obj.x-cam.x-26,
+    t.obj.y-cam.y-46,
+    52,60
+   );
+  }
+ }
+
+ // NIGHT FILTER
+
+ if(isNight()){
+  ctx.fillStyle="rgba(5,15,26,.42)";
+  ctx.fillRect(
+   0,0,VIEW.w,VIEW.h
+  );
+ }
+
+ ctx.restore();
+
+ if(S.paused&&!modalOpen()){
+  ctx.fillStyle="#09181188";
+  ctx.fillRect(0,0,960,600);
+
+  ctx.fillStyle="#f4d38a";
+  ctx.font="bold 36px Arial";
+  ctx.textAlign="center";
+
+  ctx.fillText(
+   S.dead?
+   "YOU DID NOT SURVIVE":
+   "PAUSED",
+   480,300
+  );
+
+  ctx.textAlign="left";
+ }
+}
+
+function drawNode(o,x,y){
+ ctx.save();
+ ctx.translate(x,y);
+
+ let t=o.type;
+
+ if(t==="tree"||t==="hardwood"){
+  ctx.fillStyle="#654b30";
+  ctx.fillRect(-5,-23,10,32);
+
+  for(let [a,r,col] of [
+   [-5,29,"#143d2c"],
+   [-25,24,"#22603d"],
+   [-43,18,"#337750"]
+  ]){
+   ctx.fillStyle=col;
+   ctx.beginPath();
+
+   ctx.moveTo(0,a-36);
+   ctx.lineTo(-r,a);
+   ctx.lineTo(r,a);
+
+   ctx.fill();
+  }
+
+ }else if(
+  ["rock","iron","coal","minerals"]
+   .includes(t)
+ ){
+  ctx.fillStyle="#84948c";
+  ctx.beginPath();
+
+  ctx.moveTo(-19,4);
+  ctx.lineTo(-12,-16);
+  ctx.lineTo(5,-22);
+  ctx.lineTo(21,-3);
+  ctx.lineTo(15,9);
+
+  ctx.fill();
+
+  if(t!=="rock"){
+   ctx.font="14px Arial";
+   ctx.fillText(
+    ITEMS[t][0],-8,-12
+   );
+  }
+
+ }else if(t==="berry"){
+  ctx.fillStyle="#276846";
+  ctx.beginPath();
+
+  ctx.arc(0,-8,19,0,7);
+  ctx.fill();
+
+  ctx.font="16px Arial";
+  ctx.fillText("🍓",-11,-12);
+
+ }else if(t==="branch"){
+  ctx.strokeStyle="#bb9561";
+  ctx.lineWidth=6;
+  ctx.beginPath();
+
+  ctx.moveTo(-16,5);
+  ctx.lineTo(16,-5);
+  ctx.stroke();
+
+ }else if(t==="pebble"){
+  ctx.fillStyle="#b9c3b6";
+  ctx.beginPath();
+
+  ctx.ellipse(
+   0,0,12,9,0,0,7
+  );
+
+  ctx.fill();
+
+ }else{
+  ctx.fillStyle="#438050";
+  ctx.fillRect(-2,-18,4,22);
+
+  ctx.font="17px Arial";
+
+  ctx.fillText(
+   ITEMS[t]?.[0]||"🌿",
+   -10,-15
+  );
+ }
+
+ ctx.restore();
+}
+
+function drawBuilding(b,x,y){
+ const cfg=BUILD[b.type];
+ const r=cfg[3];
+ const icon=cfg[0];
+
+ const big=[
+  "cabin","barn","smokehouse",
+  "woodshed","rootCellar"
+ ].includes(b.type);
+
+ ctx.save();
+ ctx.translate(x,y);
+
+ ctx.fillStyle="#0b241a77";
+ ctx.beginPath();
+
+ ctx.ellipse(
+  0,8,r+7,12,0,0,7
+ );
+
+ ctx.fill();
+
+ if(["fence","gate"].includes(b.type)){
+  if(b.type==="gate"&&b.open){
+   ctx.strokeStyle="#b68a52";
+   ctx.lineWidth=6;
+   ctx.beginPath();
+
+   ctx.moveTo(-12,12);
+   ctx.lineTo(-12,-13);
+   ctx.stroke();
+
+  }else{
+   ctx.strokeStyle="#b38a52";
+   ctx.lineWidth=6;
+   ctx.beginPath();
+
+   ctx.moveTo(-16,-9);
+   ctx.lineTo(16,-9);
+   ctx.moveTo(-16,5);
+   ctx.lineTo(16,5);
+
+   ctx.stroke();
+  }
+
+  ctx.fillStyle="#5a412c";
+  ctx.fillRect(-5,-17,9,30);
+
+ }else if(PENS[b.type]){
+  ctx.fillStyle="#77a27a55";
+
+  ctx.fillRect(
+   -r*.7,-r*.48,
+   r*1.4,r*.95
+  );
+
+  ctx.lineWidth=4;
+  ctx.strokeStyle="#9e8054";
+
+  ctx.strokeRect(
+   -r*.7,-r*.48,
+   r*1.4,r*.95
+  );
+
+  ctx.fillStyle=
+   b.gateOpen?"#65d190":"#e3c68a";
+
+  ctx.fillRect(
+   -18,r*.48-4,36,7
+  );
+
+  ctx.font="20px Arial";
+  ctx.fillText(
+   icon,-12,-r*.55
+  );
+
+ }else if(
+  b.type==="farmPlot"||
+  b.type==="garden"
+ ){
+  ctx.fillStyle="#64482e";
+
+  ctx.fillRect(
+   -31,-27,62,50
+  );
+
+  ctx.strokeStyle="#bf965d";
+  ctx.lineWidth=3;
+
+  ctx.strokeRect(
+   -31,-27,62,50
+  );
+
+  if(b.crop){
+   ctx.fillStyle=
+    b.ripe?"#c5b15d":"#57aa57";
+
+   for(let i=-20;i<=20;i+=13){
+    for(let j=-15;j<=15;j+=14){
+     ctx.beginPath();
+
+     ctx.ellipse(
+      i,
+      j-6,
+      4+b.growth/CROP[b.crop][2]*4,
+      6+b.growth/CROP[b.crop][2]*4,
+      0,0,7
+     );
+
+     ctx.fill();
+    }
+   }
+
+   ctx.font="17px Arial";
+   ctx.fillText(
+    CROP[b.crop][0],
+    -9,-29
+   );
+  }
+
+ }else{
+  ctx.fillStyle=
+   big?"#83543a":"#795c42";
+
+  ctx.fillRect(
+   -r*.75,-r*.65,
+   r*1.5,r*.86
+  );
+
+  ctx.fillStyle=
+   big?"#624d3b":"#9b7f55";
+
+  ctx.beginPath();
+  ctx.moveTo(-r*.88,-r*.65);
+  ctx.lineTo(0,-r*1.24);
+  ctx.lineTo(r*.88,-r*.65);
+  ctx.fill();
+
+  ctx.font=
+   `${Math.min(37,r)}px Arial`;
+
+  ctx.textAlign="center";
+  ctx.fillText(
+   icon,0,-r*.48
+  );
+  ctx.textAlign="left";
+
+  if(
+   b.type==="smokehouse"&&
+   b.smokeRemaining>0
+  ){
+   ctx.fillStyle="#d5d1bc66";
+   ctx.beginPath();
+
+   ctx.arc(
+    r*.55,-r*1.4,13,0,7
+   );
+
+   ctx.fill();
+  }
+ }
+
+ if(b.level>1){
+  ctx.strokeStyle="#f4d78b";
+  ctx.lineWidth=2;
+
+  ctx.strokeRect(
+   -r*.75,-r*.7,
+   r*1.5,r*.92
+  );
+ }
+
+ ctx.restore();
+}
+
+function drawAnimal(a,x,y){
+ ctx.fillStyle="#0e241b77";
+ ctx.beginPath();
+
+ ctx.ellipse(
+  x,y+5,19,8,0,0,7
+ );
+
+ ctx.fill();
+
+ ctx.font=
+  `${["cow","bear"].includes(a.type)?36:27}px Arial`;
+
+ ctx.fillText(
+  ANIMALS[a.type][0],
+  x-16,y
+ );
+
+ if(a.mode==="follow"){
+  ctx.font="14px Arial";
+  ctx.fillText(
+   "♥",x,y-33
+  );
+ }
+}
+
+function drawPlayer(x,y){
+ ctx.save();
+ ctx.translate(x,y);
+
+ let bob=S.player.moving?
+  Math.sin(S.player.step)*2:0;
+
+ ctx.fillStyle="#0c1f1788";
+ ctx.beginPath();
+
+ ctx.ellipse(
+  0,5,18,7,0,0,7
+ );
+
+ ctx.fill();
+
+ ctx.fillStyle="#45372b";
+ ctx.fillRect(
+  -11,-17+bob,9,19
+ );
+ ctx.fillRect(
+  2,-17-bob,9,19
+ );
+
+ ctx.fillStyle="#4c7451";
+ ctx.fillRect(-15,-41,30,29);
+
+ ctx.fillStyle="#a99468";
+ ctx.fillRect(-12,-48,24,24);
+
+ ctx.fillStyle="#c99b72";
+ ctx.fillRect(-10,-53,20,14);
+
+ ctx.fillStyle="#7b6b43";
+ ctx.fillRect(-16,-57,32,5);
+ ctx.fillRect(-10,-67,20,12);
+
+ ctx.fillStyle="#3c3026";
+ ctx.fillRect(-5,-47,3,3);
+ ctx.fillRect(4,-47,3,3);
+ ctx.fillRect(-4,-40,9,3);
+
+ if(S.tools.hideArmor){
+  ctx.fillStyle="#87623c";
+  ctx.fillRect(-14,-38,28,14);
+ }
+
+ if(S.tools.woolWrap){
+  ctx.fillStyle="#e7d9b5";
+  ctx.fillRect(-13,-46,26,5);
+ }
+
+ if(S.combat.equipped!=="hands"){
+  ctx.font="22px Arial";
+
+  ctx.fillText(
+   S.combat.equipped==="spear"?
+   "🗡️":"🏹",
+   13,-30
+  );
+ }
+
+ ctx.restore();
+}
+
+function drawFire(f,x,y){
+ ctx.fillStyle="#948875";
+
+ for(let i=0;i<8;i++){
+  let a=i*Math.PI/4;
+
+  ctx.beginPath();
+
+  ctx.arc(
+   x+Math.cos(a)*13,
+   y+Math.sin(a)*10,
+   5,0,7
+  );
+
+  ctx.fill();
+ }
+
+ if(f.fuel>0){
+  ctx.font="29px Arial";
+  ctx.fillText(
+   "🔥",x-14,y+2
+  );
+ }
+}
+
+function point(e){
+ let r=cv.getBoundingClientRect();
+
+ let w=960/r.width;
+ let h=600/r.height;
+
+ return {
+  x:cam.x+
+   (e.clientX-r.left)*w*VIEW.w/960,
+  y:cam.y+
+   (e.clientY-r.top)*h*VIEW.h/600
+ };
+}
+
+function objectAt(x,y){
+ const b=S.buildings.slice().reverse().find(b=>
+  Math.abs(x-b.x)<
+   Math.max(19,BUILD[b.type][3]*.75)&&
+  Math.abs(y-b.y)<
+   Math.max(20,BUILD[b.type][3]*.8)
+ );
+
+ if(b){
+  return {kind:"building",obj:b};
+ }
+
+ const f=S.fires.find(f=>
+  distance(f,{x,y})<25
+ );
+
+ if(f){
+  return {kind:"fire",obj:f};
+ }
+
+ const c=S.carcasses.find(c=>
+  distance(c,{x,y})<24
+ );
+
+ if(c){
+  return {kind:"corpse",obj:c};
+ }
+
+ const a=S.animals.find(a=>
+  wolfActive(a)&&
+  distance(a,{x,y})<30
+ );
+
+ if(a){
+  return {kind:"animal",obj:a};
+ }
+
+ const n=nearNodes(x,y,90).filter(n=>
+  !gathered(n)&&
+  Math.hypot(
+   x-n.x,
+   y-n.y+
+    (["tree","hardwood"].includes(n.type)?38:0)
+  )<40
+ )[0];
+
+ return n?{kind:"node",obj:n}:null;
+}
+  // PART 3 — BUILDING, FARMING, CRAFTING, STORAGE, DELETE MODE, AND CONTROLS
+
+const TOOLS=[
+ ["axe","🪓 Stone Axe",{sticks:3,pebbles:2}],
+ ["pickaxe","⛏️ Stone Pickaxe",{sticks:4,pebbles:3}],
+ ["spear","🗡️ Stone Spear",{sticks:4,pebbles:2}],
+ ["bow","🏹 Primitive Bow",{sticks:5,grass:4}],
+ ["hideArmor","🦺 Hide Armor",{hides:6,sticks:4}],
+ ["woolWrap","🧣 Wool Wrap",{wool:4,sticks:2}],
+ ["farmBucket","🪣 Farm Water Bucket",{logs:2,sticks:2}],
+ ["ironAxe","🪓 Iron Axe",{ironBars:2,sticks:2}],
+ ["ironPickaxe","⛏️ Iron Pickaxe",{ironBars:2,sticks:3}],
+ ["ironSpear","🗡️ Iron Spear",{ironBars:2,sticks:2}]
+];
+
+const RECIPES=[
+ ["arrows","🏹 Five Arrows",{sticks:2,pebbles:2},{arrows:5}],
+ ["fletched","🪶 Eight Fletched Arrows",{sticks:2,pebbles:2,feathers:2},{arrows:8}],
+ ["rations","🥫 Trail Rations",{berries:3,sticks:1},{rations:2}],
+ ["dryBricks","🧱 Two Clay Bricks",{clay:4,sticks:1},{bricks:2}],
+ ["potatoSeeds","🥔 Three Potato Seeds",{seeds:2},{potatoSeeds:3}],
+ ["carrotSeeds","🥕 Three Carrot Seeds",{seeds:2},{carrotSeeds:3}],
+ ["wheatSeeds","🌾 Three Wheat Seeds",{seeds:2},{wheatSeeds:3}],
+ ["hay","🌾 Wheat to Four Hay",{wheat:2},{hay:4}],
+ ["homesteadMeal","🥫 Two Homestead Rations",{wheat:2,carrots:1,bakedPotatoes:1},{rations:2}]
+];
+
+function benchNearby(){
+ return !!nearBuilding("workbench");
+}
+
+function craftMenu(tab="buildings"){
+ if(S.dead||modalOpen())return;
+
+ if(!benchNearby()){
+  return notice("Walk up to your workbench and click it to craft.");
+ }
+
+ let html=`<div class="row">`+
+  ["buildings","tools","supplies","upgrades"].map(k=>
+   `<button data-act="tab:${k}">${k.toUpperCase()}</button>`
+  ).join("")+
+  `</div><div class="grid">`;
+
+ if(tab==="buildings"){
+  html+=Object.entries(BUILD).map(([k,b])=>`
+   <button class="recipe"
+    data-act="build:${k}"
+    ${S.mission<b[4]||!has(b[2])?"disabled":""}>
+    <strong>${b[0]} ${b[1]}</strong>
+    <small>${costText(b[2])} ·
+    ${S.mission<b[4]?
+     "Unlock after survival progress":
+     "Click to place"}</small>
+   </button>
+  `).join("");
+ }
+
+ if(tab==="tools"){
+  html+=TOOLS.map(([k,name,cost])=>`
+   <button class="recipe"
+    data-act="tool:${k}"
+    ${S.tools[k]||!has(cost)?"disabled":""}>
+    <strong>${name}</strong>
+    <small>${S.tools[k]?
+     "Already crafted":costText(cost)}</small>
+   </button>
+  `).join("");
+ }
+
+ if(tab==="supplies"){
+  html+=RECIPES.map(([k,name,cost])=>`
+   <button class="recipe"
+    data-act="recipe:${k}"
+    ${!has(cost)?"disabled":""}>
+    <strong>${name}</strong>
+    <small>${costText(cost)}</small>
+   </button>
+  `).join("");
+ }
+
+ if(tab==="upgrades"){
+  html+=Object.entries(BUILD)
+   .filter(([k])=>
+    S.buildings.some(b=>b.type===k&&b.level<2)
+   )
+   .map(([k,b])=>{
+    let cost={logs:3,stone:3};
+
+    if(k==="well")cost={stone:6,ironBars:1};
+    if(k==="barn")cost={logs:10,stone:6};
+    if(k==="smokehouse")cost={stone:7,bricks:4};
+
+    return `
+     <button class="recipe"
+      data-act="upgrade:${k}"
+      ${!has(cost)?"disabled":""}>
+      <strong>⬆ ${b[1]} Level 2</strong>
+      <small>${costText(cost)}</small>
+     </button>
+    `;
+   }).join("");
+ }
+
+ html+="</div>";
+
+ showMenu(
+  "🔨 Workbench — "+tab,
+  "Craft tools, process supplies, construct buildings, or upgrade placed structures.",
+  html,
+  (act)=>{
+
+   if(act.startsWith("tab:")){
+    closeMenu();
+    S.paused=false;
+    craftMenu(act.slice(4));
+    return;
+   }
+
+   if(act.startsWith("build:")){
+    buildType=act.slice(6);
+    mode="build";
+    closeMenu();
+    S.paused=false;
+
+    notice(
+     "Click a clear location to build "+
+     BUILD[buildType][1]+
+     ". Press Esc to cancel."
+    );
+
+    renderUI();
+    return;
+   }
+
+   if(act.startsWith("upgrade:")){
+    buildType=act.slice(8);
+    mode="upgrade";
+    closeMenu();
+    S.paused=false;
+
+    notice(
+     "Click your existing Level 1 "+
+     BUILD[buildType][1]+
+     " to upgrade."
+    );
+
+    return;
+   }
+
+   if(act.startsWith("tool:")){
+    let t=TOOLS.find(r=>r[0]===act.slice(5));
+
+    if(!t||S.tools[t[0]]||!take(t[2]))return;
+
+    S.tools[t[0]]=true;
+
+    if(t[0]==="ironSpear")S.tools.spear=true;
+    if(t[0]==="ironAxe")S.tools.axe=true;
+    if(t[0]==="ironPickaxe")S.tools.pickaxe=true;
+
+    if(["spear","bow"].includes(t[0])){
+     S.combat.equipped=t[0];
+    }
+
+    notice("Crafted "+t[1]);
+    checkMissions();
+    renderUI();
+    save();
+
+    closeMenu();
+    S.paused=false;
+    craftMenu("tools");
+    return;
+   }
+
+   if(act.startsWith("recipe:")){
+    let r=RECIPES.find(r=>r[0]===act.slice(7));
+
+    if(!r||!take(r[2]))return;
+
+    for(const [k,n] of Object.entries(r[3])){
+     gain(k,n);
+    }
+
+    notice("Crafted "+r[1]);
+    renderUI();
+    save();
+
+    closeMenu();
+    S.paused=false;
+    craftMenu("supplies");
+   }
+  }
+ );
+}
+
+function validSpot(type,x,y){
+ const r=BUILD[type][3];
+
+ if(
+  distance({x,y},S.player)>205||
+  distance({x,y},S.player)<r+16||
+  x<r+15||
+  x>WIDTH-r-15||
+  y<r+15||
+  y>HEIGHT-r-15
+ )return false;
+
+ if(type==="trough"){
+  return S.buildings.some(b=>
+   PENS[b.type]&&
+   Math.abs(x-b.x)<BUILD[b.type][3]*.6&&
+   Math.abs(y-b.y)<BUILD[b.type][3]*.4
+  )&&!S.buildings.some(b=>
+   b.type==="trough"&&
+   distance({x,y},b)<40
+  );
+ }
+
+ for(const dx of [-r,0,r]){
+  for(const dy of [-r,0,r]){
+   if(!dry(x+dx,y+dy))return false;
+  }
+ }
+
+ for(const b of S.buildings){
+  if(
+   ["fence","gate"].includes(type)&&
+   ["fence","gate"].includes(b.type)
+  ){
+   if(distance({x,y},b)<20)return false;
+   continue;
+  }
+
+  if(
+   distance({x,y},b)<
+   r+BUILD[b.type][3]+10
+  )return false;
+ }
+
+ if(S.fires.some(f=>distance(f,{x,y})<r+22)){
+  return false;
+ }
+
+ return !nearNodes(x,y,r+25).some(n=>
+  !gathered(n)&&
+  ["tree","hardwood","rock"].includes(n.type)&&
+  distance(n,{x,y})<r+23
+ );
+}
+
+function placeAt(x,y){
+ const type=buildType;
+
+ if(!BUILD[type])return;
+
+ const snap=
+  ["fence","gate"].includes(type)?32:16;
+
+ x=Math.round(x/snap)*snap;
+ y=Math.round(y/snap)*snap;
+
+ if(!validSpot(type,x,y)){
+  return notice(
+   "Choose a clear location within building range."
+  );
+ }
+
+ if(!take(BUILD[type][2])){
+  return notice(
+   "Need "+costText(BUILD[type][2])
+  );
+ }
+
+ const pen=type==="trough"?
+  S.buildings.find(b=>
+   PENS[b.type]&&
+   Math.abs(x-b.x)<BUILD[b.type][3]*.6&&
+   Math.abs(y-b.y)<BUILD[b.type][3]*.4
+  ):null;
+
+ S.buildings.push({
+  id:"b"+Date.now()+S.buildings.length,
+  type,x,y,
+  level:1,
+  storage:{},
+  charges:0,
+  waterProgress:0,
+  progress:0,
+  growth:0,
+  planted:false,
+  ripe:false,
+  feed:0,
+  bait:0,
+  products:{},
+  gateOpen:false,
+  open:false,
+  penId:pen?.id||null,
+  smokeRemaining:0,
+  smokeReady:0,
+  smokeAmount:0
+ });
+
+ if(
+  !["fence","gate"].includes(type)||
+  !has(BUILD[type][2])
+ ){
+  mode="";
+ }
+
+ notice(
+  BUILD[type][1]+
+  " built!"+
+  (mode==="build"?
+   " Keep clicking to extend or press Esc.":"")
+ );
+
+ checkMissions();
+ renderUI();
+ save();
+}
+
+function upgradeAt(b){
+ if(
+  b.type!==buildType||
+  b.level>1
+ ){
+  return notice(
+   "Select a matching Level 1 structure."
+  );
+ }
+
+ if(distance(b,S.player)>135){
+  return notice(
+   "Walk closer to upgrade."
+  );
+ }
+
+ let cost={logs:3,stone:3};
+
+ if(b.type==="well"){
+  cost={stone:6,ironBars:1};
+ }
+
+ if(b.type==="barn"){
+  cost={logs:10,stone:6};
+ }
+
+ if(b.type==="smokehouse"){
+  cost={stone:7,bricks:4};
+ }
+
+ if(!take(cost)){
+  return notice(
+   "Need "+costText(cost)
+  );
+ }
+
+ b.level=2;
+ mode="";
+
+ notice(
+  BUILD[b.type][1]+" upgraded!"
+ );
+
+ save();
+ renderUI();
+}
+
+function fillBucket(){
+ if(!S.tools.farmBucket){
+  return notice(
+   "Craft a wooden farm bucket first."
+  );
+ }
+
+ if(S.farmWater>=6){
+  return notice(
+   "Bucket already full."
+  );
+ }
+
+ const w=nearWell();
+ const collector=nearBuilding("collector");
+
+ if(nearWater()){
+  S.farmWater=6;
+ }else if(w){
+  w.charges--;
+  S.farmWater=6;
+ }else if(collector&&collector.charges>0){
+  collector.charges--;
+  S.farmWater=Math.min(6,S.farmWater+3);
+ }else if(S.jugWater){
+  S.jugWater--;
+  S.farmWater=Math.min(6,S.farmWater+3);
+ }else{
+  return notice(
+   "Find lake water, a filled collector, well, or jug."
+  );
+ }
+
+ notice("Farm bucket filled.");
+ renderUI();
+ save();
+}
+
+function fillJugs(){
+ if(!S.inventory.jugs){
+  return notice(
+   "Fire a ceramic water jug at your furnace."
+  );
+ }
+
+ const w=nearWell();
+ const c=nearBuilding("collector");
+
+ if(nearWater()){
+  S.jugWater=S.inventory.jugs*3;
+ }else if(w){
+  w.charges--;
+  S.jugWater=S.inventory.jugs*3;
+ }else if(c?.charges>0){
+  c.charges--;
+  S.jugWater=S.inventory.jugs*3;
+ }else{
+  return notice(
+   "Move next to water."
+  );
+ }
+
+ notice("Jugs filled.");
+ renderUI();
+ save();
+}
+
+function foodMenu(){
+ let options=[
+  ["eat:berries","🍓 Eat Berries"],
+  ["eat:rations","🥫 Eat Ration"],
+  ["eat:cookedMeat","🍖 Eat Roasted Meat"],
+  ["eat:smokedMeat","🥩 Eat Smoked Meat"],
+  ["eat:carrots","🥕 Eat Carrot"],
+  ["eat:bakedPotatoes","🍠 Eat Baked Potato"],
+  ["cook:meat","🔥 Roast Raw Meat"],
+  ["cook:potato","🥔 Bake Potato"],
+  ["fill:bucket","🪣 Fill Farm Bucket"],
+  ["fill:jugs","🏺 Fill Water Jugs"],
+  ["drink","💧 Drink Water"]
+ ];
+
+ showMenu(
+  "🍲 Food & Water",
+  "Food and cooking work from your backpack; fire cooking requires a nearby burning campfire or hearth.",
+  `<div class="grid">`+
+   options.map(([id,label])=>
+    `<button data-act="${id}">${label}</button>`
+   ).join("")+
+  `</div>`,
+  act=>{
+
+   if(act.startsWith("eat:")){
+    eat(act.slice(4));
+
+   }else if(act==="drink"){
+    drink();
+
+   }else if(act==="fill:bucket"){
+    fillBucket();
+
+   }else if(act==="fill:jugs"){
+    fillJugs();
+
+   }else if(act.startsWith("cook:")){
+    let item=act==="cook:meat"?
+     "rawMeat":"potatoes";
+
+    let out=act==="cook:meat"?
+     "cookedMeat":"bakedPotatoes";
+
+    if(!nearFire()){
+     notice("Build and light a campfire first.");
+
+    }else if(S.inventory[item]<1){
+     notice("Need "+ITEMS[item][1]);
+
+    }else{
+     S.inventory[item]--;
+     gain(out,1);
+
+     if(out==="cookedMeat"){
+      S.combat.roasted++;
+     }
+
+     notice("Cooking complete.");
+     checkMissions();
+     save();
+    }
+   }
+
+   renderUI();
+  }
+ );
+}
+
+function farmMenu(b){
+ const crop=b.crop&&CROP[b.crop];
+
+ const status=!crop?
+  "Unplanted plot. Choose your crop.":
+  b.ripe?
+   "Ready for harvest.":
+   `${b.crop}: ${Math.floor(b.growth||0)}/${crop[2]} game minutes. ${b.watered?"Watered":"Needs watering"}.`;
+
+ const acts=!crop?
+  Object.keys(CROP).map(k=>[
+   "plant:"+k,
+   "Plant "+CROP[k][0]+" "+k
+  ]):
+  b.ripe?
+   [["harvest","🌾 Harvest crops"]]:
+   [["water","🪣 Water plot"]];
+
+ acts.push(["fill","🪣 Fill bucket"]);
+
+ showMenu(
+  "🌱 Farm Plot · Level "+b.level,
+  status+` Bucket water: ${S.farmWater}/6.`,
+  `<div class="grid">`+
+   acts.map(([id,label])=>
+    `<button data-act="${id}">${label}</button>`
+   ).join("")+
+  `</div>`,
+  act=>{
+
+   if(act==="fill"){
+    return fillBucket();
+   }
+
+   if(act.startsWith("plant:")){
+    const k=act.slice(6);
+    const seed=CROP[k]?.[1];
+
+    if(b.crop||!S.inventory[seed]){
+     return notice(
+      "You need "+(ITEMS[seed]?.[1]||"seeds")+"."
+     );
+    }
+
+    S.inventory[seed]--;
+    b.crop=k;
+    b.growth=0;
+    b.ripe=false;
+    b.watered=false;
+
+    S.homestead.planted++;
+
+    notice(
+     "Planted "+k+". Water once to start growth."
+    );
+   }
+
+   if(act==="water"){
+    if(!S.farmWater){
+     notice("Fill your bucket first.");
+     return;
+    }
+
+    S.farmWater--;
+    b.watered=true;
+    S.homestead.waterings++;
+
+    notice("Plot watered.");
+   }
+
+   if(act==="harvest"&&b.ripe){
+    let n=CROP[b.crop][3]+
+     (b.level>1?
+      Math.ceil(CROP[b.crop][3]*.5):0);
+
+    gain(b.crop,n);
+    gain(CROP[b.crop][1],2);
+
+    S.homestead.harvested+=n;
+
+    S.homestead.types[b.crop]=
+     (S.homestead.types[b.crop]||0)+n;
+
+    notice(
+     "Harvested "+n+" "+b.crop+
+     " and two seeds!"
+    );
+
+    b.crop=null;
+    b.watered=false;
+    b.ripe=false;
+    b.growth=0;
+   }
+
+   checkMissions();
+   renderUI();
+   save();
+
+   closeMenu();
+   S.paused=false;
+   farmMenu(b);
+  }
+ );
+}
+
+function storageMenu(b){
+ const kinds=STORAGE[b.type];
+
+ const max=STORAGE_CAP[b.type][
+  b.level>1?1:0
+ ];
+
+ const stored=()=>Object.values(b.storage)
+  .reduce((a,n)=>a+(+n||0),0);
+
+ function refresh(){
+  const list=kinds.filter(k=>
+   (S.inventory[k]||0)||
+   (b.storage[k]||0)
+  );
+
+  $("menuText").textContent=
+   `${BUILD[b.type][1]} · ${stored()}/${max} stored. Stored items return to the backpack if deleted.`;
+
+  $("menuContent").innerHTML=`
+   <table id="storageItems">
+    <tr>
+     <th>Item</th>
+     <th>Pack</th>
+     <th>Stored</th>
+     <th>Deposit</th>
+     <th>Withdraw</th>
+    </tr>
+   `+
+   list.map(k=>`
+    <tr>
+     <td>${ITEMS[k][0]} ${ITEMS[k][1]}</td>
+     <td>${S.inventory[k]||0}</td>
+     <td>${b.storage[k]||0}</td>
+     <td>
+      <button data-act="in:${k}:1">+1</button>
+      <button data-act="in:${k}:5">+5</button>
+     </td>
+     <td>
+      <button data-act="out:${k}:1">−1</button>
+      <button data-act="out:${k}:5">−5</button>
+     </td>
+    </tr>
+   `).join("")+
+   "</table>";
+ }
+
+ showMenu(
+  BUILD[b.type][0]+" "+BUILD[b.type][1],
+  "",
+  "",
+  act=>{
+
+   let [way,k,n]=act.split(":");
+   let v=Number(n);
+
+   let q=way==="in"?
+    Math.min(v,S.inventory[k]||0,max-stored()):
+    Math.min(v,b.storage[k]||0);
+
+   if(q<=0){
+    return notice(
+     "Not enough items or space."
+    );
+   }
+
+   if(way==="in"){
+    S.inventory[k]-=q;
+
+    b.storage[k]=(b.storage[k]||0)+q;
+    S.milestones.stored+=q;
+
+   }else{
+    b.storage[k]-=q;
+    gain(k,q);
+   }
+
+   refresh();
+   checkMissions();
+   renderUI();
+   save();
+  }
+ );
+
+ refresh();
+}
+
+function penAnimals(b){
+ return S.animals.filter(a=>
+  a.penId===b.id
+ );
+}
+
+function penMenu(b){
+ const cfg=PENS[b.type];
+ const animals=penAnimals(b);
+
+ const food=[
+  cfg[2],"hay","grass","seeds"
+ ].find(k=>S.inventory[k]>0)||cfg[2];
+
+ const trough=S.buildings.find(t=>
+  t.type==="trough"&&
+  t.penId===b.id
+ );
+
+ const products=Object.entries(b.products)
+  .filter(([k,n])=>n>0)
+  .map(([k,n])=>`${ITEMS[k][1]} ${n}`)
+  .join(", ")||"None";
+
+ showMenu(
+  BUILD[b.type][0]+" "+BUILD[b.type][1],
+  `${animals.length}/${cfg[1]+(b.level>1?2:0)} animals. Gate ${b.gateOpen?"OPEN":"CLOSED"}. Feed ${Math.ceil(b.feed||0)}. Products: ${products}. Trough bait: ${trough?.bait||0}.`,
+  `<div class="grid">
+   <button data-act="gate">
+    ${b.gateOpen?"Close":"Open"} Gate
+   </button>
+   <button data-act="feed">
+    Feed (${ITEMS[food][1]})
+   </button>
+   <button data-act="bait">
+    Load Trough
+   </button>
+   <button data-act="collect">
+    Collect Products
+   </button>
+   </div>`,
+  act=>{
+
+   if(act==="gate"){
+    b.gateOpen=!b.gateOpen;
+
+    if(!b.gateOpen){
+     for(const a of animals){
+      if(a.mode!=="pen"){
+       a.mode="pen";
+
+       S.captured[a.type]=
+        (S.captured[a.type]||0)+1;
+      }
+     }
+    }
+
+    notice(
+     b.gateOpen?
+     "Gate opened.":
+     "Gate closed. Livestock secured."
+    );
+   }
+
+   if(act==="feed"){
+    if(!S.inventory[food]){
+     return notice("Need feed.");
+    }
+
+    S.inventory[food]--;
+    b.feed=Math.min(500,b.feed+150);
+
+    notice("Animals fed.");
+   }
+
+   if(act==="bait"){
+    if(!trough){
+     return notice(
+      "Build a feeding trough inside this pen."
+     );
+    }
+
+    if(!S.inventory[food]){
+     return notice("Need feed.");
+    }
+
+    S.inventory[food]--;
+    trough.bait=(trough.bait||0)+2;
+
+    notice(
+     "Trough baited. Open the gate to attract animals."
+    );
+   }
+
+   if(act==="collect"){
+    let total=0;
+
+    for(const [k,n] of Object.entries(b.products)){
+     if(n){
+      gain(k,n);
+
+      S.livestockProducts[k]=
+       (S.livestockProducts[k]||0)+n;
+
+      total+=n;
+      b.products[k]=0;
+     }
+    }
+
+    notice(
+     total?
+     "Collected "+total+" animal products.":
+     "No products ready."
+    );
+   }
+
+   checkMissions();
+   renderUI();
+   save();
+
+   closeMenu();
+   S.paused=false;
+   penMenu(b);
+  }
+ );
+}
+
+function productionMenu(b){
+ let actions=[];
+
+ if(
+  b.type==="well"||
+  b.type==="collector"
+ ){
+  actions=[
+   ["drink","💧 Drink Water"],
+   ["fill","🪣 Fill Bucket"],
+   ["jugs","🏺 Fill Jugs"]
+  ];
+ }
+
+ if(b.type==="smokehouse"){
+  actions=[
+   ["smoke","🔥 Start Smoking Meat"],
+   ["collect","🥩 Collect Smoked Meat"]
+  ];
+ }
+
+ if(b.type==="furnace"){
+  actions=[
+   ["bricks","🧱 Fire Three Bricks"],
+   ["iron","🔩 Smelt Iron Bars"],
+   ["jug","🏺 Fire Water Jug"]
+  ];
+ }
+
+ if(b.type==="hearth"){
+  actions=[
+   ["fuel","🔥 Add Coal"]
+  ];
+ }
+
+ if(b.type==="garden"){
+  actions=[
+   ["plant","🌱 Plant Berries"],
+   ["harvest","🍓 Harvest Berries"]
+  ];
+ }
+
+ const detail=b.type==="smokehouse"?
+  `Smoking time: ${Math.ceil(b.smokeRemaining||0)} min. Ready: ${b.smokeReady||0} meat.`:
+  ["well","collector"].includes(b.type)?
+   `Stored water charges: ${b.charges||0}.`:
+   b.type==="hearth"?
+    `Burning fuel: ${b.fuel||0} minutes.`:
+    b.type==="garden"?
+     b.ripe?
+      "Berries ripe.":
+      b.planted?
+       `Growing: ${Math.floor(b.progress||0)}/240 min.`:
+       "Unplanted.":
+     "Materials come from your backpack.";
+
+ showMenu(
+  BUILD[b.type][0]+" "+BUILD[b.type][1],
+  detail,
+  `<div class="grid">`+
+   actions.map(([a,label])=>
+    `<button data-act="${a}">${label}</button>`
+   ).join("")+
+  `</div>`,
+  act=>{
+
+   if(act==="drink"){
+    return drink();
+   }
+
+   if(act==="fill"){
+    return fillBucket();
+   }
+
+   if(act==="jugs"){
+    return fillJugs();
+   }
+
+   if(act==="smoke"){
+    if(b.smokeRemaining){
+     return notice(
+      "Meat is already smoking."
+     );
+    }
+
+    let n=b.level>1?5:3;
+
+    if(!take({rawMeat:n,logs:1})){
+     return notice(
+      "Need "+n+" raw meat and one log."
+     );
+    }
+
+    b.smokeAmount=n;
+    b.smokeRemaining=b.level>1?140:180;
+
+    notice("Smokehouse started.");
+   }
+
+   if(act==="collect"){
+    if(!b.smokeReady){
+     return notice(
+      "Nothing ready yet."
+     );
+    }
+
+    gain("smokedMeat",b.smokeReady);
+
+    notice(
+     "Collected "+b.smokeReady+
+     " smoked meat."
+    );
+
+    b.smokeReady=0;
+   }
+
+   if(
+    act==="bricks"||
+    act==="iron"||
+    act==="jug"
+   ){
+    let cost=act==="bricks"?
+     {clay:4,coal:1}:
+     act==="iron"?
+      {iron:3,coal:2}:
+      {clay:5,coal:1};
+
+    if(!take(cost)){
+     return notice(
+      "Need "+costText(cost)
+     );
+    }
+
+    gain(
+     act==="bricks"?
+      "bricks":
+      act==="iron"?
+       "ironBars":"jugs",
+     act==="bricks"?
+      b.level>1?4:3:1
+    );
+
+    notice(
+     "Furnace completed "+act
+    );
+   }
+
+   if(act==="fuel"){
+    if(!take({coal:1})){
+     return notice("Need coal.");
+    }
+
+    b.fuel=
+     (b.fuel||0)+
+     (b.level>1?480:300);
+
+    notice("Hearth fueled.");
+   }
+
+   if(act==="plant"){
+    if(b.planted){
+     return notice("Already planted.");
+    }
+
+    if(!take({berries:2})){
+     return notice("Need two berries.");
+    }
+
+    b.planted=true;
+    b.progress=0;
+    b.ripe=false;
+
+    notice("Berry garden planted.");
+   }
+
+   if(act==="harvest"){
+    if(!b.ripe){
+     return notice(
+      "Berries aren't ripe."
+     );
+    }
+
+    gain(
+     "berries",
+     b.level>1?11:6
+    );
+
+    b.planted=false;
+    b.ripe=false;
+    b.progress=0;
+
+    S.milestones.harvestedGarden++;
+
+    notice("Berry garden harvested.");
+   }
+
+   checkMissions();
+   save();
+   renderUI();
+
+   closeMenu();
+   S.paused=false;
+   productionMenu(b);
+  }
+ );
+}
+
+function interactBuilding(b){
+ if(distance(b,S.player)>135){
+  return notice(
+   "Move closer to the structure."
+  );
+ }
+
+ if(b.type==="workbench"){
+  return craftMenu();
+ }
+
+ if(b.type==="gate"){
+  b.open=!b.open;
+
+  notice(
+   b.open?
+   "Gate opened.":
+   "Gate closed."
+  );
+
+  return save();
+ }
+
+ if(b.type==="fence"){
+  return notice(
+   "Fence section. Build more sections alongside it."
+  );
+ }
+
+ if(STORAGE[b.type]){
+  return storageMenu(b);
+ }
+
+ if(b.type==="farmPlot"){
+  return farmMenu(b);
+ }
+
+ if(PENS[b.type]){
+  return penMenu(b);
+ }
+
+ if(b.type==="trough"){
+  const p=S.buildings.find(v=>
+   v.id===b.penId
+  );
+
+  if(p)return penMenu(p);
+
+  return notice(
+   "No connected pen."
+  );
+ }
+
+ if(
+  ["cabin","tent"].includes(b.type)
+ ){
+  return showMenu(
+   BUILD[b.type][1],
+   "Shelter restores warmth and energy.",
+   `<button data-act="sleep">
+    💤 Sleep
+   </button>`,
+   act=>{
+    if(act==="sleep"){
+     closeMenu();
+     S.paused=false;
+     sleep();
+    }
+   }
+  );
+ }
+
+ return productionMenu(b);
+}
+
+function interactAnimal(a){
+ if(
+  PENS[
+   S.buildings.find(b=>b.id===a.penId)?.type
+  ]||a.penId
+ ){
+  return notice(
+   "Livestock belongs to an enclosure."
+  );
+ }
+
+ if(
+  S.combat.equipped!=="hands"&&
+  loot[a.type]
+ ){
+  return attack(a);
+ }
+
+ if(
+  !["chicken","sheep","cow"]
+   .includes(a.type)
+ ){
+  return notice(
+   "Wild "+a.type+
+   ". Equip a weapon to hunt."
+  );
+ }
+
+ let food=a.type==="chicken"?
+  "seeds":
+  S.inventory.grass?
+   "grass":"hay";
+
+ if(!S.inventory[food]){
+  return notice(
+   "Carry "+ITEMS[food][1]+
+   " to lure "+a.type+"."
+  );
+ }
+
+ a.mode="follow";
+
+ notice(
+  a.type+
+  " is following your food. Lead it to an open enclosure."
+ );
+}
+
+function deleteAt(o){
+ if(!o){
+  return notice(
+   "Select a removable object. Terrain and water are permanent."
+  );
+ }
+
+ const {kind,obj}=o;
+
+ const label=kind==="building"?
+  BUILD[obj.type][1]:
+  kind==="node"?
+   obj.type:
+   kind==="animal"?
+    obj.type:
+    kind==="fire"?
+     "Campfire":"Animal Remains";
+
+ let count=kind==="building"?
+  Object.values(obj.storage||{})
+   .reduce((a,n)=>a+(+n||0),0):
+  0;
+
+ if(!confirm(
+  `Delete ${label}? No building materials are refunded.`+
+  (count?
+   ` ${count} stored items return to your pack.`:
+   "")+
+  " This cannot be undone."
+ )){
+  return;
+ }
+
+ if(kind==="building"){
+  for(const [k,n] of Object.entries(obj.storage||{})){
+   gain(k,n);
+  }
+
+  if(obj.type==="smokehouse"){
+   gain(
+    "smokedMeat",
+    obj.smokeReady||0
+   );
+
+   if(obj.smokeRemaining){
+    gain(
+     "rawMeat",
+     obj.smokeAmount||0
+    );
+   }
+  }
+
+  if(PENS[obj.type]){
+   for(const a of penAnimals(obj)){
+    a.mode="wild";
+    a.penId=null;
+    a.homeX=a.x;
+    a.homeY=a.y;
+   }
+
+   S.buildings=S.buildings.filter(b=>
+    b.penId!==obj.id
+   );
+  }
+
+  S.buildings=S.buildings.filter(b=>
+   b!==obj
+  );
+
+ }else if(kind==="node"){
+  S.gathered[obj.id]=true;
+
+ }else if(kind==="animal"){
+  S.animals=S.animals.filter(a=>a!==obj);
+
+ }else if(kind==="corpse"){
+  S.carcasses=S.carcasses.filter(c=>c!==obj);
+
+ }else if(kind==="fire"){
+  S.fires=S.fires.filter(f=>f!==obj);
+ }
+
+ notice(label+" deleted.");
+ renderUI();
+ save();
+}
+
+function fireBuild(){
+ if(!benchNearby()){
+  return notice(
+   "Build a campfire while near the workbench."
+  );
+ }
+
+ if(!take({sticks:5,pebbles:3})){
+  return notice(
+   "Campfire requires five sticks and three pebbles."
+  );
+ }
+
+ let x=S.player.x+50;
+ let y=S.player.y;
+
+ if(!dry(x,y)){
+  return notice(
+   "Find a clear place."
+  );
+ }
+
+ S.fires.push({
+  x,y,fuel:360
+ });
+
+ notice(
+  "Campfire built and lit."
+ );
+
+ save();
+}
+
+function specialCraftMenu(){
+ showMenu(
+  "🔥 Cooking & Campfire",
+  "Campfire costs five sticks and three pebbles. Cook or rest beside it.",
+  `<div class="grid">
+   <button data-act="fire">
+    🔥 Build Campfire
+   </button>
+   <button data-act="food">
+    🍲 Open Food Menu
+   </button>
+   <button data-act="refuel">
+    🪵 Refuel Campfire
+   </button>
+   </div>`,
+  act=>{
+
+   if(act==="fire"){
+    fireBuild();
+   }
+
+   if(act==="food"){
+    closeMenu();
+    S.paused=false;
+    foodMenu();
+   }
+
+   if(act==="refuel"){
+    let f=S.fires.find(f=>
+     distance(f,S.player)<125
+    );
+
+    if(!f||!take({sticks:3})){
+     return notice(
+      "Need three sticks near a campfire."
+     );
+    }
+
+    f.fuel+=180;
+
+    notice(
+     "Campfire refueled."
+    );
+   }
+
+   renderUI();
+   save();
+  }
+ );
+}
+
+function reset(){
+ if(
+  !S.dead&&
+  !confirm(
+   "Erase your saved game and start a new one?"
+  )
+ ){
+  return;
+ }
+
+ try{
+  localStorage.removeItem(SAVE);
+ }catch(e){}
+
+ S=fresh();
+ mode="";
+ closeMenu();
+
+ if($("invDialog").open){
+  $("invDialog").close();
+ }
+
+ if($("mapDialog").open){
+  $("mapDialog").close();
+ }
+
+ reveal(
+  S.player.x,
+  S.player.y
+ );
+
+ renderUI();
+
+ notice(
+  "New wilderness journey begins."
+ );
+
+ save();
+}
+
+function inventoryMenu(){
+ if(modalOpen())return;
+
+ pausedBefore=S.paused;
+ S.paused=true;
+
+ $("inventoryItems").innerHTML=
+  Object.entries(ITEMS).map(([k,v])=>`
+   <div>
+    ${v[0]}<br>
+    ${v[1]}<br>
+    <strong>${S.inventory[k]||0}</strong>
+   </div>
+  `).join("");
+
+ $("invDialog").showModal();
+}
+
+function openMap(){
+ if($("mapDialog").open){
+  return $("mapDialog").close();
+ }
+
+ if(modalOpen())return;
+
+ pausedBefore=S.paused;
+ S.paused=true;
+
+ $("mapDialog").showModal();
+
+ drawMap();
+}
+
+function drawMap(){
+ const w=MW.width;
+ const h=MW.height;
+
+ const discovered=new Set(
+  S.exploredTiles
+ );
+
+ mc.fillStyle="#081812";
+ mc.fillRect(0,0,w,h);
+
+ for(const tile of discovered){
+  let ix=tile%80;
+  let iy=Math.floor(tile/80);
+
+  let x=(ix+.5)*80;
+  let y=(iy+.5)*80;
+
+  mc.fillStyle=water(x,y)?
+   "#2e8399":
+   BIOMES[biome(x,y)][1];
+
+  mc.fillRect(
+   ix*10,
+   iy*10,
+   10,10
+  );
+ }
+
+ for(const b of S.buildings){
+  if(!explored(b.x,b.y))continue;
+
+  mc.fillStyle="#e5ae61";
+
+  mc.fillRect(
+   b.x/8-3,
+   b.y/8-3,
+   6,6
+  );
+ }
+
+ for(const m of S.mapMarkers){
+  if(!explored(m.x,m.y))continue;
+
+  mc.fillStyle=({
+   home:"#ffe19a",
+   ore:"#d2dbe4",
+   water:"#69d6ef",
+   danger:"#e97660",
+   other:"#f1beff"
+  })[m.type]||"#fff";
+
+  mc.beginPath();
+
+  mc.arc(
+   m.x/8,
+   m.y/8,
+   6,0,7
+  );
+
+  mc.fill();
+
+  mc.fillStyle="#fff";
+  mc.font="12px Arial";
+
+  mc.fillText(
+   m.name,
+   m.x/8+8,
+   m.y/8-8
+  );
+ }
+
+ mc.fillStyle="#3c95ff";
+ mc.beginPath();
+
+ mc.arc(
+  S.player.x/8,
+  S.player.y/8,
+  5,0,7
+ );
+
+ mc.fill();
+
+ $("mapInfo").textContent=
+  `${discovered.size}/4800 tiles explored · ${S.mapMarkers.length} markers`;
+}
+
+function setup(){
+ let handlers={
+
+  benchBtn:()=>{
+   if(S.buildings.some(b=>b.type==="workbench")){
+    return craftMenu();
+   }
+
+   buildType="workbench";
+   mode="build";
+
+   notice(
+    "Collect five sticks and three pebbles. Click nearby to place the workbench."
+   );
+  },
+
+  craftBtn:()=>craftMenu(),
+
+  inventoryBtn:inventoryMenu,
+
+  mapBtn:openMap,
+
+  gatherBtn:nearbyGather,
+
+  eatBtn:foodMenu,
+
+  drinkBtn:drink,
+
+  restBtn:sleep,
+
+  roastBtn:specialCraftMenu,
+
+  removeBtn:()=>{
+   mode=mode==="delete"?"":"delete";
+
+   notice(
+    mode?
+    "REMOVE MODE: click an object, confirm deletion. Esc exits.":
+    "Remove mode disabled."
+   );
+
+   renderUI();
+  },
+
+  cancelBtn:()=>{
+   mode="";
+   renderUI();
+  },
+
+  pauseBtn:()=>{
+   S.paused=!S.paused;
+   renderUI();
+  },
+
+  fullBtn:()=>{
+   if(document.fullscreenElement){
+    document.exitFullscreen();
+   }else{
+    $("app").requestFullscreen().catch(()=>
+     notice("Fullscreen unavailable.")
+    );
+   }
+  },
+
+  saveBtn:()=>save(true),
+
+  helpBtn:()=>showMenu(
+   "Welcome to Wilderness",
+   "Gather sticks and pebbles, build your workbench, explore, hunt, plant crops, raise animals, and develop a settlement.",
+   `<p>
+    WASD/arrows: move · E: gather ·
+    I: inventory · M: map ·
+    1: hands · 2: spear · 3: bow ·
+    Shift: sneak · Delete: toggle removal ·
+    Esc: cancel.
+   </p>
+   <p>
+    Workstations and structures are physical.
+    Click them to use them.
+    Buildings unlock through survival milestones.
+    Grow crops by planting and watering each plot once;
+    crops mature during travel or sleep.
+    Open livestock gates and lure matching animals
+    inside with food.
+   </p>`,
+   ()=>{}
+  ),
+
+  newBtn:reset,
+
+  touchGather:nearbyGather,
+
+  touchAttack:()=>attack(),
+
+  touchBuild:()=>craftMenu(),
+
+  touchRemove:()=>$("removeBtn").click()
+
+ };
+
+ for(const [id,fn] of Object.entries(handlers)){
+  $(id).onclick=fn;
+ }
+
+ $("menuClose").onclick=closeMenu;
+
+ $("inventoryClose").onclick=()=>
+  $("invDialog").close();
+
+ $("mapClose").onclick=()=>
+  $("mapDialog").close();
+
+ for(const id of [
+  "menu","invDialog","mapDialog"
+ ]){
+  $(id).addEventListener("close",()=>{
+   S.paused=pausedBefore;
+   keys.clear();
+   renderUI();
+  });
+ }
+
+ $("progress").onclick=showProgress;
+
+ $("progress").onkeydown=e=>{
+  if(e.key==="Enter"){
+   showProgress();
+  }
+ };
+
+ document.addEventListener("keydown",e=>{
+  if(e.target.matches("input,select,textarea")){
+   return;
+  }
+
+  const k=e.key.toLowerCase();
+
+  if([
+   "arrowup",
+   "arrowdown",
+   "arrowleft",
+   "arrowright",
+   " "
+  ].includes(k)){
+   e.preventDefault();
+  }
+
+  if([
+   "w","a","s","d",
+   "arrowup",
+   "arrowdown",
+   "arrowleft",
+   "arrowright",
+   "shift"
+  ].includes(k)){
+   keys.add(k);
+  }
+
+  if(e.repeat)return;
+
+  if(k==="escape"){
+   if(mode){
+    mode="";
+    renderUI();
+
+   }else if($("menu").open){
+    closeMenu();
+   }
+
+   return;
+  }
+
+  if(modalOpen()){
+   if(k==="i"&&$("invDialog").open){
+    $("invDialog").close();
+   }
+
+   if(k==="m"&&$("mapDialog").open){
+    $("mapDialog").close();
+   }
+
+   return;
+  }
+
+  if(k==="e")nearbyGather();
+  if(k==="i")inventoryMenu();
+  if(k==="m")openMap();
+  if(k==="f")drink();
+  if(k==="q")foodMenu();
+  if(k==="r")sleep();
+
+  if(k==="1"){
+   S.combat.equipped="hands";
+  }
+
+  if(k==="2"){
+   if(S.tools.spear){
+    S.combat.equipped="spear";
+   }else{
+    notice("Craft a spear first.");
+   }
+  }
+
+  if(k==="3"){
+   if(S.tools.bow){
+    S.combat.equipped="bow";
+   }else{
+    notice("Craft a bow first.");
+   }
+  }
+
+  if(k==="delete"){
+   $("removeBtn").click();
+  }
+
+  if(k===" "){
+   $("pauseBtn").click();
+  }
+
+  renderUI();
+ });
+
+ document.addEventListener("keyup",e=>
+  keys.delete(e.key.toLowerCase())
+ );
+
+ window.addEventListener("blur",()=>{
+  keys.clear();
+  pressed.clear();
+ });
+
+ for(const b of document.querySelectorAll("[data-dir]")){
+  b.onpointerdown=e=>{
+   e.preventDefault();
+   b.setPointerCapture(e.pointerId);
+   pressed.add(b.dataset.dir);
+  };
+
+  for(const ev of [
+   "pointerup",
+   "pointercancel",
+   "lostpointercapture"
+  ]){
+   b.addEventListener(ev,()=>
+    pressed.delete(b.dataset.dir)
+   );
+  }
+ }
+
+ cv.onpointermove=e=>{
+  mouse={
+   ...point(e),
+   inside:true
+  };
+ };
+
+ cv.onpointerleave=()=>{
+  mouse.inside=false;
+ };
+
+ cv.onclick=e=>{
+  if(
+   S.dead||
+   modalOpen()||
+   S.paused
+  )return;
+
+  const p=point(e);
+
+  if(mode==="build"){
+   return placeAt(p.x,p.y);
+  }
+
+  const o=objectAt(p.x,p.y);
+
+  if(mode==="delete"){
+   return deleteAt(o);
+  }
+
+  if(mode==="upgrade"){
+   if(o?.kind==="building"){
+    return upgradeAt(o.obj);
+   }
+
+   return notice(
+    "Click the structure to upgrade."
+   );
+  }
+
+  if(!o){
+   if(water(p.x,p.y)){
+    drink();
+   }
+
+   return;
+  }
+
+  if(o.kind==="node"){
+   return gather(o.obj);
+  }
+
+  if(o.kind==="corpse"){
+   return harvestCarcass(o.obj);
+  }
+
+  if(o.kind==="animal"){
+   return interactAnimal(o.obj);
+  }
+
+  if(o.kind==="building"){
+   return interactBuilding(o.obj);
+  }
+
+  if(o.kind==="fire"){
+   specialCraftMenu();
+  }
+ };
+
+ cv.oncontextmenu=e=>{
+  e.preventDefault();
+ };
+
+ MW.onclick=e=>{
+  const r=MW.getBoundingClientRect();
+
+  const x=
+   (e.clientX-r.left)/r.width*WIDTH;
+
+  const y=
+   (e.clientY-r.top)/r.height*HEIGHT;
+
+  if(!explored(x,y)){
+   return notice(
+    "Travel to explore that area first."
+   );
+  }
+
+  mapPosition={
+   x:Math.round(x),
+   y:Math.round(y)
+  };
+
+  selectedMarker=S.mapMarkers.find(m=>
+   Math.hypot(m.x-x,m.y-y)<90
+  )||null;
+
+  $("markerName").value=
+   selectedMarker?.name||"";
+
+  $("markerKind").value=
+   selectedMarker?.type||"other";
+
+  $("mapInfo").textContent=
+   `X ${Math.round(x)} · Y ${Math.round(y)} · ${BIOMES[biome(x,y)][0]}`;
+ };
+
+ $("markerSave").onclick=()=>{
+  let name=$("markerName").value
+   .trim()
+   .slice(0,28);
+
+  if(!name||!mapPosition){
+   return notice(
+    "Click explored terrain and enter a name."
+   );
+  }
+
+  if(selectedMarker){
+   selectedMarker.name=name;
+   selectedMarker.type=
+    $("markerKind").value;
+
+  }else if(S.mapMarkers.length<35){
+   S.mapMarkers.push({
+    ...mapPosition,
+    id:"m"+Date.now(),
+    name,
+    type:$("markerKind").value
+   });
+  }
+
+  drawMap();
+  save();
+ };
+
+ $("markerDelete").onclick=()=>{
+  if(selectedMarker){
+   S.mapMarkers=S.mapMarkers.filter(m=>
+    m!==selectedMarker
+   );
+  }
+
+  selectedMarker=null;
+  mapPosition=null;
+
+  drawMap();
+  save();
+ };
+
+ window.addEventListener(
+  "beforeunload",
+  ()=>save()
+ );
+}
+
+function start(){
+ makeNodes();
+
+ const loaded=load();
+
+ reveal(
+  S.player.x,
+  S.player.y
+ );
+
+ setup();
+ renderUI();
+
+ if(!loaded){
+  S.paused=false;
+
+  showMenu(
+   "🏕 Welcome to the Last Frontier",
+   "Build your first workbench with five sticks and three pebbles.",
+   `<p>
+    Explore the world, hunt wildlife,
+    raise livestock, grow crops and
+    build a homestead.
+   </p>
+   <p>
+    All five Version 2.7 expansion buildings
+    are included: Woodshed, Smokehouse,
+    Root Cellar, Water Well and Large Barn.
+   </p>
+   <p>
+    Delete mode removes placed structures,
+    wildlife, campfires, natural resources
+    and remains. It requests confirmation
+    before removing anything.
+   </p>`,
+   ()=>{}
+  );
+
+ }else{
+  notice(
+   "Welcome back to your homestead!"
+  );
+ }
+
+ function frame(t){
+  const dt=Math.min(
+   .06,
+   (t-frameLast)/1000||0
+  );
+
+  frameLast=t;
+
+  if(toastTimer>0){
+   toastTimer-=dt;
+
+   if(toastTimer<=0){
+    $("toast").style.opacity=0;
+   }
+  }
+
+  advance(dt);
+  paint();
+
+  requestAnimationFrame(frame);
+ }
+
+ requestAnimationFrame(frame);
+}
+
+// CORRECTED CAMPFIRE GRAPHICS
+
+drawFire=function(f,x,y){
+ ctx.fillStyle="#948875";
+
+ for(let i=0;i<8;i++){
+  let a=i*Math.PI/4;
+
+  ctx.beginPath();
+
+  ctx.arc(
+   x+Math.cos(a)*13,
+   y+Math.sin(a)*10,
+   5,0,7
+  );
+
+  ctx.fill();
+ }
+
+ if(f.fuel>0){
+  ctx.font="29px Arial";
+  ctx.fillText("🔥",x-14,y+2);
+ }
+};
+
+// LAUNCH THE COMPLETE GAME
+
+start();
+
 </script>
-</body></html>
+</body>
+</html>
