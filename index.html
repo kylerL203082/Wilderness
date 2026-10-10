@@ -315,7 +315,7 @@ header{padding:7px 12px}.brand{font-size:17px}
 "use strict";
 const $=id=>document.getElementById(id);
 const canvas=$("game"),ctx=canvas.getContext("2d");
-const W=960,H=600,WW=6400,WH=4800,ZOOM=1.28,VIEW_W=W/ZOOM,VIEW_H=H/ZOOM;
+const W=960,H=600,WW=9040,WH=6800,ZOOM=1.28,VIEW_W=W/ZOOM,VIEW_H=H/ZOOM;
 const SPAWN={x:1600,y:1200};
 const SAVE="wilderness_frontier_v13_wasd";
 const OLD=[
@@ -1391,7 +1391,7 @@ function heroAction(kind,duration){
  if(!state||state.dead)return;
  heroFX.kind=kind;heroFX.elapsed=0;heroFX.duration=duration;
 }
- function heroTick(dt){
+function heroTick(dt){
  heroFX.clock+=dt;
  if(heroFX.hit>0)heroFX.hit=Math.max(0,heroFX.hit-dt);
  if(heroFX.duration>0){
@@ -1602,7 +1602,7 @@ function avatar(x,y){
  }
  ctx.restore();
 }
-function building(b,cx,cy,ghost=false){
+ function building(b,cx,cy,ghost=false){
  let x=b.x-cx,y=b.y-cy;
  ctx.save();ctx.translate(x,y);
  ctx.globalAlpha=ghost?.5:1;
@@ -1800,6 +1800,7 @@ function render(){
    ctx.beginPath();ctx.arc(x,y,130,0,7);ctx.fill();
   }
  }
+ v28DrawSettlers(cx,cy);
  drawCombatOverlay(cx,cy);
  ctx.restore();
  minimap();
@@ -2975,7 +2976,7 @@ moveUpdate=function(dt){
   state.player.y=before.y+(state.player.y-before.y)*.52;
  }
 };
- function drawCombatOverlay(cx,cy){
+function drawCombatOverlay(cx,cy){
  for(const arrow of arrowsFlying){
   const x=arrow.x-cx,y=arrow.y-cy;
   if(x<0||x>W||y<0||y>H)continue;
@@ -3052,7 +3053,7 @@ die=function(){heroAction("death",1);heroBaseDie()};
 // VERSION 2.5: DISCOVERY MAP, WAYPOINTS, FURNACE & METAL TOOLS
 // Existing save key and established world resource IDs are kept.
 // ============================================================
-const MAP_COLS=80,MAP_ROWS=60,MAP_CELL=80;
+const MAP_COLS=113,MAP_ROWS=85,MAP_CELL=80;
 const MARKER_TYPES={home:{icon:"⌂",color:"#ffdc83"},ore:{icon:"◆",color:"#bcc9df"},water:{icon:"●",color:"#5bcbea"},danger:{icon:"!",color:"#ff7d69"},other:{icon:"✦",color:"#e7bcff"}};
 const mapCanvas=$("worldMap"),mapCtx=mapCanvas.getContext("2d");
 let explored=new Set(),mapSelected=null,mapCandidate=null,mapWasPaused=false,forgeWasPaused=false,forgeTarget=null;
@@ -3201,7 +3202,7 @@ function workbenchUpgradeTool(id,cost){
  renderUI();save();
 }
 // Furnace recipes are made physically at the placed furnace, not a remote menu.
-const FURNACE_RECIPES=[
+ const FURNACE_RECIPES=[
  {id:"bricks",title:"Fire Clay Bricks (3)",cost:{clay:4,coal:1},gain:{bricks:3}},
  {id:"ironBars",title:"Smelt Iron Bar",cost:{iron:3,coal:2},gain:{ironBars:1}},
  {id:"jug",title:"Fire Ceramic Water Jug",cost:{clay:5,coal:1},gain:{jugs:1}}
@@ -3751,7 +3752,7 @@ start=function(){
 
 // VERSION 2.7 UI — injected before startup, leaving older HTML intact.
 (function v27AddInterface(){
- document.title="Wilderness: Last Frontier — Version 2.7: Homestead Expansion";
+ document.title="Wilderness: Last Frontier — Version 2.8: Frontier Settlers";
  const css=document.createElement("style");
  css.textContent=`#removeBtn{background:#63382e;border-color:#ecaa8c}#removeBtn.active{background:#a64b37;border-color:#ffe2a6;box-shadow:0 0 0 2px #f3a66a99}#v27BuildingDialog{width:min(96vw,590px)}#v27Actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}#v27Actions button{text-align:left}#deleteBanner{display:none;position:absolute;top:54px;left:50%;transform:translateX(-50%);z-index:4;background:#4f221ce8;border:2px solid #f9bb83;border-radius:8px;padding:7px 12px;font-size:12px;pointer-events:none;white-space:nowrap}#deleteBanner.active{display:block}`;
  document.head.appendChild(css);
@@ -4161,6 +4162,445 @@ function v27Setup(){
 }
 const v27OldStart=start;
 start=function(){v27OldStart();v27Normalize();v27Setup();renderUI();};
+
+
+// ============================================================
+// V2.8 FRONTIER SETTLERS - additive to original-graphics V2.7.
+// The legacy world, player, builds and localStorage key stay intact.
+// ============================================================
+const V28_ORIGINAL_W=6400,V28_ORIGINAL_H=4800;
+const V28_ROLES={
+ lumberjack:{name:"Lumberjack",icon:"🪓",cycle:230,info:"Gathers logs and sticks for the settlement."},
+ miner:{name:"Miner",icon:"⛏️",cycle:320,info:"Mines stone. Trace ore only when a deposit is nearby."},
+ farmer:{name:"Farmer",icon:"🌾",cycle:145,info:"Plants, waters and harvests farm plots close to housing."},
+ rancher:{name:"Ranch Hand",icon:"🐄",cycle:230,info:"Feeds livestock and collects eggs, milk, wool and feathers."},
+ hunter:{name:"Hunter",icon:"🏹",cycle:400,info:"Brings back modest amounts of game, never unlimited rare resources."},
+ guard:{name:"Guard",icon:"🛡️",cycle:210,info:"Protects residents and animals around the homestead."}
+};
+const V28_CAMPS=[
+ ["Ada","Ada Merritt",2240,1740,"farmer"],
+ ["Jonas","Jonas Reed",3670,1760,"lumberjack"],
+ ["Mara","Mara Vale",4880,3090,"miner"],
+ ["Silas","Silas Boone",6240,4110,"hunter"],
+ ["Eliza","Eliza Hart",7140,1520,"rancher"],
+ ["Caleb","Caleb Frost",8290,790,"guard"],
+ ["Nora","Nora Bell",7480,3220,"farmer"],
+ ["Jasper","Jasper Fox",8390,5500,"miner"],
+ ["Ruth","Ruth Wilder",6510,5890,"lumberjack"],
+ ["Eli","Eli Mercer",4530,5870,"hunter"],
+ ["Grace","Grace Finch",2710,5040,"rancher"],
+ ["Wyatt","Wyatt Hale",1240,3710,"guard"]
+];
+const V28_FOOD=["rations","smokedMeat","cookedMeat","bakedPotatoes","potatoes","carrots","berries","wheat"];
+const V28_MAX_STOCKPILE=650;
+const V28_SPRITES=["#567ba1","#9c784d","#8b775c","#9e6247","#64805c","#756c95","#b08463","#777982"];
+let v28PauseBefore=false,v28Selected=null,v28ManagerTab="people",v28FrameClock=0;
+
+// Stay away from old lakes, tree trunks, and already built bases.
+function v28SafeSpot(x,y){
+ for(let radius=0;radius<=440;radius+=34){
+  for(let i=0;i<20;i++){
+   const angle=i*Math.PI*2/20+radius*.003;
+   const px=x+Math.cos(angle)*radius,py=y+Math.sin(angle)*radius;
+   if(!canStand(px,py))continue;
+   if(nodesNear(px,py,55).some(n=>available(n)&&["tree","hardwood","rock"].includes(n.type)&&dist(n,{x:px,y:py})<58))continue;
+   if(state?.buildings?.some(b=>dist(b,{x:px,y:py})<BUILDINGS[b.type].radius+50))continue;
+   return {x:Math.round(px),y:Math.round(py)};
+  }
+ }
+ return {x,y};
+}
+function v28Bunks(){
+ return state.buildings.reduce((n,b)=>n+(
+  b.type==="tent"?(b.level>1?2:1):
+  b.type==="cabin"?(b.level>1?5:3):
+  b.type==="bunkhouse"?(b.level>1?10:6):0
+ ),0);
+}
+function v28Recruited(){return (state?.settlers||[]).filter(s=>s.recruited)}
+function v28Shelter(){
+ return state.buildings.find(b=>["bunkhouse","cabin","tent"].includes(b.type))||null;
+}
+function v28Home(){
+ const b=v28Shelter()||state.buildings.find(b=>b.type==="workbench");
+ return b?{x:b.x,y:b.y}:{...SPAWN};
+}
+function v28StockCount(){return Object.values(state.settlerStockpile).reduce((a,v)=>a+(Number(v)||0),0)}
+function v28StockAdd(item,count){
+ const n=Math.max(0,Math.min(count,V28_MAX_STOCKPILE-v28StockCount()));
+ if(n>0)state.settlerStockpile[item]=(state.settlerStockpile[item]||0)+n;
+ return n;
+}
+function v28TakeFood(){
+ for(const food of V28_FOOD){
+  if((state.settlerStockpile[food]||0)>0){state.settlerStockpile[food]--;return true;}
+ }
+ // Food carried far into the wilderness is not magically available at home.
+ if(dist(state.player,v28Home())<270){
+  for(const food of V28_FOOD){
+   if((state.inventory[food]||0)>0){state.inventory[food]--;return true;}
+  }
+ }
+ return false;
+}
+function v28InitializeSettlers(){
+ if(!Array.isArray(state.settlers))state.settlers=[];
+ if(!state.settlerStockpile||typeof state.settlerStockpile!=="object")state.settlerStockpile={};
+ for(const [id,name,x,y,role] of V28_CAMPS){
+  let p=state.settlers.find(s=>s.id===id);
+  if(!p){const spot=v28SafeSpot(x,y);p={id,name,x:spot.x,y:spot.y,
+    campX:spot.x,campY:spot.y,recruited:false,job:role,
+    hunger:88,health:100,morale:80,work:0,mealClock:0,days:0};
+   state.settlers.push(p);
+  }else{
+   p.campX=Number.isFinite(p.campX)?p.campX:x;
+   p.campY=Number.isFinite(p.campY)?p.campY:y;
+   p.hunger=clamp(Number(p.hunger??88),0,100);
+   p.health=clamp(Number(p.health??100),0,100);
+   p.morale=clamp(Number(p.morale??80),0,100);
+   p.work=Number(p.work)||0;
+   p.mealClock=Number(p.mealClock)||0;
+   if(!V28_ROLES[p.job])p.job=role;
+  }
+ }
+ // Old saves keep their existing wild populations and get the new outskirts.
+ if(!state.v28FaunaAdded){
+  const known=new Set((state.animals||[]).map(a=>a.id));
+  const generated=makeAnimals().filter(a=>
+   a.x>=V28_ORIGINAL_W||a.y>=V28_ORIGINAL_H
+  );
+  for(const a of generated)if(!known.has(a.id))state.animals.push(a);
+  state.v28FaunaAdded=true;
+ }
+ // Mark the migration only after the existing map preparation has migrated cells.
+ state.v28=true;
+}
+// Preserve all prior explored tiles: V2.7 numbers used 80 columns, V2.8 uses 113.
+const v28OldPrepareDiscovery=prepareDiscovery;
+prepareDiscovery=function(){
+ if(Number(state.mapVersion||0)<2){
+  state.exploredTiles=(Array.isArray(state.exploredTiles)?state.exploredTiles:[])
+   .filter(n=>Number.isInteger(n)&&n>=0&&n<4800)
+   .map(n=>Math.floor(n/80)*MAP_COLS+(n%80));
+ }
+ v28OldPrepareDiscovery();
+ state.mapVersion=2;
+};
+// Make iron/coal about 75% rarer, and precious minerals about 90% rarer.
+// Existing node IDs and collected-node flags remain stable in saved games.
+const v28OldInitializeWorld=initializeWorld;
+initializeWorld=function(){
+ v28OldInitializeWorld();
+ for(const n of nodes){
+  if(!["iron","coal","minerals"].includes(n.type))continue;
+  const xy=n.id.match(/(\d+)_(\d+)$/);
+  if(!xy)continue;
+  const nroll=hash(Number(xy[1]),Number(xy[2]),228);
+  const keep=n.type==="iron"?.24:n.type==="coal"?.25:.10;
+  if(nroll>=keep)n.type=biomeAt(n.x,n.y)==="badlands"?"clay":"rock";
+ }
+ indexNodes();
+};
+// Add two remote lakes and new remote biome centers without changing original land.
+LAKES.push({x:7830,y:4270,rx:245,ry:175},{x:3750,y:5920,rx:175,ry:120});
+BIOME_SITES.push(
+ ["hardwood",6920,5500,1160,1020],
+ ["highlands",8070,2770,1220,1120],
+ ["grasslands",6900,760,1140,950],
+ ["wetlands",3900,6190,1100,1000],
+ ["snow",8580,850,850,800],
+ ["badlands",8180,5900,1200,1050]
+);
+// Avoid re-coloring old land when scoring new remote biomes.
+const v28OldBiomeAt=biomeAt;
+biomeAt=function(x,y){
+ if(x<V28_ORIGINAL_W&&y<V28_ORIGINAL_H){
+  // Score original centers without the appended remote entries.
+  const n=Math.sin(x*.0042+y*.002)*130+Math.cos(y*.0051-x*.0022)*100;
+  if(x<=3200&&y<=2400)return "pine";
+  const edgeNoise=45*Math.sin(y*.008)+55*Math.cos(x*.006);
+  if((x<3200+185+edgeNoise&&y<2550)||(y<2400+175+edgeNoise&&x<3350))return "pine";
+  let best=-Infinity,id="pine";
+  for(let i=0;i<7;i++){
+   const [k,bx,by,rx,ry]=BIOME_SITES[i];
+   const wobble=n*Math.sin(i*1.63+1);
+   const score=Math.exp(-((x-bx+wobble)**2/rx**2+(y-by-wobble)**2/ry**2)*1.6);
+   if(score>best){best=score;id=k;}
+  }
+  return id;
+ }
+ return v28OldBiomeAt(x,y);
+};
+const v28OldBiomeColor=biomeColor;
+biomeColor=function(id,n,gx,gy){
+ // Original V2.7 cells remain exactly as they were rendered.
+ if(gx*40<V28_ORIGINAL_W&&gy*40<V28_ORIGINAL_H){
+  if(groundColorCache.has(gx+":"+gy))return groundColorCache.get(gx+":"+gy);
+  const original=BIOME_SITES.splice(7);
+  const result=v28OldBiomeColor(id,n,gx,gy);
+  BIOME_SITES.push(...original);
+  return result;
+ }
+ return v28OldBiomeColor(id,n,gx,gy);
+};
+Object.assign(BUILDINGS,{
+ bunkhouse:{name:"Settler Bunkhouse",icon:"🏘️",unlock:7,
+  cost:{logs:15,stone:10,sticks:8},radius:67,
+  description:"Shelter for six recruited settlers. Upgrade to house ten."}
+});
+UPGRADES.bunkhouse={logs:10,stone:6,bricks:3};
+const v28OldDrawBuilding=building;
+building=function(b,cx,cy,ghost=false){
+ if(b.type!=="bunkhouse")return v28OldDrawBuilding(b,cx,cy,ghost);
+ const x=b.x-cx,y=b.y-cy;
+ ctx.save();ctx.translate(x,y);ctx.globalAlpha=ghost?.55:1;
+ const rect=(a,c,w,h,col)=>{ctx.fillStyle=col;ctx.fillRect(a,c,w,h)};
+ ctx.fillStyle="#091b1480";ctx.beginPath();ctx.ellipse(3,12,78,18,0,0,7);ctx.fill();
+ rect(-61,-62,122,83,"#745138");
+ for(let yy=-54;yy<18;yy+=13)rect(-60,yy,120,4,"#bb8252");
+ ctx.fillStyle=b.level>1?"#6d7978":"#625146";ctx.beginPath();
+ ctx.moveTo(-74,-61);ctx.lineTo(0,-116);ctx.lineTo(74,-61);ctx.fill();
+ rect(-16,-36,32,56,"#3d2e25");rect(-10,-29,20,32,"#806b4b");
+ for(const xx of [-46,28]){rect(xx,-44,19,23,"#d2c79f");rect(xx+8,-44,3,23,"#775c43");}
+ rect(-66,16,132,6,"#b58f5d");
+ ctx.font="17px Arial";ctx.textAlign="center";ctx.fillText("🏘️",0,-80);
+ if(b.level>1){ctx.strokeStyle="#e8d087";ctx.lineWidth=3;ctx.strokeRect(-64,-66,128,89)}
+ ctx.restore();
+};
+// NPCs have deliberately detailed canvas characters consistent with original art.
+function v28DrawSettlers(cx,cy){
+ if(!state?.settlers)return;
+ for(let i=0;i<state.settlers.length;i++){
+  const s=state.settlers[i],x=s.x-cx,y=s.y-cy;
+  if(x<-80||x>VIEW_W+80||y<-130||y>VIEW_H+60)continue;
+  const col=V28_SPRITES[i%V28_SPRITES.length];
+  ctx.save();ctx.translate(x,y);
+  if(!s.recruited){
+   ctx.fillStyle="#394333";ctx.beginPath();ctx.ellipse(34,8,28,11,0,0,7);ctx.fill();
+   ctx.fillStyle="#76583a";ctx.fillRect(18,-30,35,37);
+   ctx.fillStyle="#b3a17a";ctx.beginPath();ctx.moveTo(13,-28);ctx.lineTo(35,-56);ctx.lineTo(59,-28);ctx.fill();
+   ctx.fillStyle="#d9a252";ctx.beginPath();ctx.arc(8,3,7,0,7);ctx.fill();
+  }
+  ctx.fillStyle="#1420178a";ctx.beginPath();ctx.ellipse(0,6,17,6,0,0,7);ctx.fill();
+  ctx.fillStyle="#43372b";ctx.fillRect(-10,-15,8,19);ctx.fillRect(3,-15,8,19);
+  ctx.fillStyle=col;ctx.fillRect(-14,-39,28,27);
+  ctx.fillStyle="#d0a377";ctx.fillRect(-10,-54,20,19);
+  ctx.fillStyle="#604d39";ctx.fillRect(-17,-57,34,6);ctx.fillRect(-11,-66,22,12);
+  ctx.fillStyle="#423627";ctx.fillRect(-6,-45,3,3);ctx.fillRect(4,-45,3,3);
+  if(s.recruited){ctx.font="17px Arial";ctx.textAlign="center";ctx.fillText(V28_ROLES[s.job]?.icon||"👤",0,-42)}
+  ctx.font="bold 11px Arial";ctx.textAlign="center";ctx.lineWidth=3;
+  ctx.strokeStyle="#0b1c13";ctx.fillStyle=s.recruited?"#d8efce":"#ffe0a0";
+  ctx.strokeText(s.name,0,-80);ctx.fillText(s.name,0,-80);
+  if(!s.recruited){ctx.font="11px Arial";ctx.strokeText("TRAVELER",0,-93);ctx.fillText("TRAVELER",0,-93)}
+  ctx.restore();
+ }
+}
+function v28SettlerAt(x,y){
+ return state.settlers.find(s=>dist(s,{x,y:y+23})<37)||null;
+}
+function v28OpenSettlers(selected=null){
+ if(state.dead||anyModal())return;
+ v28Selected=selected;
+ v28PauseBefore=state.paused;state.paused=true;
+ $("settlerDialog").showModal();v28ShowSettlers();renderUI();
+}
+function v28ShowSettlers(){
+ const s=v28Selected,home=v28Home(),within=dist(state.player,home)<290;
+ const housed=v28Bunks(),people=v28Recruited();
+ $("settlerTitle").textContent=s?s.name+" · Frontier Settler":"🏘️ Settler Management";
+ $("settlerDetails").textContent=`Recruited ${people.length}/${housed} housing spaces · Settlement supplies ${v28StockCount()}/${V28_MAX_STOCKPILE} · ${within?"At homestead: collection available":"Return near your homestead to collect supplies"}`;
+ let html="";
+ if(s){
+  html+=`<p><b>${s.recruited?"Settler":"Traveler"}</b> — ${V28_ROLES[s.job].name} · Health ${Math.round(s.health)} · Hunger ${Math.round(s.hunger)} · Morale ${Math.round(s.morale)}</p>`;
+  if(!s.recruited){
+   html+=`<p>Found at a wilderness camp. Recruitment requires an unoccupied tent, cabin, or bunkhouse bed and food: <b>one ration OR four berries</b>. The traveler heads to your homestead when recruited.</p>`;
+   html+=`<button data-v28="recruit:${s.id}" ${housed<=people.length||!((state.inventory.rations||0)>=1||(state.inventory.berries||0)>=4)||dist(state.player,s)>112?"disabled":""}>Invite ${s.name} to Settle</button>`;
+  }else{
+   html+=`<label>Assign job <select id="v28Job">${Object.entries(V28_ROLES).map(([k,v])=>`<option value="${k}" ${k===s.job?"selected":""}>${v.icon} ${v.name}</option>`).join("")}</select></label> <button data-v28="job:${s.id}">Assign Job</button>`;
+   html+=`<p>${V28_ROLES[s.job].info}</p>`;
+  }
+  html+=`<p><button data-v28="list">View All Settlers</button></p>`;
+ }else{
+  html+=`<p><b>Explore the wilderness to discover travelers.</b> Click one while standing nearby to invite them to settle. Travelers do not arrive automatically.</p>`;
+  html+=`<div class="v28-srow">${people.length?people.map(p=>`<button data-v28="person:${p.id}">${V28_ROLES[p.job].icon} ${p.name} · ${V28_ROLES[p.job].name} · Hunger ${Math.round(p.hunger)}</button>`).join(""):"No recruited settlers yet."}</div>`;
+ }
+ const stock=Object.entries(state.settlerStockpile).filter(([k,n])=>n>0);
+ html+=`<h3>📦 Settlement Supplies</h3><p>${stock.length?stock.map(([k,n])=>`${ITEMS[k]?.[0]||"📦"} ${ITEMS[k]?.[1]||k}: ${n}`).join(" · "):"Nothing stored yet. Assign settlers to gather, hunt, farm, or ranch."}</p>`;
+ html+=`<button data-v28="collect" ${within&&stock.length?"":"disabled"}>Collect All Supplies</button>`;
+ $("settlerContent").innerHTML=html;
+}
+function v28Recruit(s){
+ if(s.recruited)return;
+ if(dist(s,state.player)>112)return notice("Walk closer to the traveler.");
+ if(v28Recruited().length>=v28Bunks())return notice("Build more tents, cabins, or a settler bunkhouse first.");
+ if((state.inventory.rations||0)>0)state.inventory.rations--;
+ else if((state.inventory.berries||0)>=4)state.inventory.berries-=4;
+ else return notice("Bring one ration or four berries to recruit.");
+ s.recruited=true;s.hunger=88;s.morale=88;s.mealClock=0;
+ const home=v28Home();s.x=home.x+35+hash(s.id.length,4,22)*30;s.y=home.y+62;
+ notice(s.name+" joined your homestead as a "+V28_ROLES[s.job].name+"!");
+ save();renderUI();
+}
+function v28DoJob(s){
+ const home=v28Home(),near=b=>dist(b,home)<480;
+ if(s.job==="lumberjack"){
+  v28StockAdd("logs",2);v28StockAdd("sticks",2);
+ }else if(s.job==="miner"){
+  v28StockAdd("stone",2);
+  // Only trace ore if a scarce physical deposit exists near the homestead.
+  const deposits=nodesNear(home.x,home.y,620).filter(n=>available(n)&&["iron","coal","minerals"].includes(n.type));
+  if(deposits.length){
+   const seed=hash(s.id.length,state.day,Math.floor(s.work*1000)+Math.floor(state.time));
+   if(seed<.085)v28StockAdd(deposits[Math.floor(seed*10000)%deposits.length].type,1);
+  }
+ }else if(s.job==="farmer"){
+  const farms=state.buildings.filter(b=>b.type==="farmPlot"&&near(b));
+  for(const b of farms){
+   if(b.crop&&b.ripe){
+    const c=CROPS[b.crop],n=c.yield+(b.level>1?Math.ceil(c.yield*.5):0);
+    v28StockAdd(c.item,n);v28StockAdd(c.seed,2);
+    state.homestead.harvested+=n;
+    state.homestead.types[b.crop]=(state.homestead.types[b.crop]||0)+n;
+    b.crop=null;b.ripe=false;b.watered=false;b.growth=0;
+    return;
+   }
+   if(b.crop&&!b.watered){
+    let source=state.buildings.find(w=>["collector","well"].includes(w.type)&&w.charges>0&&near(w));
+    if(source){source.charges--;b.watered=true;state.homestead.waterings++;return;}
+   }
+   if(!b.crop){
+    for(const id of Object.keys(CROPS)){
+     const k=CROPS[id].seed;
+     if((state.settlerStockpile[k]||0)>0){
+      state.settlerStockpile[k]--;b.crop=id;b.growth=0;b.watered=false;b.ripe=false;state.homestead.planted++;return;
+     }
+     if(dist(state.player,home)<270&&(state.inventory[k]||0)>0){
+      state.inventory[k]--;b.crop=id;b.growth=0;b.watered=false;b.ripe=false;state.homestead.planted++;return;
+     }
+    }
+   }
+  }
+ }else if(s.job==="rancher"){
+  for(const p of state.buildings.filter(b=>isPen(b.type)&&near(b))){
+   const livestock=penAnimals(p).filter(a=>a.mode==="pen");
+   if(!livestock.length)continue;
+   for(const [k,n] of Object.entries(p.products||{})){
+    if(n>0){v28StockAdd(k,n);p.products[k]=0;return;}
+   }
+   if((p.feed||0)<115){
+    const food=["hay","grass","seeds","wheat"].find(k=>(state.settlerStockpile[k]||0)>0);
+    if(food){state.settlerStockpile[food]--;p.feed=Math.min(350,(p.feed||0)+145);return;}
+   }
+  }
+ }else if(s.job==="hunter"){
+  v28StockAdd("rawMeat",1+Math.floor(hash(state.day,s.id.length,Math.floor(state.time/90))*2));
+ }else if(s.job==="guard"){
+  for(const a of state.animals){
+   if(!["wolf","bear","coyote"].includes(a.type)||dist(a,home)>310)continue;
+   a.homeX+=Math.sign(a.x-home.x)*95;a.homeY+=Math.sign(a.y-home.y)*95;
+   if(dist(a,home)<110){a.x=a.homeX;a.y=a.homeY;}
+  }
+ }
+}
+function v28Advance(minutes){
+ if(!state.settlers||!Number.isFinite(minutes)||minutes<=0)return;
+ const housing=v28Bunks(),home=v28Home(),people=v28Recruited();
+ people.forEach((s,i)=>{
+  s.x=home.x+(i%4-1.5)*37;
+  s.y=home.y+86+Math.floor(i/4)*30;
+  s.mealClock+=minutes;
+  while(s.mealClock>=680){
+   s.mealClock-=680;
+   if(v28TakeFood()){s.hunger=clamp(s.hunger+45,0,100);s.morale=clamp(s.morale+4,0,100);}
+   else{s.hunger=clamp(s.hunger-28,0,100);s.morale=clamp(s.morale-12,0,100);}
+  }
+  if(i>=housing){s.morale=clamp(s.morale-minutes*.04,0,100);return;}
+  if(s.hunger<15){s.health=clamp(s.health-minutes*.012,0,100);return;}
+  if(s.health<35||s.morale<12)return;
+  s.work+=minutes;
+  const cycle=V28_ROLES[s.job].cycle;
+  let runs=0;
+  while(s.work>=cycle&&runs<12){s.work-=cycle;v28DoJob(s);runs++;}
+  if(runs>=12)s.work=Math.min(s.work,cycle);
+ });
+}
+const v28OldAdvance=advance;
+advance=function(minutes){v28OldAdvance(minutes);v28Advance(minutes);};
+const v28OldAnyModal=anyModal;
+anyModal=function(){return v28OldAnyModal()||$("settlerDialog").open};
+const v28OldRenderUI=renderUI;
+renderUI=function(){
+ v28OldRenderUI();
+ $("settlerBtn").textContent="🏘️ Settlers ("+v28Recruited().length+"/"+v28Bunks()+") · N";
+};
+const v28OldDrawWorldMap=drawWorldMap;
+drawWorldMap=function(){
+ v28OldDrawWorldMap();
+ if(!$("mapDialog").open||!state.settlers)return;
+ for(const s of state.settlers){
+  if(!revealedAt(s.x,s.y))continue;
+  mapCtx.save();mapCtx.fillStyle=s.recruited?"#acdcab":"#efce7a";
+  mapCtx.beginPath();mapCtx.arc(s.x/WW*mapCanvas.width,s.y/WH*mapCanvas.height,4,0,7);mapCtx.fill();
+  mapCtx.restore();
+ }
+};
+function v28Setup(){
+ $("settlerBtn").onclick=()=>v28OpenSettlers();
+ $("settlerClose").onclick=()=>$("settlerDialog").close();
+ $("settlerDialog").addEventListener("close",()=>{
+  if(!state.dead)state.paused=v28PauseBefore;
+  v28Selected=null;keys.clear();touchKeys.clear();renderUI();
+ });
+ $("settlerContent").addEventListener("click",e=>{
+  const button=e.target.closest("[data-v28]");if(!button||button.disabled)return;
+  const [cmd,id]=button.dataset.v28.split(":");
+  const s=state.settlers.find(q=>q.id===id);
+  if(cmd==="list")v28Selected=null;
+  if(cmd==="person")v28Selected=s||null;
+  if(cmd==="recruit"&&s)v28Recruit(s);
+  if(cmd==="job"&&s){s.job=$("v28Job").value;s.work=0;notice(s.name+" assigned as "+V28_ROLES[s.job].name+".");save();}
+  if(cmd==="collect"){
+   if(dist(state.player,v28Home())>=290)return notice("Return to your homestead to collect supplies.");
+   let total=0;
+   for(const [k,n] of Object.entries(state.settlerStockpile)){
+    if(n>0){state.inventory[k]=(state.inventory[k]||0)+n;total+=n;state.settlerStockpile[k]=0;}
+   }
+   notice("Collected "+total+" supplies from your settlement.");save();
+  }
+  v28ShowSettlers();renderUI();
+ });
+ // Capture click before existing canvas hunting/gathering handlers; never interrupt build/delete mode.
+ document.addEventListener("click",e=>{
+  if(e.target!==canvas||v27RemoveMode||placing||upgrading||anyModal()||state.paused||state.dead)return;
+  const point=gamePoint(e),s=v28SettlerAt(point.x,point.y);
+  if(!s)return;
+  e.preventDefault();e.stopImmediatePropagation();
+  if(dist(state.player,s)>115)return notice("Move closer to talk to "+s.name+".");
+  v28OpenSettlers(s);
+ },true);
+ window.addEventListener("keydown",e=>{
+  if(e.code!=="KeyN"||e.repeat||e.target?.matches?.("input,textarea,select"))return;
+  if($("settlerDialog").open){e.preventDefault();$("settlerDialog").close();return;}
+  if(!anyModal()){e.preventDefault();v28OpenSettlers();}
+ });
+}
+// Inject V2.8 controls into existing interface, leaving all V2.7 widgets in place.
+(function v28InsertUI(){
+ document.title="Wilderness: Last Frontier — V2.8 Frontier Settlers";
+ const style=document.createElement("style");
+ style.textContent="#settlerDialog{width:min(94vw,650px)}#settlerContent h3{color:#ebcf86;margin:18px 0 7px}.v28-srow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.v28-srow button{background:#254536;border:1px solid #739376;border-radius:7px;padding:9px;text-align:left}#settlerContent>button,#settlerContent p button{background:#355c42;border:1px solid #8bb389;border-radius:7px;padding:8px;margin:7px 0}#v28Job{padding:8px;background:#1d3b2b;color:#fff;border:1px solid #75987e;border-radius:5px}@media(max-width:650px){.v28-srow{grid-template-columns:1fr}}";
+ document.head.appendChild(style);
+ $("removeBtn").insertAdjacentHTML("afterend",'<button id="settlerBtn">🏘️ Settlers · N</button>');
+ $("v27BuildingDialog").insertAdjacentHTML("afterend",'<dialog id="settlerDialog"><div class="dialoghead"><h2 id="settlerTitle">🏘️ Frontier Settlers</h2><button id="settlerClose">Close</button></div><p id="settlerDetails"></p><div id="settlerContent"></div></dialog>');
+ $("helpClose").insertAdjacentHTML("beforebegin",'<p><b>V2.8:</b> The world is twice as large. Valuable ore deposits are scarce. Explore distant camps to find travelers; click to recruit them after building housing and bringing a ration or berries. Assign jobs with the Settlers button or N key. Workers store supplies at your homestead.</p>');
+})();
+const v28OldStart=start;
+start=function(){
+ v28OldStart();
+ v28InitializeSettlers();
+ v28Setup();
+ renderUI();
+};
 
 start();
 </script>
