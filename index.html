@@ -1602,7 +1602,7 @@ function avatar(x,y){
  }
  ctx.restore();
 }
- function building(b,cx,cy,ghost=false){
+function building(b,cx,cy,ghost=false){
  let x=b.x-cx,y=b.y-cy;
  ctx.save();ctx.translate(x,y);
  ctx.globalAlpha=ghost?.5:1;
@@ -1828,7 +1828,7 @@ function toggleFull(){
   notice("Fullscreen not supported.");
  }
 }
-function setup(){
+ function setup(){
  let ignore=new Set([
   "ArrowUp","ArrowDown","ArrowLeft","ArrowRight",
   "Space","KeyW","KeyA","KeyS","KeyD","KeyE",
@@ -3202,7 +3202,7 @@ function workbenchUpgradeTool(id,cost){
  renderUI();save();
 }
 // Furnace recipes are made physically at the placed furnace, not a remote menu.
- const FURNACE_RECIPES=[
+const FURNACE_RECIPES=[
  {id:"bricks",title:"Fire Clay Bricks (3)",cost:{clay:4,coal:1},gain:{bricks:3}},
  {id:"ironBars",title:"Smelt Iron Bar",cost:{iron:3,coal:2},gain:{ironBars:1}},
  {id:"jug",title:"Fire Ceramic Water Jug",cost:{clay:5,coal:1},gain:{jugs:1}}
@@ -3564,7 +3564,7 @@ openStructure=function(b){
  if(b.type==="fence")return notice("Wooden fence. Build adjacent sections to extend your homestead boundary.");
  return v26PreviousOpenStructure(b);
 };
-const v26PreviousBuilding=building;
+ const v26PreviousBuilding=building;
 building=function(b,cx,cy,ghost=false){
  if(b.type==="farmPlot"){
   const x=b.x-cx,y=b.y-cy;
@@ -4601,6 +4601,467 @@ start=function(){
  v28Setup();
  renderUI();
 };
+
+// ===============================================================
+// V2.9 — LIVING SETTLERS.  Existing V2.8 world/art/save stay intact.
+// Workers now act on real resource entities and transport actual cargo.
+// ===============================================================
+const V29_SKILLS=Object.keys(V28_ROLES);
+const V29_TRAVEL_SPEED=83;
+const V29_GRID=46;
+const V29_MEALS=V28_FOOD;
+const V29_JOB_LABEL={lumberjack:"Chopping",miner:"Mining",farmer:"Farming",rancher:"Ranching",hunter:"Hunting",guard:"Patrolling"};
+const V29_FOOD_VAL={rations:52,smokedMeat:58,cookedMeat:43,bakedPotatoes:34,potatoes:20,carrots:22,berries:18,wheat:16};
+const V29_NO_PATH="No accessible route";
+let v29FrameAccumulator=0;
+function v29Normalize(s){
+ s.energy=clamp(Number(s.energy??78),0,100);
+ s.hunger=clamp(Number(s.hunger??85),0,100);
+ s.morale=clamp(Number(s.morale??80),0,100);
+ s.health=clamp(Number(s.health??100),0,100);
+ s.skills=s.skills||{};s.production=s.production||{};s.pack=s.pack||{};
+ for(const k of V29_SKILLS){if(!Number.isFinite(s.skills[k]))s.skills[k]=0;}
+ s.v29Task=s.v29Task||null;s.v29Path=Array.isArray(s.v29Path)?s.v29Path:[];
+ s.v29Block=Number(s.v29Block)||0;s.v29Clock=Number(s.v29Clock)||0;
+ s.v29Stuck=Number(s.v29Stuck)||0;s.v29Last=s.v29Last||{x:s.x,y:s.y};
+ s.v29Avoid=s.v29Avoid||{};s.v29ThreatCooldown=Number(s.v29ThreatCooldown)||0;
+ s.activity=s.activity||"Looking for work";s.v29Target=s.v29Target||null;
+ if(s.recruited&&s.v29Arriving===undefined)s.v29Arriving=dist(s,v28Home())>400;
+ s.v29Rest=Number(s.v29Rest)||0;
+ s.v29Work=Number(s.v29Work)||0;
+ s.v29Cooldown=Number(s.v29Cooldown)||0;
+ if(!s.v29Tint)s.v29Tint=V28_SPRITES[Math.max(0,V28_CAMPS.findIndex(c=>c[0]===s.id))%V28_SPRITES.length]||"#64805c";
+}
+function v29XP(s,job,n=1){s.skills[job]=(s.skills[job]||0)+n;s.morale=clamp(s.morale+1.4,0,100);}
+function v29Level(s,job){return Math.min(5,1+Math.floor((s.skills[job]||0)/6));}
+function v29Cargo(s){return Object.values(s.pack||{}).reduce((n,v)=>n+Math.max(0,Number(v)||0),0);}
+function v29Pack(s,item,amount){
+ const cap=8+2*v29Level(s,s.job);
+ let q=Math.min(Math.max(0,amount),Math.max(0,cap-v29Cargo(s)));
+ if(q>0)s.pack[item]=(s.pack[item]||0)+q;
+ return q;
+}
+function v29Passable(x,y){
+ if(!canStand(x,y))return false;
+ if(nodesNear(x,y,30).some(n=>available(n)&&["tree","hardwood","rock","iron","coal","minerals"].includes(n.type)&&dist(n,{x,y})<24))return false;
+ for(const b of state.buildings){
+  const r=BUILDINGS[b.type]?.radius||25;
+  if(b.type==="trough")continue;
+  if(isPen(b.type)){
+   if(Math.abs(x-b.x)<r*.73&&Math.abs(y-b.y)<r*.52)return false;
+   continue;
+  }
+  if(b.type==="fence"||b.type==="gate"){
+   if(b.type==="gate"&&(b.open||b.gateOpen))continue;
+   if(Math.abs(x-b.x)<20&&Math.abs(y-b.y)<20)return false;
+  }else if(Math.abs(x-b.x)<r+13&&Math.abs(y-b.y+8)<r*.55+12)return false;
+ }
+ return true;
+}
+function v29StandNear(obj,from,clearance=42){
+ if(!obj)return {x:SPAWN.x+90,y:SPAWN.y+75};
+ const r=BUILDINGS[obj.type]?.radius;
+ const margin=r?Math.max(clearance,r+35):clearance;
+ const angle=Math.atan2(from.y-obj.y,from.x-obj.x);
+ for(const extra of [0,22,46,72]){
+  for(let i=0;i<16;i++){
+   const a=angle+i*Math.PI*2/16;
+   const x=obj.x+Math.cos(a)*(margin+extra),y=obj.y+Math.sin(a)*(margin+extra);
+   if(v29Passable(x,y))return {x,y};
+  }
+ }
+ return {x:obj.x+margin,y:obj.y+margin};
+}
+function v29HomeDoor(s){const h=v28Shelter()||state.buildings.find(b=>b.type==="workbench");
+ return h?v29StandNear(h,s,55):v29StandNear(SPAWN,s,85);
+}
+function v29Storage(s){return v29HomeDoor(s);}
+function v29Cell(x,y){return Math.floor(x/V29_GRID)+","+Math.floor(y/V29_GRID);}
+function v29Path(s,goal,wide=false){
+ // Bounded A*.  Target may be distant; route in short segments.
+ const dx=goal.x-s.x,dy=goal.y-s.y,d=Math.hypot(dx,dy);
+ if(d<16)return [goal];
+ // The shortest safe path is a clear straight line.  This also handles
+ // nearby targets located within the same A* cell.
+ if(d<=520){
+  let clear=true;
+  for(let i=1;i<=Math.ceil(d/14);i++){
+   const a=i/Math.ceil(d/14);
+   if(!v29Passable(s.x+dx*a,s.y+dy*a)){clear=false;break;}
+  }
+  if(clear)return [{x:goal.x,y:goal.y}];
+ }
+ const step=Math.min(d,wide?850:490),end={x:s.x+dx/d*step,y:s.y+dy/d*step};
+ const sx=Math.floor(s.x/V29_GRID),sy=Math.floor(s.y/V29_GRID);
+ let tx=Math.floor(end.x/V29_GRID),ty=Math.floor(end.y/V29_GRID);
+ const key=(x,y)=>x+","+y;
+ const start=key(sx,sy);const queue=[{x:sx,y:sy,g:0,f:0,k:start}];
+ const best=new Map([[start,0]]),came=new Map();
+ const pad=wide?23:13;
+ const minX=Math.max(0,Math.min(sx,tx)-pad),maxX=Math.min(Math.ceil(WW/V29_GRID),Math.max(sx,tx)+pad);
+ const minY=Math.max(0,Math.min(sy,ty)-pad),maxY=Math.min(Math.ceil(WH/V29_GRID),Math.max(sy,ty)+pad);
+ const walk=(x,y)=>v29Passable((x+.5)*V29_GRID,(y+.5)*V29_GRID);
+ let closest=start,closestD=Infinity,expanded=0;
+ while(queue.length&&expanded++<(wide?4500:1850)){
+  let ix=0;for(let i=1;i<queue.length;i++)if(queue[i].f<queue[ix].f)ix=i;
+  const cur=queue.splice(ix,1)[0];
+  if(cur.g>(best.get(cur.k)??Infinity))continue;
+  const goalD=Math.hypot(cur.x-tx,cur.y-ty);
+  if(goalD<closestD){closestD=goalD;closest=cur.k;}
+  if(goalD<=1){closest=cur.k;break;}
+  for(const [ox,oy] of [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]]){
+   let x=cur.x+ox,y=cur.y+oy,k=key(x,y);
+   if(x<minX||x>maxX||y<minY||y>maxY||!walk(x,y))continue;
+   if(ox&&oy&&(!walk(cur.x+ox,cur.y)||!walk(cur.x,cur.y+oy)))continue;
+   const ng=cur.g+(ox&&oy?1.414:1);
+   if(ng>=(best.get(k)??Infinity))continue;
+   best.set(k,ng);came.set(k,cur.k);
+   queue.push({x,y,k,g:ng,f:ng+Math.hypot(x-tx,y-ty)});
+  }
+ }
+ if(closest===start||closestD>3.8)return null;
+ const back=[];let cur=closest;
+ while(cur!==start&&back.length<250){
+  const [x,y]=cur.split(",").map(Number);
+  back.push({x:(x+.5)*V29_GRID,y:(y+.5)*V29_GRID});
+  cur=came.get(cur);if(!cur)return null;
+ }
+ back.reverse();
+ // Path persists on saved settlers; smooth only when segment is passable.
+ return back;
+}
+function v29Move(s,goal,sec){
+ const d=dist(s,goal);
+ if(d<33)return true;
+ if(!s.v29Path.length||dist(s.v29Target||{x:0,y:0},goal)>95||s.v29Stuck>3){
+  s.v29Path=v29Path(s,goal,false)||v29Path(s,goal,true)||[];
+  s.v29Target={x:goal.x,y:goal.y};s.v29Stuck=0;
+  if(!s.v29Path.length){s.v29Block=5;s.activity=V29_NO_PATH;return false;}
+ }
+ let remain=Math.min(170*sec,V29_TRAVEL_SPEED*(.8+.08*v29Level(s,s.job))*sec);
+ const oldX=s.x,oldY=s.y;
+ while(remain>0&&s.v29Path.length){
+  const p=s.v29Path[0],d=dist(s,p);
+  if(d<5){s.v29Path.shift();continue;}
+  let amount=Math.min(remain,d,18),nx=s.x+(p.x-s.x)/d*amount,ny=s.y+(p.y-s.y)/d*amount;
+  if(!v29Passable(nx,ny)){s.v29Path=[];break;}
+  s.x=nx;s.y=ny;remain-=amount;
+  if(d<=amount+6)s.v29Path.shift();
+ }
+ s.v29Moving=dist(s,{x:oldX,y:oldY})>1;
+ s.v29Step=(s.v29Step||0)+sec*9;
+ if(s.v29Moving)s.energy=clamp(s.energy-sec*.027,0,100);
+ else s.v29Stuck+=sec;
+ if(s.v29Stuck>3){s.v29Path=[];s.v29Stuck=0;s.v29Block=4;}
+ return dist(s,goal)<33;
+}
+function v29Task(s,kind,obj,verb,extra={}){
+ const point=obj.id==="v29stock"?{x:obj.x,y:obj.y}:v29StandNear(obj,s,kind==="hunt"?38:55);
+ s.v29Task={kind,ref:obj.id||null,x:point.x,y:point.y,verb,phase:"travel",...extra};
+ s.v29Path=[];s.v29Target=null;s.activity=verb;
+}
+function v29Find(s,types,radius=800){
+ const home=v28Home();
+ return nodesNear(s.x,s.y,Math.min(radius,1000)).filter(n=>available(n)&&types.includes(n.type)&&
+  dist(n,home)<Math.max(830,radius)&&
+  (s.v29Avoid[n.id]||0)<state.day*1440+state.time&&
+  !v28Recruited().some(q=>q!==s&&q.v29Task?.ref===n.id))
+  .sort((a,b)=>dist(a,s)-dist(b,s))[0]||null;
+}
+function v29Food(s){
+ if(s.hunger>=58)return true;
+ if(dist(s,v29Storage(s))>120)return false;
+ const k=V29_MEALS.find(k=>(state.settlerStockpile[k]||0)>0);
+ if(k){state.settlerStockpile[k]--;s.hunger=clamp(s.hunger+(V29_FOOD_VAL[k]||26),0,100);
+  s.morale=clamp(s.morale+2,0,100);s.activity="Eating "+(ITEMS[k]?.[1]||k);return true;}
+ s.activity="Hungry — stock settlement food";s.morale=clamp(s.morale-.1,0,100);return false;
+}
+function v29Deposit(s){
+ if(!v29Cargo(s))return true;
+ if(dist(s,v29Storage(s))>90)return false;
+ for(const [item,n] of Object.entries(s.pack)){
+  if(n<=0)continue;
+  const accepted=v28StockAdd(item,n);
+  s.pack[item]-=accepted;s.production[item]=(s.production[item]||0)+accepted;
+ }
+ if(v29Cargo(s)>0){s.activity="Storage full — waiting";return false;}
+ s.v29Task=null;s.v29Work=0;s.activity="Unloaded supplies";return true;
+}
+function v29NewJob(s){
+ const home=v28Home();
+ const buildings=state.buildings.filter(b=>dist(b,home)<640);
+ if(s.job==="lumberjack"){
+  const n=v29Find(s,["tree","hardwood"],850);
+  if(n)v29Task(s,"wood",n,"Heading to a tree");
+  else s.activity="No nearby standing timber";
+ }else if(s.job==="miner"){
+  const n=v29Find(s,["iron","coal","minerals","rock"],880);
+  if(n)v29Task(s,"ore",n,"Looking for exposed stone or ore");
+  else s.activity="No accessible ore or stone";
+ }else if(s.job==="farmer"){
+  const plots=buildings.filter(b=>b.type==="farmPlot");
+  const p=plots.find(b=>b.crop&&b.ripe)||plots.find(b=>b.crop&&!b.watered)||plots.find(b=>!b.crop);
+  if(!p){s.activity=plots.length?"Waiting for crops to ripen":"Needs a farm plot";return;}
+  const kind=p.ripe?"harvest":p.crop?"water":"plant";
+  const seeds=Object.entries(CROPS).find(([crop,c])=>(state.settlerStockpile[c.seed]||0)>0);
+  if(kind==="plant"&&!seeds){s.activity="Needs seeds in settlement storage";return;}
+  const source=buildings.find(b=>["well","collector"].includes(b.type)&&(b.charges||0)>0);
+  if(kind==="water"&&!source){s.activity="Needs a filled well or water collector";return;}
+  if(kind==="water"&&!(s.pack.v29Water>0)){
+   v29Task(s,"fetchWater",source,"Fetching water",{plotId:p.id});
+  }else if(kind==="plant"&&!(Object.keys(s.pack).some(k=>k.endsWith("Seeds")&&s.pack[k]>0))){
+   v29Task(s,"fetchSeeds",{...v29HomeDoor(s),id:"v29stock"},"Fetching crop seeds",{plotId:p.id});
+  }else v29Task(s,kind,p,kind==="harvest"?"Harvesting crops":kind==="plant"?"Planting seeds":"Watering plot");
+ }else if(s.job==="rancher"){
+  const pens=buildings.filter(b=>isPen(b.type)&&penAnimals(b).some(a=>a.mode==="pen"));
+  let p=pens.find(b=>Object.values(b.products||{}).some(n=>n>0));
+  if(p)return v29Task(s,"collect",p,"Collecting livestock products");
+  p=pens.find(b=>(b.feed||0)<120);
+  if(!p){s.activity=pens.length?"Animals are fed":"Needs a stocked livestock pen";return;}
+  if(s.pack.v29Feed>0)v29Task(s,"feed",p,"Feeding livestock");
+  else if(["hay","grass","seeds","wheat"].some(k=>(state.settlerStockpile[k]||0)>0)){
+   v29Task(s,"fetchFeed",{...v29HomeDoor(s),id:"v29stock"},"Collecting livestock feed",{penId:p.id});
+  }else s.activity="Needs feed in settlement storage";
+ }else if(s.job==="hunter"){
+  const prey=state.animals.filter(a=>!a.penId&&HUNTING_SPECIES[a.type]&&
+   !["wolf","bear","coyote"].includes(a.type)&&dist(a,home)<850&&dist(a,s)<850)
+   .sort((a,b)=>dist(a,s)-dist(b,s))[0];
+  if(prey)v29Task(s,"hunt",prey,"Tracking "+ANIMALS[prey.type].name);
+  else s.activity="No reachable wildlife nearby";
+ }else if(s.job==="guard"){
+  const threat=state.animals.filter(a=>!a.penId&&["wolf","bear","coyote"].includes(a.type)&&
+   dist(a,home)<360).sort((a,b)=>dist(a,home)-dist(b,home))[0];
+  if(threat)v29Task(s,"guard",threat,"Protecting settlement");
+  else{
+   const t=s.v29Patrol=(s.v29Patrol||0)+1;
+   const a=(t%8)*Math.PI/4, p={x:home.x+Math.cos(a)*180,y:home.y+Math.sin(a)*180};
+   v29Task(s,"patrol",p,"Patrolling perimeter");
+  }
+ }
+}
+function v29Action(s,minutes){
+ const t=s.v29Task;if(!t)return;
+ const obj=state.buildings.find(o=>o.id===t.ref)||nodes.find(o=>o.id===t.ref)||state.animals.find(o=>o.id===t.ref);
+ if((t.kind==="hunt"||t.kind==="guard")&&obj){
+  // Follow moving prey; prevent hunting through walls or from across the map.
+  if(dist(obj,{x:t.x,y:t.y})>100){const p=v29StandNear(obj,s,40);t.x=p.x;t.y=p.y;s.v29Path=[];}
+ }
+ if(["wood","ore","hunt","guard","collect","plant","water","harvest","feed"].includes(t.kind)&&!obj){s.v29Task=null;s.v29Cooldown=5;return;}
+ if(t.phase==="travel"){
+  const goal={x:t.x,y:t.y};
+  if(v29Move(s,goal,minutes/2)){t.phase="work";s.v29Work=0;s.v29Path=[];}
+  else if(s.v29Block>0&&s.activity===V29_NO_PATH){if(t.ref)s.v29Avoid[t.ref]=state.day*1440+state.time+85;s.v29Task=null;s.v29Cooldown=8;s.morale=clamp(s.morale-1,0,100);}
+  return;
+ }
+ s.activity=t.verb;s.v29Moving=false;
+ s.v29Work+=minutes;
+ if(s.v29Work<Math.max(5,28-3*v29Level(s,s.job)))return;
+ s.v29Work=0;
+ if(t.kind==="wood"||t.kind==="ore"){
+  const n=obj;if(!available(n)){s.v29Task=null;return;}
+  const item=n.type==="tree"?"logs":n.type==="hardwood"?"hardwood":n.type==="rock"?"stone":n.type;
+  const qty=(n.type==="tree"?3:n.type==="rock"?2:1)+Math.floor((n.variant||0)*2);
+  const taken=v29Pack(s,item,qty);
+  if(taken>0){state.gathered[n.id]=true;state.totalGathered++;if(n.type==="hardwood")v29Pack(s,"logs",2);v29XP(s,s.job);}
+ }else if(t.kind==="fetchSeeds"){
+  const crop=Object.entries(CROPS).find(([id,c])=>state.settlerStockpile[c.seed]>0);
+  if(crop){const k=crop[1].seed;state.settlerStockpile[k]--;s.pack[k]=(s.pack[k]||0)+1;}
+  const p=state.buildings.find(b=>b.id===t.plotId);
+  if(p&&crop&&!p.crop)v29Task(s,"plant",p,"Planting seeds");else s.v29Task=null;
+  return;
+ }else if(t.kind==="fetchWater"){
+  const w=obj||state.buildings.find(b=>b.id===t.ref);
+  if(w&&w.charges>0){w.charges--;s.pack.v29Water=1;}
+  const p=state.buildings.find(b=>b.id===t.plotId);
+  if(p&&!p.watered&&s.pack.v29Water)v29Task(s,"water",p,"Watering plot");else s.v29Task=null;
+  return;
+ }else if(t.kind==="plant"){
+  const p=obj;
+  const k=Object.keys(s.pack).find(k=>k.endsWith("Seeds")&&s.pack[k]>0);
+  const crop=Object.entries(CROPS).find(([id,c])=>c.seed===k);
+  if(p&&!p.crop&&crop){s.pack[k]--;p.crop=crop[0];p.growth=0;p.ripe=false;p.watered=false;state.homestead.planted++;v29XP(s,"farmer");}
+ }else if(t.kind==="water"){
+  if(obj.crop&&!obj.watered&&s.pack.v29Water>0){s.pack.v29Water--;obj.watered=true;state.homestead.waterings++;v29XP(s,"farmer");}
+ }else if(t.kind==="harvest"){
+  if(obj.crop&&obj.ripe){const c=CROPS[obj.crop],q=c.yield+(obj.level>1?Math.ceil(c.yield*.5):0);
+   v29Pack(s,c.item,q);v29Pack(s,c.seed,2);state.homestead.harvested+=q;
+   state.homestead.types[obj.crop]=(state.homestead.types[obj.crop]||0)+q;
+   obj.crop=null;obj.ripe=false;obj.watered=false;obj.growth=0;v29XP(s,"farmer");}
+ }else if(t.kind==="fetchFeed"){
+  const k=["hay","grass","seeds","wheat"].find(k=>state.settlerStockpile[k]>0);
+  if(k){state.settlerStockpile[k]--;s.pack.v29Feed=(s.pack.v29Feed||0)+1;}
+  const pen=state.buildings.find(b=>b.id===t.penId);
+  if(pen&&s.pack.v29Feed)v29Task(s,"feed",pen,"Feeding livestock");else s.v29Task=null;
+  return;
+ }else if(t.kind==="feed"){
+  if(s.pack.v29Feed>0){s.pack.v29Feed--;obj.feed=Math.min(350,(obj.feed||0)+145);v29XP(s,"rancher");}
+ }else if(t.kind==="collect"){
+  for(const [k,n] of Object.entries(obj.products||{})){
+   if(n>0){const q=v29Pack(s,k,n);obj.products[k]-=q;if(q>0)v29XP(s,"rancher");}
+  }
+ }else if(t.kind==="hunt"||t.kind==="guard"){
+  const a=obj,spec=HUNTING_SPECIES[a.type];
+  if(spec&&!a.penId&&dist(s,a)<100){
+   a.hp=Number.isFinite(a.hp)?a.hp:spec.hp;a.hp-=t.kind==="guard"?28:45;
+   a.injuredTimer=12;v29XP(s,s.job);
+   if(t.kind==="guard"){s.health=clamp(s.health-(a.type==="bear"?15:5),0,100);}
+   if(a.hp<=0){
+    state.animals=state.animals.filter(x=>x!==a);
+    if(t.kind==="hunt"){v29Pack(s,"rawMeat",spec.meat);v29Pack(s,"hides",spec.hides);}
+    else state.carcasses.push({id:"guard_"+a.id,x:a.x,y:a.y,type:a.type,meat:spec.meat,hides:spec.hides,decay:720});
+   }else{const p=v29StandNear(a,s,45);t.x=p.x;t.y=p.y;t.phase="travel";s.v29Path=[];return;}
+  }else {t.phase="travel";return;}
+ }else if(t.kind==="patrol"){v29XP(s,"guard",.12);}
+ s.v29Task=null;s.v29Cooldown=1;
+ if(v29Cargo(s)>0)s.activity="Returning with supplies";
+}
+function v29UpdateOne(s,minutes,slot){
+ v29Normalize(s);
+ if(!s.recruited){s.activity="Waiting at wilderness camp";return;}
+ if(s.v29Block>0)s.v29Block=Math.max(0,s.v29Block-minutes/2);
+ if(s.v29Cooldown>0)s.v29Cooldown=Math.max(0,s.v29Cooldown-minutes/2);
+ s.hunger=clamp(s.hunger-minutes*.037,0,100);
+ s.v29ThreatCooldown=Math.max(0,s.v29ThreatCooldown-minutes);
+ if(s.v29ThreatCooldown<=0&&s.job!=="guard"){
+  const predator=state.animals.find(a=>!a.penId&&["wolf","bear","coyote"].includes(a.type)&&wolfActive(a)&&dist(s,a)<53);
+  if(predator){s.health=clamp(s.health-(predator.type==="bear"?14:7),0,100);
+   s.morale=clamp(s.morale-12,0,100);s.v29ThreatCooldown=25;
+   s.activity="Attacked by "+predator.type;s.v29Task=null;s.v29Cooldown=4;}
+ }
+ if(s.hunger<15){s.health=clamp(s.health-minutes*.028,0,100);s.morale=clamp(s.morale-minutes*.04,0,100);}
+ if(s.health<10){s.activity="Injured — needs shelter and food";s.v29Task=null;return;}
+ if(slot>=v28Bunks())s.morale=clamp(s.morale-minutes*.04,0,100);
+ const h=v29Storage(s);
+ if(s.v29Arriving){
+  if(dist(s,h)>88){s.activity="Traveling to homestead";if(s.v29Block<=0)v29Move(s,h,minutes/2);return;}
+  s.v29Arriving=false;s.activity="Arrived at homestead";s.v29Path=[];
+ }
+ const isSleeping=state.time<360||state.time>=1200;
+ const tired=s.energy<18;
+ if(isSleeping||tired){
+  s.v29Task=null;
+  if(dist(s,h)>85&&s.v29Block<=0){s.activity="Returning to sleep";v29Move(s,h,minutes/2);}
+  else{s.v29Path=[];s.v29Moving=false;s.activity=isSleeping?"Sleeping":"Resting";
+   s.energy=clamp(s.energy+minutes*.17,0,100);s.health=clamp(s.health+minutes*.004,0,100);
+   if(slot<v28Bunks())s.morale=clamp(s.morale+minutes*.008,0,100);}
+  return;
+ }
+ if(s.hunger<58&&!v29Food(s)){
+  if(dist(s,h)>85&&s.v29Block<=0){s.activity="Returning to eat";v29Move(s,h,minutes/2);}
+  return;
+ }
+ if(s.v29Task&&["plant","water","feed","fetchSeeds","fetchWater","fetchFeed"].includes(s.v29Task.kind)){
+  v29Action(s,minutes);return;
+ }
+ if((v29Cargo(s)>0&&!Object.keys(s.pack).some(k=>k.startsWith("v29")&&s.pack[k]>0))||v29Cargo(s)>9){
+  if(!v29Deposit(s)){
+   if(dist(s,h)>85&&s.v29Block<=0){s.activity="Delivering supplies";v29Move(s,h,minutes/2);}
+  }
+  return;
+ }
+ // Workers carrying seed, water or feed continue the associated job.
+ if(s.v29Task){v29Action(s,minutes);return;}
+ if(s.v29Cooldown>0||s.v29Block>0){s.activity=s.v29Block>0?V29_NO_PATH:"Searching for work";return;}
+ v29NewJob(s);
+}
+function v29Advance(minutes){
+ if(!state.settlers||!Number.isFinite(minutes)||minutes<=0)return;
+ // Time advances normally during play, or in bounded slices when the player sleeps.
+ const frames=Math.min(170,Math.ceil(minutes/.16));
+ const dt=minutes/frames;
+ const people=v28Recruited();
+ for(let j=0;j<frames;j++){
+  for(let i=0;i<people.length;i++)v29UpdateOne(people[i],dt,i);
+ }
+}
+v28Advance=v29Advance;
+const v29OldV28Initialize=v28InitializeSettlers;
+v28InitializeSettlers=function(){v29OldV28Initialize();for(const s of state.settlers)v29Normalize(s);state.v29=true;};
+const v29OldRecruit=v28Recruit;
+v28Recruit=function(s){
+ const x=s.x,y=s.y;
+ v29OldRecruit(s);
+ if(s.recruited){s.x=x;s.y=y;s.v29Arriving=true;s.energy=80;s.activity="Traveling to new homestead";s.v29Task=null;s.v29Path=[];s.v29Target=null;v29Normalize(s);}
+};
+function v29Stat(name,n){return `<span class="v29stat">${name} <b>${Math.round(n)}</b></span>`;}
+function v29SafeText(t){return String(t||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"})[c]);}
+function v29ShowManager(){
+ const s=v28Selected,home=v28Home(),within=dist(state.player,home)<290,people=v28Recruited(),stock=Object.entries(state.settlerStockpile).filter(([k,n])=>n>0);
+ $("settlerTitle").textContent=s?s.name+" · Settler Profile":"🏘️ Settler Management — V2.9";
+ $("settlerDetails").textContent=`Recruited ${people.length}/${v28Bunks()} beds · Settlement stock ${v28StockCount()}/${V28_MAX_STOCKPILE} · ${within?"At homestead":"Travel home to manage supplies"}`;
+ let html="";
+ if(s){
+  html+=`<p><b>${s.recruited?"Recruited Settler":"Traveler"}</b> — ${V28_ROLES[s.job].icon} ${V28_ROLES[s.job].name} · <b>${v29SafeText(s.activity)}</b></p>`;
+  html+=`<div class="v29stats">${v29Stat("Health",s.health)}${v29Stat("Hunger",s.hunger)}${v29Stat("Energy",s.energy)}${v29Stat("Morale",s.morale)}</div>`;
+  if(!s.recruited){
+   html+=`<p>Found at a wilderness camp. Recruitment requires housing and one ration or four berries. Recruits must walk back to the homestead.</p>`;
+   html+=`<button data-v28="recruit:${s.id}" ${v28Bunks()<=people.length||!((state.inventory.rations||0)>=1||(state.inventory.berries||0)>=4)||dist(state.player,s)>112?"disabled":""}>Invite ${s.name} to Settle</button>`;
+  }else{
+   html+=`<label>Assigned job <select id="v28Job">${Object.entries(V28_ROLES).map(([k,v])=>`<option value="${k}" ${k===s.job?"selected":""}>${v.icon} ${v.name}</option>`).join("")}</select></label> <button data-v28="job:${s.id}">Assign Job</button>`;
+   html+=`<h3>Skills and Experience</h3><div class="v29skills">${V29_SKILLS.map(k=>`<span>${V28_ROLES[k].icon} ${V28_ROLES[k].name}<br>Level ${v29Level(s,k)} · ${Math.floor(s.skills[k])} XP</span>`).join("")}</div>`;
+   html+=`<p><b>Backpack:</b> ${Object.entries(s.pack||{}).filter(([k,n])=>n>0).map(([k,n])=>`${v29SafeText(ITEMS[k]?.[1]||k)} ×${n}`).join(" · ")||"Empty"}</p>`;
+   html+=`<p><b>Resources delivered:</b> ${Object.entries(s.production||{}).filter(([k,n])=>n>0).map(([k,n])=>`${v29SafeText(ITEMS[k]?.[1]||k)} ×${n}`).join(" · ")||"None yet"}</p>`;
+   if(s.activity===V29_NO_PATH)html+="<p>⚠ This settler could not reach the task and will find another route or wait.</p>";
+  }
+  html+='<p><button data-v28="list">View All Settlers</button></p>';
+ }else{
+  html+="<p>Explore wilderness camps to recruit settlers. Workers physically travel to tasks, collect real resources, and carry them home. Provide food and housing to maintain morale.</p>";
+  html+=`<div class="v29list">${people.length?people.map(p=>`<button data-v28="person:${p.id}"><b>${V28_ROLES[p.job].icon} ${v29SafeText(p.name)}</b><small>${v29SafeText(p.activity)} · Hunger ${Math.round(p.hunger)} · Energy ${Math.round(p.energy)} · ${v29Cargo(p)} carried</small></button>`).join(""):"No recruited settlers yet."}</div>`;
+ }
+ html+=`<h3>📦 Settlement Supplies</h3><p>${stock.length?stock.map(([k,n])=>`${ITEMS[k]?.[0]||"📦"} ${v29SafeText(ITEMS[k]?.[1]||k)}: ${n}`).join(" · "):"Empty. Workers must bring supplies home."}</p>`;
+ html+=`<button data-v28="collect" ${within&&stock.length?"":"disabled"}>Collect All Supplies</button>`;
+ html+=`<h3>Supply Workers</h3><p>Deposit supplies from your backpack at the homestead. Farmers need seeds; ranch hands need hay or grass; all settlers need food.</p>`;
+ html+=`<div class="v29deposits">${[...new Set([...V29_MEALS,"potatoSeeds","carrotSeeds","wheatSeeds","hay","grass","seeds","wheat"])].filter(k=>state.inventory[k]>0).map(k=>`<button data-v29="deposit:${k}" ${within&&v28StockCount()<V28_MAX_STOCKPILE?"":"disabled"}>➕ ${v29SafeText(ITEMS[k]?.[1]||k)} (${state.inventory[k]||0})</button>`).join("")||"No food or seeds in backpack."}</div>`;
+ $("settlerContent").innerHTML=html;
+}
+v28ShowSettlers=v29ShowManager;
+const v29OldV28Draw=v28DrawSettlers;
+v28DrawSettlers=function(cx,cy){
+ // Keep the original V2.8 canvas characters and enhance them with physical animation and tools.
+ v29OldV28Draw(cx,cy);
+ for(const s of state.settlers||[]){
+  if(!s.recruited)continue;
+  const x=s.x-cx,y=s.y-cy;if(x<-55||x>VIEW_W+55||y<-110||y>VIEW_H+40)continue;
+  ctx.save();ctx.translate(x,y);
+  if(s.v29Moving){ctx.fillStyle=s.v29Tint||"#71977b";const bob=Math.sin(s.v29Step||0)*4;
+   ctx.fillRect(-11,-11+bob,8,7);ctx.fillRect(3,-11-bob,8,7);}
+  const tool={lumberjack:"🪓",miner:"⛏️",farmer:"🪣",rancher:"🌾",hunter:"🏹",guard:"🛡️"}[s.job];
+  ctx.textAlign="center";ctx.font="19px Arial";
+  const shift=/Chopping|Mining|Harvesting|Hunting|Feeding|Protecting/.test(s.activity)?Math.sin(s.v29Step||performance.now()*.012)*4:0;
+  ctx.fillText(tool,21,-29+shift);
+  ctx.font="10px Arial";ctx.lineWidth=3;ctx.strokeStyle="#122118";ctx.fillStyle=s.activity==="Sleeping"?"#c6b9f0":"#f0dba2";
+  const msg=s.activity.length>27?s.activity.slice(0,26)+"…":s.activity;
+  ctx.strokeText(msg,0,-98);ctx.fillText(msg,0,-98);
+  ctx.restore();
+ }
+};
+// Centralize a small number of interactions and do not change existing key / mouse handlers.
+const v29OldV28Setup=v28Setup;
+v28Setup=function(){
+ v29OldV28Setup();
+ $("settlerContent").addEventListener("click",e=>{
+  const button=e.target.closest("[data-v29]");if(!button)return;
+  e.preventDefault();e.stopImmediatePropagation();
+  const [cmd,k]=button.dataset.v29.split(":");
+  if(cmd==="deposit"){
+   if(dist(state.player,v28Home())>290)return notice("Return to your homestead to deposit resources.");
+   const n=Math.min(10,Number(state.inventory[k]||0),V28_MAX_STOCKPILE-v28StockCount());
+   if(n>0){state.inventory[k]-=n;v28StockAdd(k,n);notice("Deposited "+n+" "+(ITEMS[k]?.[1]||k));save();renderUI();}
+   v28ShowSettlers();
+  }
+ },true);
+ $("settlerContent").addEventListener("click",e=>{
+  const button=e.target.closest('[data-v28^="job:"]');if(!button)return;
+  const s=state.settlers.find(q=>q.id===button.dataset.v28.slice(4));
+  if(s){s.v29Task=null;s.v29Path=[];s.v29Cooldown=0;s.activity="Starting new assignment";}
+ },true);
+};
+// Workers can no longer create meat, ore, stone, wood or farm products on a timer.
+// Their task actions operate on real nodes, animals, farm plots and pens only.
+(function(){const css=document.createElement("style");css.textContent=`.v29stats{display:flex;gap:5px;flex-wrap:wrap}.v29stat{display:inline-block;padding:7px;background:#213e30;border:1px solid #547457;border-radius:5px}.v29list,.v29deposits,.v29skills{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.v29skills span{padding:8px;border:1px solid #5b7d62;border-radius:6px;background:#263c2c;font-size:12px}.v29list small{display:block;color:#bbd1c2;margin-top:5px}#settlerContent .v29deposits button{padding:6px}@media(max-width:630px){.v29list,.v29deposits,.v29skills{grid-template-columns:1fr}}`;document.head.appendChild(css);document.title="Wilderness: Last Frontier — V2.9 Living Settlers";})();
+
+// V2.9 field-guide supplement; keep all previous controls and documentation.
+$("helpClose").insertAdjacentHTML("beforebegin",'<p><b>V2.9:</b> Settlers physically walk to jobs, gather finite resources, transport their own cargo, and grow individual skills. They eat from settlement supplies and sleep at night. Recruited travelers must reach their home. Open Settlers (N) to assign jobs, inspect needs, and deposit food or crop seeds.</p>');
 
 start();
 </script>
